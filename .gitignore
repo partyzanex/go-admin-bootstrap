@@ -15,4 +15,4 @@
 vendor/
 .idea
 sqlboiler.toml
-assets/js/
+/assets/plugins/*

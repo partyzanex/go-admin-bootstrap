@@ -18,7 +18,7 @@ func main() {
 
 	admin, err := goadmin.New(goadmin.Config{
 		Host:       "localhost",
-		Port:       9000,
+		Port:       9900,
 		BaseURL:    "http://localhost:9000",
 		ViewsPath:  "../views",
 		DevMode:    true,

@@ -11,18 +11,22 @@ import (
 var (
 	js = []AssetSource{
 		{
-			Path: "js/jquery/jquery-3.4.1.min.js",
+			Path: "plugins/jquery/jquery-3.4.1.min.js",
 			URL:  "https://code.jquery.com/jquery-3.4.1.min.js",
 		},
 		{
-			Path: "js/bootstrap/js/bootstrap.min.js",
+			Path: "plugins/bootstrap/js/bootstrap.min.js",
 			URL:  "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js",
 		},
 	}
 	css = []AssetSource{
 		{
-			Path: "js/bootstrap/css/bootstrap.min.css",
+			Path: "plugins/bootstrap/css/bootstrap.min.css",
 			URL:  "https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css",
+		},
+		{
+			Path: "css/style.css",
+			URL:  "",
 		},
 	}
 )

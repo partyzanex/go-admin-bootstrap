@@ -1,18 +1,28 @@
 {{ import "nav.jet" }}
-{{ import "breadcrumbs.jet" }}
+{{ import "widgets/breadcrumbs.jet" }}
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>Admin {{ isset(title) ? title : "" }}</title>
-    <link rel="stylesheet" href="{{ adminPath }}/assets/js/bootstrap/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ adminPath }}/assets/js/bootstrap-datepicker/css/bootstrap-datepicker.min.css">
-    <link href="{{ adminPath }}/assets/css/style.css" rel="stylesheet" type="text/css"/>
-    <script src="{{ adminPath }}/assets/js/jquery-3.4.1.min.js"></script>
-    <script src="{{ adminPath }}/assets/js/bootstrap/js/bootstrap.min.js"></script>
-    <script src="{{ adminPath }}/assets/js/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
-    <script src="{{ adminPath }}/assets/js/jquery.cookie.js"></script>
-    <script src="{{ adminPath }}/assets/js/common.js"></script>
+    <title>GoAdmin {{ isset(title) ? title : "" }}</title>
+  {{ if isset(styles) }}
+    {{ range _, style := styles }}
+    <link href="{{ adminPath }}/assets/{{ style.Path }}" rel="stylesheet" type="text/css"/>
+    {{ end }}
+  {{ end }}
+  {{ if isset(scripts) }}
+    {{ range _, script := scripts }}
+    <script src="{{ adminPath }}/assets/{{ script.Path }}"></script>
+    {{ end }}
+  {{ end }}
+{*    <link rel="stylesheet" href="{{ adminPath }}/assets/js/bootstrap/css/bootstrap.min.css">*}
+{*    <link rel="stylesheet" href="{{ adminPath }}/assets/js/bootstrap-datepicker/css/bootstrap-datepicker.min.css">*}
+{*    <link href="{{ adminPath }}/assets/css/style.css" rel="stylesheet" type="text/css"/>*}
+{*    <script src="{{ adminPath }}/assets/js/jquery-3.4.1.min.js"></script>*}
+{*    <script src="{{ adminPath }}/assets/js/bootstrap/js/bootstrap.min.js"></script>*}
+{*    <script src="{{ adminPath }}/assets/js/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>*}
+{*    <script src="{{ adminPath }}/assets/js/jquery.cookie.js"></script>*}
+{*    <script src="{{ adminPath }}/assets/js/common.js"></script>*}
   </head>
   <body>
     <header>

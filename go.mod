@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/CloudyKit/fastprinter v0.0.0-20170127035650-74b38d55f37a // indirect
-	github.com/CloudyKit/jet v2.1.2+incompatible
+	github.com/CloudyKit/jet v2.1.3-0.20180809161101-62edd43e4f88+incompatible
 	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
@@ -19,4 +19,5 @@ require (
 	github.com/volatiletech/inflect v0.0.0-20170731032912-e7201282ae8d // indirect
 	github.com/volatiletech/null v8.0.0+incompatible // indirect
 	github.com/volatiletech/sqlboiler v3.6.1+incompatible
+	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
 )

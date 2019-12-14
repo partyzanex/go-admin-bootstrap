@@ -2,7 +2,7 @@
 <nav class="navbar navbar-dark bg-info">
 <div class="container-fluid">
   <div class="navbar-brand">
-    <a href="{{ adminPath }}/" class="navbar-brand align-self-center">Emails</a>
+    <a href="{{ adminPath }}/" class="navbar-brand align-self-center">GoAdmin</a>
   </div>
   <div class="navbar-expand">
     <ul class="navbar-nav mr-0 my-0">

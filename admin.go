@@ -10,7 +10,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
-	"log"
 	"os"
 	"path/filepath"
 )
@@ -68,17 +67,22 @@ func (admin *Admin) configureDatabase() error {
 
 	migrationsPath := filepath.Join(dir, admin.DBConfig.MigrationsPath)
 
-	log.Println(admin.DBConfig.DatabaseName, admin.DBConfig.DriverName)
 	m, err := migrate.NewWithDatabaseInstance(
 		"file:///"+migrationsPath,
 		admin.DBConfig.DriverName,
 		driver,
 	)
+
 	if err != nil {
 		return errors.Wrap(err, "creating database instance failed")
 	}
 
-	return m.Up()
+	err = m.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		return errors.Wrap(err, "to migrate up failed")
+	}
+
+	return nil
 }
 
 func (admin *Admin) configureRoutes() {

@@ -3,7 +3,6 @@ package goadmin
 import (
 	"github.com/CloudyKit/jet"
 	"github.com/labstack/echo/v4"
-	"gitlab.com/app-builder/backoffice/api.git/admin/api"
 	"net/http"
 	"strings"
 )
@@ -30,6 +29,8 @@ func (data viewData) JetVars() jet.VarMap {
 	vars.Set("error", data.Error)
 	vars.Set("title", data.Title)
 	vars.Set("details", data.Details)
+	vars.Set("scripts", js)
+	vars.Set("styles", css)
 
 	return vars
 }
@@ -81,7 +82,7 @@ func JSONError(e error, ctx echo.Context) {
 		code = he.Code
 	}
 
-	resp := &api.Response{
+	resp := &Response{
 		Success: false,
 		Error:   e.Error(),
 	}
@@ -91,4 +92,10 @@ func JSONError(e error, ctx echo.Context) {
 	}
 
 	ctx.Logger().Error(e)
+}
+
+type Response struct {
+	Success bool        `json:"success"`
+	Error   string      `json:"error,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
 }

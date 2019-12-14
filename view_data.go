@@ -24,6 +24,8 @@ func (data *Data) JetVars() jet.VarMap {
 		data.VarMap = make(jet.VarMap)
 	}
 
+	data.Set("scripts", js)
+	data.Set("styles", css)
 	data.Set("title", data.Title)
 	return data.VarMap
 }
