@@ -1,0 +1,19 @@
+{{ block nav() }}
+<nav class="navbar navbar-dark bg-info">
+<div class="container-fluid">
+  <div class="navbar-brand">
+    <a href="{{ adminPath }}/" class="navbar-brand align-self-center">Emails</a>
+  </div>
+  <div class="navbar-expand">
+    <ul class="navbar-nav mr-0 my-0">
+    {{ if isset(.User) }}
+      <li class="nav-item"><a href="{{ adminPath }}/emails" class="nav-link">Addresses</a></li>
+      <li class="nav-item"><a href="{{ adminPath }}/auth/logout" class="nav-link">Logout</a></li>
+    {{ else }}
+      <li class="nav-item"><a href="{{ adminPath }}/auth/login" class="nav-link">Login</a></li>
+    {{ end }}
+    </ul>
+  </div>
+  </div>
+</nav>
+{{ end }}

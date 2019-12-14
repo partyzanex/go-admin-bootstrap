@@ -1,0 +1,9 @@
+{{ extends "layouts/main.jet" }}
+
+{{ block documentBody() }}
+<div class="m-4">
+  <h1>{{ isset(title) ? title : "" }}</h1>
+  <p class="text-danger">{{ isset(error) ? error : "Unknown Error" }}</p>
+  <p class="text-warning">{{ isset(details) ? details : "" }}</p>
+</div>
+{{ end }}

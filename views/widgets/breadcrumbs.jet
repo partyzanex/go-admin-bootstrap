@@ -1,0 +1,17 @@
+{{ block breadcrumbs() }}
+  {{ if isset(.Breadcrumbs) }}
+  <nav aria-label="breadcrumb" class="bg-transparent">
+    <ol class="breadcrumb bg-transparent p-0">
+      {{ range _, breadcrumb := .Breadcrumbs }}
+        <li class="breadcrumb-item"{{ breadcrumb.Active ? `aria-current="page"` : "" }}>
+          {{ if !breadcrumb.Active }}
+          <a href="{{ breadcrumb.URL }}">{{ breadcrumb.Name }}</a>
+          {{ else }}
+          <b>{{ breadcrumb.Name }}</b>
+          {{ end }}
+        </li>
+      {{ end }}
+    </ol>
+  </nav>
+  {{ end }}
+{{ end }}

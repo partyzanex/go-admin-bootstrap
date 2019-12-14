@@ -1,0 +1,31 @@
+{{ import "nav.jet" }}
+{{ import "breadcrumbs.jet" }}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Admin {{ isset(title) ? title : "" }}</title>
+    <link rel="stylesheet" href="{{ adminPath }}/assets/js/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ adminPath }}/assets/js/bootstrap-datepicker/css/bootstrap-datepicker.min.css">
+    <link href="{{ adminPath }}/assets/css/style.css" rel="stylesheet" type="text/css"/>
+    <script src="{{ adminPath }}/assets/js/jquery-3.4.1.min.js"></script>
+    <script src="{{ adminPath }}/assets/js/bootstrap/js/bootstrap.min.js"></script>
+    <script src="{{ adminPath }}/assets/js/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
+    <script src="{{ adminPath }}/assets/js/jquery.cookie.js"></script>
+    <script src="{{ adminPath }}/assets/js/common.js"></script>
+  </head>
+  <body>
+    <header>
+      {{ yield nav() }}
+    </header>
+    <main class="container-fluid pt-2">
+      {{ yield breadcrumbs() }}
+      {{ block documentBody() }}{{ end }}
+    </main>
+    <footer class="footer bg-light border-top p-2">
+      <div class="container">
+        <p class="text-center">&copy;2019 All rights reserved and bla bla bla</p>
+      </div>
+    </footer>
+  </body>
+</html>
