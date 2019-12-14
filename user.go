@@ -1,6 +1,7 @@
 package goadmin
 
 import (
+	"github.com/asaskevich/govalidator"
 	"github.com/pkg/errors"
 	"time"
 )
@@ -41,10 +42,44 @@ type User struct {
 	Current           bool `db:"-" json:"-"`
 }
 
+func (user User) Validate(create bool) error {
+	if !create && user.ID == 0 {
+		return ErrRequiredUserID
+	}
+
+	if user.Name == "" {
+		return ErrRequiredUserName
+	}
+
+	if user.Login == "" {
+		return ErrRequiredUserLogin
+	}
+
+	if govalidator.IsEmail(user.Login) {
+		return ErrInvalidUserLogin
+	}
+
+	if !user.PasswordIsEncoded && user.Password == "" {
+		return ErrRequiredUserPassword
+	}
+
+	if !user.Status.IsValid() {
+		return ErrInvalidUserStatus
+	}
+
+	return nil
+}
+
 var (
-	ErrWrongPassword = errors.New("wrong password")
-	ErrUserNotFound  = errors.New("user not found")
-	ErrTokenNotFound = errors.New("token not found")
+	ErrRequiredUserName     = errors.New("required user name")
+	ErrRequiredUserLogin    = errors.New("required user login")
+	ErrInvalidUserLogin     = errors.New("invalid user login")
+	ErrInvalidUserStatus    = errors.New("invalid user status")
+	ErrRequiredUserID       = errors.New("required user id")
+	ErrRequiredUserPassword = errors.New("required user password")
+	ErrWrongPassword        = errors.New("wrong password")
+	ErrUserNotFound         = errors.New("user not found")
+	ErrTokenNotFound        = errors.New("token not found")
 )
 
 type Token struct {

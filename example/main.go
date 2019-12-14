@@ -19,7 +19,7 @@ func main() {
 	admin, err := goadmin.New(goadmin.Config{
 		Host:       "localhost",
 		Port:       9900,
-		BaseURL:    "http://localhost:9000",
+		BaseURL:    "http://localhost:9000/admin",
 		ViewsPath:  "../views",
 		DevMode:    true,
 		AssetsPath: "../assets",

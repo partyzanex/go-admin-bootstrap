@@ -26,7 +26,7 @@ var (
 		},
 		{
 			Path: "css/style.css",
-			URL:  "",
+			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/v0.0.1/assets/css/style.css",
 		},
 	}
 )

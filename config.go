@@ -76,6 +76,7 @@ type UserFilter struct {
 
 type UserRepository interface {
 	Search(ctx context.Context, filter *UserFilter) ([]*User, error)
+	Count(ctx context.Context, filter *UserFilter) (int64, error)
 	Create(ctx context.Context, user User) (*User, error)
 	Update(ctx context.Context, user User) (*User, error)
 	Delete(ctx context.Context, user User) error

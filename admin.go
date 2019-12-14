@@ -46,6 +46,7 @@ func (admin *Admin) configure() error {
 	admin.configureRenderer()
 	admin.configureErrorHandler()
 	admin.configureAssets()
+	admin.configureRoutes()
 
 	if err := admin.configureDatabase(); err != nil {
 		return errors.Wrap(err, "configure database failed")
@@ -88,8 +89,9 @@ func (admin *Admin) configureDatabase() error {
 func (admin *Admin) configureRoutes() {
 	admin.group = admin.e.Group(admin.baseURL.Path, withViewData)
 	admin.group.GET(LoginURL, WrapHandler(Login))
-	admin.group.GET(LogoutURL, WrapHandler(Logout))
-	admin.group.GET(DashboardURL, WrapHandler(Dashboard), AuthByCookie)
+	admin.group.POST(LoginURL, WrapHandler(Login))
+	admin.group.Any(LogoutURL, WrapHandler(Logout))
+	admin.group.GET(DashboardURL, WrapHandler(Dashboard))
 }
 
 func (admin *Admin) configureMiddleware() {
