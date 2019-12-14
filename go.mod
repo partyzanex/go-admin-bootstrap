@@ -7,6 +7,7 @@ require (
 	github.com/CloudyKit/jet v2.1.3-0.20180809161101-62edd43e4f88+incompatible
 	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
+	github.com/asticode/go-astitools v1.2.2 // indirect
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/golang-migrate/migrate v3.5.4+incompatible
@@ -19,5 +20,4 @@ require (
 	github.com/spf13/viper v1.6.1
 	github.com/volatiletech/null v8.0.0+incompatible // indirect
 	github.com/volatiletech/sqlboiler v3.6.1+incompatible
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
 )

@@ -36,6 +36,7 @@ type Config struct {
 	DevMode    bool
 	AssetsPath string
 	DBConfig   DBConfig
+	UserCase   UserUseCase
 
 	baseURL *url.URL
 }
@@ -60,14 +61,19 @@ func (config *Config) Validate() error {
 }
 
 type UserUseCase interface {
+	Validate(user *User, create bool) error
 	SearchByLogin(ctx context.Context, login string) (*User, error)
+	SearchByID(ctx context.Context, id int64) (*User, error)
+	Register(ctx context.Context, user *User) error
 	ComparePassword(user *User, password string) (bool, error)
+	EncodePassword(user *User) error
 	CreateAuthToken(ctx context.Context, user *User) (*Token, error)
 	SetLastLogged(ctx context.Context, user *User) error
 	SearchToken(ctx context.Context, token string) (*Token, error)
 }
 
 type UserFilter struct {
+	IDs           []int64
 	Name          string
 	Login         string
 	Status        UserStatus
@@ -83,5 +89,7 @@ type UserRepository interface {
 }
 
 type TokenRepository interface {
-	Search(ctx context.Context) error
+	Search(ctx context.Context, token string) (*Token, error)
+	Create(ctx context.Context, token Token) (*Token, error)
+	Update(ctx context.Context, token Token) (*Token, error)
 }

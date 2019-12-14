@@ -1,7 +1,6 @@
 package goadmin
 
 import (
-	"github.com/asaskevich/govalidator"
 	"github.com/pkg/errors"
 	"time"
 )
@@ -43,31 +42,7 @@ type User struct {
 }
 
 func (user User) Validate(create bool) error {
-	if !create && user.ID == 0 {
-		return ErrRequiredUserID
-	}
 
-	if user.Name == "" {
-		return ErrRequiredUserName
-	}
-
-	if user.Login == "" {
-		return ErrRequiredUserLogin
-	}
-
-	if govalidator.IsEmail(user.Login) {
-		return ErrInvalidUserLogin
-	}
-
-	if !user.PasswordIsEncoded && user.Password == "" {
-		return ErrRequiredUserPassword
-	}
-
-	if !user.Status.IsValid() {
-		return ErrInvalidUserStatus
-	}
-
-	return nil
 }
 
 var (
@@ -80,6 +55,7 @@ var (
 	ErrWrongPassword        = errors.New("wrong password")
 	ErrUserNotFound         = errors.New("user not found")
 	ErrTokenNotFound        = errors.New("token not found")
+	ErrTokenExpired         = errors.New("token expired")
 )
 
 type Token struct {

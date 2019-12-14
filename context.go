@@ -10,8 +10,7 @@ import (
 type AdminContext struct {
 	echo.Context
 
-	admin    *Admin
-	userCase UserUseCase
+	admin *Admin
 }
 
 func (c AdminContext) URL(path string) string {
@@ -41,7 +40,7 @@ func (c *AdminContext) Ctx() context.Context {
 }
 
 func (c *AdminContext) UserCase() UserUseCase {
-	return c.userCase
+	return c.admin.UserCase
 }
 
 func withAdminContext(admin *Admin) echo.MiddlewareFunc {
