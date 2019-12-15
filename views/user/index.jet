@@ -1,0 +1,50 @@
+{{ extends "layouts/main.jet" }}
+
+{{ block documentBody() }}
+
+  <table class="table table-hover table-striped">
+    <thead>
+      <tr class="table-secondary">
+        <td style="width: 40px;">#</td>
+        <td>Login</td>
+        <td>Name</td>
+        <td>Role</td>
+        <td style="width: 120px">Status</td>
+        <td style="width: 200px">Date</td>
+        <td style="width: 160px" class="text-right">
+          <a class="btn btn-info btn-sm" href="{{ adminPath }}/users/create">Create User</a>
+        </td>
+      </tr>
+    </thead>
+    <tbody>
+    {{ if isset(users) }}
+      {{ range _, user := users }}
+      <tr>
+        <td>{{ user.ID }}</td>
+        <td>
+          {{ user.Login }}
+        </td>
+        <td>{{ user.Name }}</td>
+        <td>{{ user.Role }}</td>
+        <td>{{ user.Status }}</td>
+        <td class="text-muted">
+          <span class="badge badge-success">Created: {{ user.DTCreated }}</span><br>
+          <span class="badge badge-primary">Updated: {{ user.DTUpdated }}</span><br>
+          <span class="badge badge-info">Last logged: {{ user.DTLastLogged }}</span>
+        </td>
+        <td class="text-right">
+          <a href="{{ adminPath }}/users/{{ user.ID }}/update" class="btn-sm btn btn-outline-primary">Edit</a>
+          <a href="{{ adminPath }}/users/{{ user.ID }}/delete" class="btn-sm btn btn-outline-danger">Delete</a>
+        </td>
+      </tr>
+      {{ end }}
+    {{ else }}
+      <tr>
+        <td colspan="4">No groups</td>
+      </tr>
+    {{ end }}
+    </tbody>
+  </table>
+
+{{ end }}
+

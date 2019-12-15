@@ -18,7 +18,8 @@ var (
 	dsn      = pflag.String("dsn", "", "postgres dsn")
 	login    = pflag.String("login", "", "user login")
 	password = pflag.String("password", "", "user password")
-	name     = pflag.String("name", "", "user first name")
+	name     = pflag.String("name", "", "user name")
+	role     = pflag.String("role", "", "user role name, available: owner, root, user")
 )
 
 func main() {
@@ -30,7 +31,7 @@ func main() {
 		return
 	}
 
-	if *login == "" || *password == "" || *name == "" {
+	if *login == "" || *password == "" || *name == "" || *role == "" {
 		fmt.Println("user name, login and password are required")
 		return
 	}
@@ -58,6 +59,7 @@ func main() {
 		Password: *password,
 		Status:   goadmin.UserActive,
 		Name:     *name,
+		Role:     goadmin.UserRole(*role),
 	}
 
 	err = userCase.Register(ctx, user)

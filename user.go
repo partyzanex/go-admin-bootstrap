@@ -2,6 +2,7 @@ package goadmin
 
 import (
 	"github.com/pkg/errors"
+	"net/http"
 	"time"
 )
 
@@ -10,8 +11,23 @@ const (
 	UserActive  UserStatus = "active"
 	UserBlocked UserStatus = "blocked"
 
+	RoleOwner UserRole = "owner"
+	RoleRoot  UserRole = "root"
+	RoleUser  UserRole = "user"
+
 	UserContextKey = "user_context"
 )
+
+type UserRole string
+
+func (role UserRole) IsValid() bool {
+	switch role {
+	case RoleOwner, RoleRoot, RoleUser:
+		return true
+	}
+
+	return false
+}
 
 type UserStatus string
 
@@ -30,8 +46,8 @@ type User struct {
 	Login    string     `db:"login" json:"login"`
 	Password string     `db:"password" json:"password"`
 	Status   UserStatus `db:"status" json:"status"`
-
-	Name string `db:"name" json:"name"`
+	Name     string     `db:"name" json:"name"`
+	Role     UserRole   `db:"role" json:"role"`
 
 	DTCreated    time.Time `db:"dt_created" json:"dt_created"`
 	DTUpdated    time.Time `db:"dt_updated" json:"dt_updated"`
@@ -50,6 +66,7 @@ var (
 	ErrRequiredUserPassword = errors.New("required user password")
 	ErrWrongPassword        = errors.New("wrong password")
 	ErrUserNotFound         = errors.New("user not found")
+	ErrInvalidUserRole      = errors.New("invalid user role")
 	ErrTokenNotFound        = errors.New("token not found")
 	ErrTokenExpired         = errors.New("token expired")
 )
@@ -77,3 +94,41 @@ func (t TokenType) IsValid() bool {
 const (
 	AuthToken TokenType = "auth"
 )
+
+func UserList(ctx *AdminContext) error {
+	repo := ctx.UserCase().UserRepository()
+
+	nav := &Pagination{
+		Ctx:         ctx,
+		URLTemplate: ctx.URL("/users?p={page}"),
+		PageParam:   "p",
+		Limit:       DefaultLimit,
+	}
+
+	nav.ParsePage()
+
+	filter := &UserFilter{
+		Limit:  DefaultLimit,
+		Offset: nav.Page*DefaultLimit - DefaultLimit,
+	}
+
+	count, err := repo.Count(ctx.Ctx(), filter)
+	if err != nil {
+		return err
+	}
+
+	users, err := repo.Search(ctx.Ctx(), filter)
+	if err != nil {
+		return err
+	}
+
+	nav.Total = count
+
+	data := ctx.Data()
+	data.Set("users", users)
+	data.Set("count", count)
+	data.Set("pagination", nav)
+	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL))
+
+	return ctx.Render(http.StatusOK, "user/index", data)
+}

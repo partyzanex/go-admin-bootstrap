@@ -722,7 +722,7 @@ func testUsersSelect(t *testing.T) {
 }
 
 var (
-	userDBTypes = map[string]string{`ID`: `bigint`, `Login`: `character varying`, `Password`: `character`, `Status`: `enum.user_status('new','active','blocked')`, `Name`: `character varying`, `DTCreated`: `timestamp without time zone`, `DTUpdated`: `timestamp without time zone`, `DTLastLogged`: `timestamp without time zone`}
+	userDBTypes = map[string]string{`ID`: `bigint`, `Login`: `character varying`, `Password`: `character`, `Status`: `enum.user_status('new','active','blocked')`, `Name`: `character varying`, `Role`: `enum.user_role('owner','root','user')`, `DTCreated`: `timestamp without time zone`, `DTUpdated`: `timestamp without time zone`, `DTLastLogged`: `timestamp without time zone`}
 	_           = bytes.MinRead
 )
 

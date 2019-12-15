@@ -28,6 +28,7 @@ type User struct {
 	Password     string    `boil:"password" json:"password" toml:"password" yaml:"password"`
 	Status       string    `boil:"status" json:"status" toml:"status" yaml:"status"`
 	Name         string    `boil:"name" json:"name" toml:"name" yaml:"name"`
+	Role         string    `boil:"role" json:"role" toml:"role" yaml:"role"`
 	DTCreated    time.Time `boil:"dt_created" json:"dt_created" toml:"dt_created" yaml:"dt_created"`
 	DTUpdated    time.Time `boil:"dt_updated" json:"dt_updated" toml:"dt_updated" yaml:"dt_updated"`
 	DTLastLogged time.Time `boil:"dt_last_logged" json:"dt_last_logged" toml:"dt_last_logged" yaml:"dt_last_logged"`
@@ -42,6 +43,7 @@ var UserColumns = struct {
 	Password     string
 	Status       string
 	Name         string
+	Role         string
 	DTCreated    string
 	DTUpdated    string
 	DTLastLogged string
@@ -51,6 +53,7 @@ var UserColumns = struct {
 	Password:     "password",
 	Status:       "status",
 	Name:         "name",
+	Role:         "role",
 	DTCreated:    "dt_created",
 	DTUpdated:    "dt_updated",
 	DTLastLogged: "dt_last_logged",
@@ -64,6 +67,7 @@ var UserWhere = struct {
 	Password     whereHelperstring
 	Status       whereHelperstring
 	Name         whereHelperstring
+	Role         whereHelperstring
 	DTCreated    whereHelpertime_Time
 	DTUpdated    whereHelpertime_Time
 	DTLastLogged whereHelpertime_Time
@@ -73,6 +77,7 @@ var UserWhere = struct {
 	Password:     whereHelperstring{field: "\"goadmin\".\"user\".\"password\""},
 	Status:       whereHelperstring{field: "\"goadmin\".\"user\".\"status\""},
 	Name:         whereHelperstring{field: "\"goadmin\".\"user\".\"name\""},
+	Role:         whereHelperstring{field: "\"goadmin\".\"user\".\"role\""},
 	DTCreated:    whereHelpertime_Time{field: "\"goadmin\".\"user\".\"dt_created\""},
 	DTUpdated:    whereHelpertime_Time{field: "\"goadmin\".\"user\".\"dt_updated\""},
 	DTLastLogged: whereHelpertime_Time{field: "\"goadmin\".\"user\".\"dt_last_logged\""},
@@ -99,8 +104,8 @@ func (*userR) NewStruct() *userR {
 type userL struct{}
 
 var (
-	userAllColumns            = []string{"id", "login", "password", "status", "name", "dt_created", "dt_updated", "dt_last_logged"}
-	userColumnsWithoutDefault = []string{"login", "password", "name", "dt_updated", "dt_last_logged"}
+	userAllColumns            = []string{"id", "login", "password", "status", "name", "role", "dt_created", "dt_updated", "dt_last_logged"}
+	userColumnsWithoutDefault = []string{"login", "password", "name", "role", "dt_updated", "dt_last_logged"}
 	userColumnsWithDefault    = []string{"id", "status", "dt_created"}
 	userPrimaryKeyColumns     = []string{"id"}
 )

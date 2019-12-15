@@ -58,6 +58,10 @@ var (
 			Path: "auth/login.jet",
 			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/views/auth/login.jet",
 		},
+		{
+			Path: "user/index.jet",
+			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/views/user/index.jet",
+		},
 	}
 )
 
@@ -66,9 +70,9 @@ type AssetSource struct {
 	URL  string
 }
 
-func (admin *Admin) LoadAssets() error {
+func (admin *Admin) LoadSources() error {
 	for _, source := range js {
-		err := admin.loadAsset(source)
+		err := admin.loadSource(admin.AssetsPath, source)
 		if err != nil {
 			// todo: wrap error
 			return err
@@ -76,7 +80,7 @@ func (admin *Admin) LoadAssets() error {
 	}
 
 	for _, source := range css {
-		err := admin.loadAsset(source)
+		err := admin.loadSource(admin.AssetsPath, source)
 		if err != nil {
 			// todo: wrap error
 			return err
@@ -84,7 +88,7 @@ func (admin *Admin) LoadAssets() error {
 	}
 
 	for _, source := range views {
-		err := admin.loadAsset(source)
+		err := admin.loadSource(admin.ViewsPath, source)
 		if err != nil {
 			// todo: wrap error
 			return err
@@ -94,21 +98,21 @@ func (admin *Admin) LoadAssets() error {
 	return nil
 }
 
-func (admin Admin) loadAsset(source AssetSource) error {
-	assetPath := filepath.Join(admin.AssetsPath, source.Path)
+func (admin Admin) loadSource(path string, source AssetSource) error {
+	sourcePath := filepath.Join(path, source.Path)
 
-	_, err := os.Stat(assetPath)
+	_, err := os.Stat(sourcePath)
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Wrapf(err, "loading asset %s (%s) source failed",
 			source.Path, source.URL,
 		)
 	}
 	if os.IsNotExist(err) {
-		assetDir := filepath.Dir(assetPath)
-		err = os.MkdirAll(assetDir, os.ModePerm)
+		sourceDir := filepath.Dir(sourcePath)
+		err = os.MkdirAll(sourceDir, os.ModePerm)
 		if err != nil {
 			return errors.Wrapf(err, "make assets dir %s failed",
-				assetDir,
+				sourceDir,
 			)
 		}
 
@@ -127,7 +131,7 @@ func (admin Admin) loadAsset(source AssetSource) error {
 			return err
 		}
 
-		err = ioutil.WriteFile(assetPath, b, os.ModePerm)
+		err = ioutil.WriteFile(sourcePath, b, os.ModePerm)
 		if err != nil {
 			// todo: wrap error
 			return err

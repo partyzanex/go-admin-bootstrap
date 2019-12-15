@@ -46,6 +46,10 @@ func (uc *userCase) Validate(user *goadmin.User, create bool) error {
 		return goadmin.ErrInvalidUserStatus
 	}
 
+	if !user.Role.IsValid() {
+		return goadmin.ErrInvalidUserRole
+	}
+
 	return nil
 }
 

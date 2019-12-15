@@ -62,3 +62,10 @@ const (
 	UserStatusActive  = "active"
 	UserStatusBlocked = "blocked"
 )
+
+// Enum values for user_role
+const (
+	UserRoleOwner = "owner"
+	UserRoleRoot  = "root"
+	UserRoleUser  = "user"
+)

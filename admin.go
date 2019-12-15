@@ -23,6 +23,7 @@ const (
 	DefaultViewsPath                = "./views"
 	DefaultCacheTTL   time.Duration = 30 * time.Minute
 	DefaultCacheClean time.Duration = 5 * time.Second
+	DefaultLimit                    = 20
 	Version                         = "v0.0.1"
 )
 
@@ -102,6 +103,7 @@ func (admin *Admin) configureRoutes() {
 	admin.group.POST(LoginURL, WrapHandler(Login))
 	admin.group.Any(LogoutURL, WrapHandler(Logout), AuthByCookie)
 	admin.group.GET(DashboardURL, WrapHandler(Dashboard), AuthByCookie)
+	admin.group.GET(UserListURL, WrapHandler(UserList), AuthByCookie)
 }
 
 func (admin *Admin) configureMiddleware() {
@@ -124,6 +126,9 @@ func (admin *Admin) configureRenderer() {
 	}
 	renderer.Views.SetDevelopmentMode(admin.DevMode)
 	renderer.Views.AddGlobal("adminPath", admin.baseURL.Path)
+	renderer.Views.AddGlobal("loginURL", LoginURL)
+	renderer.Views.AddGlobal("logoutURL", LogoutURL)
+	renderer.Views.AddGlobal("userListURL", UserListURL)
 
 	admin.e.Renderer = renderer
 }
@@ -171,7 +176,7 @@ func New(config Config) (*Admin, error) {
 		return nil, err
 	}
 
-	if err := admin.LoadAssets(); err != nil {
+	if err := admin.LoadSources(); err != nil {
 		return nil, err
 	}
 

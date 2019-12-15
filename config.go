@@ -11,9 +11,15 @@ import (
 )
 
 var (
-	DashboardURL     = "/"
-	LoginURL         = "/login"
-	LogoutURL        = "/logout"
+	DashboardURL = "/"
+	LoginURL     = "/login"
+	LogoutURL    = "/logout"
+
+	UserListURL   = "/users"
+	UserCreateURL = "/users/create"
+	UserUpdateURL = "/users/:id/update"
+	UserDeleteURL = "/users/:id/delete"
+
 	AccessCookieName = "auth_token"
 
 	ErrContextNotConfigured = errors.New("admin context not configured")

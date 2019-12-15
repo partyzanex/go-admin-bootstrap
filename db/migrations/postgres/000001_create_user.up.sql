@@ -1,6 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS goadmin;
 
 CREATE TYPE goadmin.USER_STATUS AS ENUM ('new', 'active', 'blocked');
+CREATE TYPE goadmin.USER_ROLE AS ENUM ('owner', 'root', 'user');
 
 CREATE TABLE IF NOT EXISTS goadmin."user"
 (
@@ -9,6 +10,7 @@ CREATE TABLE IF NOT EXISTS goadmin."user"
     password       CHARACTER(64)               NOT NULL,
     status         goadmin.USER_STATUS         NOT NULL DEFAULT 'new',
     name           CHARACTER VARYING(255)      NOT NULL,
+    role           goadmin.USER_ROLE           NOT NULL,
     dt_created     TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
     dt_updated     TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     dt_last_logged TIMESTAMP WITHOUT TIME ZONE NOT NULL,
