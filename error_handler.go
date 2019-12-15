@@ -1,10 +1,11 @@
 package goadmin
 
 import (
-	"github.com/CloudyKit/jet"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"strings"
+
+	"github.com/CloudyKit/jet"
+	"github.com/labstack/echo/v4"
 )
 
 func errorHandler(e error, ctx echo.Context) {

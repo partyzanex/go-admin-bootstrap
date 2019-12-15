@@ -17,3 +17,5 @@ vendor/
 sqlboiler.toml
 /assets/plugins/*
 users
+/example/assets
+/example/views

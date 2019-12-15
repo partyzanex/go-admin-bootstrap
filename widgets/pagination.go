@@ -1,10 +1,11 @@
-package goadmin
+package widgets
 
 import (
-	"github.com/labstack/echo/v4"
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/labstack/echo/v4"
 )
 
 const (

@@ -2,82 +2,74 @@ package goadmin
 
 import (
 	"fmt"
+	"net/url"
+
+	_ "github.com/golang-migrate/migrate/v4/source/aws_s3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/lib/pq"
-	"os"
-	"path/filepath"
+	_ "github.com/golang-migrate/migrate/v4/source/github"
+	_ "github.com/golang-migrate/migrate/v4/source/github_ee"
+	_ "github.com/golang-migrate/migrate/v4/source/gitlab"
+	_ "github.com/golang-migrate/migrate/v4/source/go_bindata"
+	_ "github.com/golang-migrate/migrate/v4/source/godoc_vfs"
+	_ "github.com/golang-migrate/migrate/v4/source/google_cloud_storage"
+	_ "github.com/golang-migrate/migrate/v4/source/stub"
 
 	"github.com/CloudyKit/jet"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
 )
-
-const (
-	DefaultAssetsPath = "./assets"
-	DefaultViewsPath  = "./views"
-	//DefaultCacheTTL   time.Duration = 30 * time.Minute
-	//DefaultCacheClean time.Duration = 5 * time.Second
-	DefaultLimit = 20
-	Version      = "v0.0.1"
-)
-
-type AdminHandler func(ctx *AdminContext) error
 
 type Admin struct {
 	*Config
 
-	e      *echo.Echo
-	static *echo.Group
-	group  *echo.Group
+	e       *echo.Echo
+	static  *echo.Group
+	admin   *echo.Group
+	baseURL *url.URL
 }
 
-func (admin *Admin) Serve() error {
-	if err := admin.hasEcho(); err != nil {
+func (a *Admin) Serve() error {
+	if err := a.hasEcho(); err != nil {
 		return err
 	}
 
-	addr := fmt.Sprintf("%s:%d", admin.Host, admin.Port)
-	return admin.e.Start(addr)
+	addr := fmt.Sprintf("%s:%d", a.Host, a.Port)
+	return a.e.Start(addr)
 }
 
-func (admin *Admin) Echo() *echo.Echo {
-	return admin.e
+func (a *Admin) Echo() *echo.Echo {
+	return a.e
 }
 
-func (admin *Admin) configure() error {
-	//admin.configureCache()
-	admin.configureMiddleware()
-	admin.configureRenderer()
-	admin.configureErrorHandler()
-	admin.configureAssets()
-	admin.configureRoutes()
+func (a *Admin) Static() *echo.Group {
+	return a.static
+}
 
-	if err := admin.configureDatabase(); err != nil {
+func (a *Admin) configure() error {
+	a.configureMiddleware()
+	a.configureRenderer()
+	a.configureErrorHandler()
+	a.configureAssets()
+	a.configureRoutes()
+
+	if err := a.configureDatabase(); err != nil {
 		return errors.Wrap(err, "configure database failed")
 	}
 
 	return nil
 }
 
-func (admin *Admin) configureDatabase() error {
-	dir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	driver, err := postgres.WithInstance(admin.DBConfig.DB, &postgres.Config{})
+func (a *Admin) configureDatabase() error {
+	driver, err := postgres.WithInstance(a.DBConfig.DB, &postgres.Config{})
 	if err != nil {
 		return errors.Wrap(err, "creating postgres instance failed")
 	}
 
-	migrationsPath := filepath.Join(dir, admin.DBConfig.MigrationsPath)
-
-	m, err := migrate.NewWithDatabaseInstance(
-		"file:///"+migrationsPath,
-		admin.DBConfig.DriverName,
+	mig, err := migrate.NewWithDatabaseInstance(
+		a.DBConfig.MigrationsPath,
+		a.DBConfig.Driver,
 		driver,
 	)
 
@@ -85,7 +77,7 @@ func (admin *Admin) configureDatabase() error {
 		return errors.Wrap(err, "creating database instance failed")
 	}
 
-	err = m.Up()
+	err = mig.Up()
 	if err != nil && err != migrate.ErrNoChange {
 		return errors.Wrap(err, "to migrate up failed")
 	}
@@ -93,73 +85,60 @@ func (admin *Admin) configureDatabase() error {
 	return nil
 }
 
-func (admin *Admin) configureRoutes() {
-	admin.group = admin.e.Group(admin.baseURL.Path, withViewData)
-	admin.group.GET(LoginURL, WrapHandler(Login))
-	admin.group.POST(LoginURL, WrapHandler(Login))
+func (a *Admin) configureRoutes() {
+	a.admin = a.e.Group(a.baseURL.Path, withViewData)
+	a.admin.GET(LoginURL, WrapHandler(Login))
+	a.admin.POST(LoginURL, WrapHandler(Login))
 
 	auth := AuthByCookie
 
-	admin.group.Any(LogoutURL, WrapHandler(Logout), auth)
-	admin.group.GET(DashboardURL, WrapHandler(Dashboard), auth)
-	admin.group.GET(UserListURL, WrapHandler(UserList), auth)
-	admin.group.GET(UserCreateURL, WrapHandler(UserCreate), auth)
-	admin.group.POST(UserCreateURL, WrapHandler(UserCreate), auth)
-	admin.group.GET(UserDeleteURL, WrapHandler(UserDelete), auth)
-	admin.group.GET(UserUpdateURL, WrapHandler(UserUpdate), auth)
-	admin.group.POST(UserUpdateURL, WrapHandler(UserUpdate), auth)
+	a.admin.Any(LogoutURL, WrapHandler(Logout), auth)
+	a.admin.GET(DashboardURL, WrapHandler(Dashboard), auth)
+	a.admin.GET(UserListURL, WrapHandler(UserList), auth)
+	a.admin.GET(UserCreateURL, WrapHandler(UserCreate), auth)
+	a.admin.POST(UserCreateURL, WrapHandler(UserCreate), auth)
+	a.admin.GET(UserDeleteURL, WrapHandler(UserDelete), auth)
+	a.admin.GET(UserUpdateURL, WrapHandler(UserUpdate), auth)
+	a.admin.POST(UserUpdateURL, WrapHandler(UserUpdate), auth)
 }
 
-func (admin *Admin) configureMiddleware() {
-	for _, mw := range admin.Middleware {
-		admin.e.Use(mw)
+func (a *Admin) configureMiddleware() {
+	for _, mw := range a.Middleware {
+		a.e.Use(mw)
 	}
 
-	admin.e.Use(middleware.Recover())
-	admin.e.Use(middleware.Logger())
-	admin.e.Use(withAdminContext(admin))
+	a.e.Use(withAdminContext(a))
 }
 
-func (admin *Admin) configureErrorHandler() {
-	admin.e.HTTPErrorHandler = errorHandler
+func (a *Admin) configureErrorHandler() {
+	a.e.HTTPErrorHandler = errorHandler
 }
 
-func (admin *Admin) configureRenderer() {
+func (a *Admin) configureRenderer() {
 	renderer := &Renderer{
-		Views: jet.NewHTMLSet(admin.ViewsPath),
+		Views: jet.NewHTMLSet(a.ViewsPath),
 	}
-	renderer.Views.SetDevelopmentMode(admin.DevMode)
-	renderer.Views.AddGlobal("adminPath", admin.baseURL.Path)
+
+	renderer.Views.SetDevelopmentMode(a.DevMode)
+	renderer.Views.AddGlobal("adminPath", a.baseURL.Path)
 	renderer.Views.AddGlobal("loginURL", LoginURL)
 	renderer.Views.AddGlobal("logoutURL", LogoutURL)
 	renderer.Views.AddGlobal("userListURL", UserListURL)
 
-	admin.e.Renderer = renderer
+	a.e.Renderer = renderer
 }
 
-func (admin *Admin) configureAssets() {
-	if admin.AssetsPath == "" {
-		admin.AssetsPath = DefaultAssetsPath
+func (a *Admin) configureAssets() {
+	if a.AssetsPath == "" {
+		a.AssetsPath = DefaultAssetsPath
 	}
 
-	admin.static = admin.e.Group(admin.baseURL.Path + "/assets")
-	admin.static.Static("/", admin.AssetsPath)
+	a.static = a.e.Group(a.baseURL.Path + "/assets")
+	a.static.Static("/", a.AssetsPath)
 }
 
-//func (admin *Admin) configureCache() {
-//	if admin.CacheTTL == 0 {
-//		admin.CacheTTL = DefaultCacheTTL
-//	}
-//
-//	if admin.CacheClean == 0 {
-//		admin.CacheClean = DefaultCacheClean
-//	}
-//
-//	admin.cache = cache.New(admin.CacheTTL, admin.CacheClean)
-//}
-
-func (admin *Admin) hasEcho() error {
-	if admin.e == nil {
+func (a *Admin) hasEcho() error {
+	if a.e == nil {
 		return errors.New("please use goadmin.New when creating Admin")
 	}
 
@@ -171,29 +150,24 @@ func New(config Config) (*Admin, error) {
 		return nil, errors.Wrap(err, "validation failed")
 	}
 
-	admin := &Admin{
-		Config: &config,
-		e:      echo.New(),
+	baseURL, err := url.Parse(config.BaseURL)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse base url failed")
 	}
 
-	if err := admin.configure(); err != nil {
+	a := &Admin{
+		Config:  &config,
+		e:       echo.New(),
+		baseURL: baseURL,
+	}
+
+	if err := a.configure(); err != nil {
 		return nil, err
 	}
 
-	if err := admin.LoadSources(); err != nil {
+	if err := a.LoadSources(); err != nil {
 		return nil, err
 	}
 
-	return admin, nil
-}
-
-func WrapHandler(h AdminHandler) echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		ac, ok := ctx.(*AdminContext)
-		if !ok {
-			return ErrContextNotConfigured
-		}
-
-		return h(ac)
-	}
+	return a, nil
 }

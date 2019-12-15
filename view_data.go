@@ -2,7 +2,6 @@ package goadmin
 
 import (
 	"github.com/CloudyKit/jet"
-	"github.com/labstack/echo/v4"
 	"github.com/partyzanex/go-admin-bootstrap/widgets"
 )
 
@@ -49,25 +48,4 @@ func (data *Data) Set(name string, value interface{}) {
 	}
 
 	data.VarMap.Set(name, value)
-}
-
-var (
-	DataContextKey = "data_context"
-)
-
-func withViewData(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		ac := ctx.(*AdminContext)
-
-		data := &Data{}
-		user, ok := ac.Get(UserContextKey).(*User)
-		if ok {
-			data.User = user
-		}
-		data.Breadcrumbs.Add("Dashboard", ac.URL("/"))
-
-		ac.Set(DataContextKey, data)
-
-		return handlerFunc(ctx)
-	}
 }

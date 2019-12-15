@@ -3,6 +3,7 @@ package encrypt
 import (
 	"crypto/md5"
 	"crypto/sha256"
+
 	"github.com/pkg/errors"
 	"github.com/spacemonkeygo/openssl"
 )

@@ -44,19 +44,6 @@ func (c *AdminContext) UserCase() UserUseCase {
 	return c.admin.UserCase
 }
 
-func withAdminContext(admin *Admin) echo.MiddlewareFunc {
-	return func(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
-		return func(ctx echo.Context) error {
-			ac := &AdminContext{
-				Context: ctx,
-				admin:   admin,
-			}
-
-			return handlerFunc(ac)
-		}
-	}
-}
-
 func Path(paths ...string) string {
 	for i := range paths {
 		if i == 0 {

@@ -2,63 +2,14 @@ package goadmin
 
 import (
 	"encoding/hex"
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"github.com/partyzanex/go-admin-bootstrap/encrypt"
 	"github.com/pkg/errors"
-	"log"
-	"net/http"
-	"time"
 )
 
-func Login(ctx *AdminContext) error {
-	_, err := ctx.Cookie(AccessCookieName)
-	if err == nil {
-		return ctx.Redirect(http.StatusFound, ctx.URL("/"))
-	}
-
-	u := ctx.User()
-	if u != nil {
-		return ctx.Redirect(http.StatusFound, ctx.URL("/"))
-	}
-
-	data := &Data{
-		Title: "Login",
-	}
-	data.Breadcrumbs.Add("Login", ctx.URL(LoginURL))
-
-	if ctx.Request().Method == http.MethodPost {
-		result, err := auth(ctx)
-		if err != nil && err != ErrUserNotFound && err != ErrWrongPassword {
-			return err
-		}
-		if err == nil {
-			return ctx.Redirect(http.StatusFound, ctx.URL(DashboardURL))
-		} else {
-			data.Set("err", err.Error())
-		}
-
-		data.Set("login", result.Login)
-		data.Set("password", result.Password)
-	}
-
-	return ctx.Render(http.StatusOK, "auth/login", data)
-}
-
-func Logout(ctx *AdminContext) error {
-	if user := ctx.User(); user != nil {
-		ctx.SetCookie(&http.Cookie{
-			Name:    AccessCookieName,
-			Expires: time.Now().Add(-24 * time.Hour),
-			Domain:  ctx.Request().Host,
-			Path:    "/",
-		})
-	}
-
-	return ctx.Redirect(http.StatusFound, ctx.URL(LoginURL))
-}
-
 func auth(ctx *AdminContext) (result User, err error) {
-
 	login := ctx.FormValue("login")
 	password := ctx.FormValue("password")
 
@@ -71,7 +22,6 @@ func auth(ctx *AdminContext) (result User, err error) {
 	}
 
 	ok, err := ctx.UserCase().ComparePassword(user, password)
-	log.Println(ok, err)
 	if err != nil {
 		return result, err
 	}
@@ -110,25 +60,6 @@ func auth(ctx *AdminContext) (result User, err error) {
 	})
 
 	return result, nil
-}
-
-func AuthByCookie(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
-	return func(ctx echo.Context) error {
-		ac, ok := ctx.(*AdminContext)
-		if !ok {
-			return ErrContextNotConfigured
-		}
-
-		u, err := authByCookie(ac)
-		if err != nil {
-			return err
-		}
-
-		u.Current = true
-		ctx.Set(UserContextKey, u)
-
-		return withViewData(handlerFunc)(ctx)
-	}
 }
 
 func authByCookie(ctx *AdminContext) (*User, error) {
