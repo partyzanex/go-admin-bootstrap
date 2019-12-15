@@ -2,13 +2,10 @@ package goadmin
 
 import (
 	"fmt"
-	"github.com/patrickmn/go-cache"
-	"os"
-	"path/filepath"
-	"time"
-
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
+	"os"
+	"path/filepath"
 
 	"github.com/CloudyKit/jet"
 	"github.com/golang-migrate/migrate/v4"
@@ -19,12 +16,12 @@ import (
 )
 
 const (
-	DefaultAssetsPath               = "./assets"
-	DefaultViewsPath                = "./views"
-	DefaultCacheTTL   time.Duration = 30 * time.Minute
-	DefaultCacheClean time.Duration = 5 * time.Second
-	DefaultLimit                    = 20
-	Version                         = "v0.0.1"
+	DefaultAssetsPath = "./assets"
+	DefaultViewsPath  = "./views"
+	//DefaultCacheTTL   time.Duration = 30 * time.Minute
+	//DefaultCacheClean time.Duration = 5 * time.Second
+	DefaultLimit = 20
+	Version      = "v0.0.1"
 )
 
 type AdminHandler func(ctx *AdminContext) error
@@ -35,7 +32,6 @@ type Admin struct {
 	e      *echo.Echo
 	static *echo.Group
 	group  *echo.Group
-	cache  *cache.Cache
 }
 
 func (admin *Admin) Serve() error {
@@ -52,7 +48,7 @@ func (admin *Admin) Echo() *echo.Echo {
 }
 
 func (admin *Admin) configure() error {
-	admin.configureCache()
+	//admin.configureCache()
 	admin.configureMiddleware()
 	admin.configureRenderer()
 	admin.configureErrorHandler()
@@ -101,9 +97,17 @@ func (admin *Admin) configureRoutes() {
 	admin.group = admin.e.Group(admin.baseURL.Path, withViewData)
 	admin.group.GET(LoginURL, WrapHandler(Login))
 	admin.group.POST(LoginURL, WrapHandler(Login))
-	admin.group.Any(LogoutURL, WrapHandler(Logout), AuthByCookie)
-	admin.group.GET(DashboardURL, WrapHandler(Dashboard), AuthByCookie)
-	admin.group.GET(UserListURL, WrapHandler(UserList), AuthByCookie)
+
+	auth := AuthByCookie
+
+	admin.group.Any(LogoutURL, WrapHandler(Logout), auth)
+	admin.group.GET(DashboardURL, WrapHandler(Dashboard), auth)
+	admin.group.GET(UserListURL, WrapHandler(UserList), auth)
+	admin.group.GET(UserCreateURL, WrapHandler(UserCreate), auth)
+	admin.group.POST(UserCreateURL, WrapHandler(UserCreate), auth)
+	admin.group.GET(UserDeleteURL, WrapHandler(UserDelete), auth)
+	admin.group.GET(UserUpdateURL, WrapHandler(UserUpdate), auth)
+	admin.group.POST(UserUpdateURL, WrapHandler(UserUpdate), auth)
 }
 
 func (admin *Admin) configureMiddleware() {
@@ -142,17 +146,17 @@ func (admin *Admin) configureAssets() {
 	admin.static.Static("/", admin.AssetsPath)
 }
 
-func (admin *Admin) configureCache() {
-	if admin.CacheTTL == 0 {
-		admin.CacheTTL = DefaultCacheTTL
-	}
-
-	if admin.CacheClean == 0 {
-		admin.CacheClean = DefaultCacheClean
-	}
-
-	admin.cache = cache.New(admin.CacheTTL, admin.CacheClean)
-}
+//func (admin *Admin) configureCache() {
+//	if admin.CacheTTL == 0 {
+//		admin.CacheTTL = DefaultCacheTTL
+//	}
+//
+//	if admin.CacheClean == 0 {
+//		admin.CacheClean = DefaultCacheClean
+//	}
+//
+//	admin.cache = cache.New(admin.CacheTTL, admin.CacheClean)
+//}
 
 func (admin *Admin) hasEcho() error {
 	if admin.e == nil {

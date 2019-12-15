@@ -3,12 +3,12 @@
     <p>Page navigation ({{ pagination.View }} of {{ pagination.Total }}):</p>
     <nav aria-label="Page navigation">
       <ul class="pagination">
-      {{ if !isNil(pagination.First) }}
+      {{ if pagination.First.Enable() }}
         <li class="page-item">
           <a class="page-link" href="{{ pagination.First.URL }}">First</a>
         </li>
       {{ end }}
-      {{ if !isNil(pagination.Previous) }}
+      {{ if pagination.Previous.Enable() }}
         <li class="page-item">
           <a class="page-link" href="{{ pagination.Previous.URL }}" >Previous</a>
         </li>
@@ -18,12 +18,12 @@
           <a class="page-link" href="{{ item.URL }}">{{ item.PageNum }}</a>
         </li>
       {{ end }}
-      {{ if !isNil(pagination.Next) }}
+      {{ if pagination.Next.Enable() }}
         <li class="page-item">
           <a class="page-link" href="{{ pagination.Next.URL }}">Next</a>
         </li>
       {{ end }}
-      {{ if !isNil(pagination.Last) }}
+      {{ if pagination.Last.Enable() }}
         <li class="page-item">
           <a class="page-link" href="{{ pagination.Last.URL }}">Last</a>
         </li>

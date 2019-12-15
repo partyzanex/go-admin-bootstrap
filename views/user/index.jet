@@ -1,4 +1,5 @@
 {{ extends "layouts/main.jet" }}
+{{ import "widgets/pagination.jet" }}
 
 {{ block documentBody() }}
 
@@ -45,6 +46,6 @@
     {{ end }}
     </tbody>
   </table>
-
+  {{ yield pagenav() }}
 {{ end }}
 

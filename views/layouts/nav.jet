@@ -8,7 +8,7 @@
     <ul class="navbar-nav mr-0 my-0">
     {{ if isset(.User) }}
       <li class="nav-item"><a href="{{ adminPath }}/users" class="nav-link">Users</a></li>
-      <li class="nav-item"><a href="{{ adminPath }}/logout" class="nav-link">Logout</a></li>
+      <li class="nav-item"><a href="{{ adminPath }}/logout" class="nav-link">Logout [{{ .User.Name }}]</a></li>
     {{ else }}
       <li class="nav-item"><a href="{{ adminPath }}/login" class="nav-link">Login</a></li>
     {{ end }}

@@ -8,6 +8,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.3.3 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a
 	github.com/asticode/go-astitools v1.2.2
+	github.com/davecgh/go-spew v1.1.1
 	github.com/friendsofgo/errors v0.9.2
 	github.com/gofrs/uuid v3.2.0+incompatible // indirect
 	github.com/golang-migrate/migrate v3.5.4+incompatible
@@ -17,9 +18,9 @@ require (
 	github.com/lib/pq v1.2.0
 	github.com/partyzanex/layer v0.0.2
 	github.com/partyzanex/testutils v0.0.3
-	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.8.1
 	github.com/spacemonkeygo/openssl v0.0.0-20181017203307-c2dcc5cca94a
+	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.6.1
 	github.com/volatiletech/null v8.0.0+incompatible // indirect
 	github.com/volatiletech/sqlboiler v3.6.1+incompatible

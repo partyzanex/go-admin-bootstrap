@@ -23,7 +23,9 @@ func NewUserRepository(ex layer.BoilExecutor) *userRepository {
 }
 
 func (repo *userRepository) Search(ctx context.Context, filter *goadmin.UserFilter) ([]*goadmin.User, error) {
-	mods := repo.applyFilter(filter, nil)
+	mods := repo.applyFilter(filter, []qm.QueryMod{
+		qm.OrderBy("id"),
+	})
 
 	c, ex := layer.GetExecutor(ctx, repo.ex)
 
@@ -66,6 +68,15 @@ func (*userRepository) applyFilter(filter *goadmin.UserFilter, mods []qm.QueryMo
 	}
 
 	if filter != nil {
+		if n := len(filter.IDs); n > 0 {
+			ids := make([]interface{}, n)
+			for i, id := range filter.IDs {
+				ids[i] = id
+			}
+
+			mods = append(mods, qm.WhereIn("id in ?", ids...))
+		}
+
 		if filter.Name != "" {
 			clause := "%" + filter.Name + "%"
 			mods = append(mods, qm.Where("name like ?", clause))

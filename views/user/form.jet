@@ -1,0 +1,61 @@
+{{ extends "layouts/main.jet" }}
+
+{{ block documentBody() }}
+
+<form action="{{ adminPath }}{{ formAction }}" method="post" id="user-form">
+  {{ if isset(error) }}
+    <div class="row">
+      <div class="col-sm-7">
+        <div class="alert alert-danger">{{ error }}</div>
+      </div>
+    </div>
+  {{ end }}
+  <input type="hidden" id="user-id" name="id" value="{{ user.ID }}">
+    <div class="row">
+    <div class="col-md-4">
+      <div class="form-group">
+        <label>User Name:</label>
+        <input type="text" class="form-control" id="user-name" name="name" value="{{ user.Name }}" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>User Login:</label>
+        <input type="text" class="form-control" id="user-login" name="login" value="{{ user.Login }}">
+      </div>
+      <div class="form-group">
+        <label>User Password:</label>
+        <input type="password"
+          class="form-control"
+          id="user-password"
+          name="password"
+          value=""
+          autocomplete="off"
+          readonly
+          onfocus="this.removeAttribute('readonly')"
+        >
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="form-group">
+        <label>User Role:</label>
+        <select class="form-control" id="user-role" name="role">
+          <option value="owner"{{ user.Role == "owner" ? " selected" : "" }}>owner</option>
+          <option value="root"{{ user.Role == "root" ? " selected" : "" }}>root</option>
+          <option value="user"{{ user.Role == "user" ? " selected" : "" }}>user</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="group-status">User Status:</label>
+        <select class="form-control" id="user-status" name="status">
+          <option value="new"{{ user.Status == "new" ? " selected" : "" }}>new</option>
+          <option value="active"{{ user.Status == "active" ? " selected" : "" }}>active</option>
+          <option value="blocked"{{ user.Status == "blocked" ? " selected" : "" }}>blocked</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-12">
+      <button class="btn btn-success" type="submit">Save</button>
+    </div>
+  </div>
+</form>
+
+{{ end }}

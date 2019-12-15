@@ -23,14 +23,18 @@ type Pagination struct {
 	URLTemplate string
 	PageParam   string
 
-	Previous, Next *PaginationItem
-	First, Last    *PaginationItem
+	Previous, Next PaginationItem
+	First, Last    PaginationItem
 }
 
 type PaginationItem struct {
 	PageNum int
 	URL     string
 	Current bool
+}
+
+func (item PaginationItem) Enable() bool {
+	return item.PageNum > 0
 }
 
 func (p *Pagination) Exists() bool {
@@ -58,7 +62,7 @@ func (p *Pagination) ParsePage() {
 	}
 
 	if p.Page > 1 {
-		p.Previous = &PaginationItem{
+		p.Previous = PaginationItem{
 			PageNum: p.Page - 1,
 			URL:     p.url(p.Page - 1),
 		}
@@ -66,21 +70,21 @@ func (p *Pagination) ParsePage() {
 
 	pages := int(math.Ceil(float64(p.Total) / float64(p.Limit)))
 	if p.Page < pages {
-		p.Next = &PaginationItem{
+		p.Next = PaginationItem{
 			PageNum: p.Page + 1,
 			URL:     p.url(p.Page + 1),
 		}
 	}
 
 	if p.Page+1 < pages {
-		p.Last = &PaginationItem{
+		p.Last = PaginationItem{
 			PageNum: pages,
 			URL:     p.url(pages),
 		}
 	}
 
 	if p.Page-1 > 0 {
-		p.First = &PaginationItem{
+		p.First = PaginationItem{
 			PageNum: 1,
 			URL:     p.url(1),
 		}
