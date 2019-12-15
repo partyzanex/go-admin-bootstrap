@@ -47,6 +47,10 @@ func (a *Admin) Static() *echo.Group {
 	return a.static
 }
 
+func (a *Admin) Admin() *echo.Group {
+	return a.admin
+}
+
 func (a *Admin) configure() error {
 	a.configureMiddleware()
 	a.configureRenderer()
