@@ -14,7 +14,8 @@ type AdminContext struct {
 }
 
 func (c AdminContext) URL(path string) string {
-	return Path(c.admin.baseURL.Path, path)
+	result := Path(c.admin.baseURL.Path, path)
+	return result
 }
 
 func (c *AdminContext) Data() *Data {

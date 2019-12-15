@@ -3,12 +3,14 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	goadmin "github.com/partyzanex/go-admin-bootstrap"
+
 	"github.com/partyzanex/go-admin-bootstrap/db/models/postgres"
 	"github.com/partyzanex/layer"
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
+
+	goadmin "github.com/partyzanex/go-admin-bootstrap"
 )
 
 type authTokenRepository struct {

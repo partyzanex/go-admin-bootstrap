@@ -7,6 +7,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"net/url"
+	"time"
 )
 
 var (
@@ -37,6 +38,8 @@ type Config struct {
 	AssetsPath string
 	DBConfig   DBConfig
 	UserCase   UserUseCase
+	CacheTTL   time.Duration
+	CacheClean time.Duration
 
 	baseURL *url.URL
 }

@@ -4,15 +4,16 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/asaskevich/govalidator"
-	astistring "github.com/asticode/go-astitools/string"
-	goadmin "github.com/partyzanex/go-admin-bootstrap"
-	"github.com/pkg/errors"
-	"golang.org/x/crypto/bcrypt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/asaskevich/govalidator"
+	"github.com/pkg/errors"
+	"golang.org/x/crypto/bcrypt"
+
+	astistring "github.com/asticode/go-astitools/string"
+	goadmin "github.com/partyzanex/go-admin-bootstrap"
 )
 
 type userCase struct {
@@ -135,16 +136,12 @@ func (uc *userCase) ComparePassword(user *goadmin.User, password string) (bool, 
 		return false, err
 	}
 
-	log.Println(user.Password, password)
-
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		log.Println(err)
 		err = goadmin.ErrWrongPassword
 	}
 
 	return err == nil, err
-
 }
 
 func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User) (*goadmin.Token, error) {

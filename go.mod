@@ -16,7 +16,10 @@ require (
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/lib/pq v1.2.0
 	github.com/partyzanex/layer v0.0.2
+	github.com/partyzanex/testutils v0.0.3
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.8.1
+	github.com/spacemonkeygo/openssl v0.0.0-20181017203307-c2dcc5cca94a
 	github.com/spf13/viper v1.6.1
 	github.com/volatiletech/null v8.0.0+incompatible // indirect
 	github.com/volatiletech/sqlboiler v3.6.1+incompatible

@@ -1,7 +1,9 @@
 package goadmin
 
 import (
+	"encoding/hex"
 	"github.com/labstack/echo/v4"
+	"github.com/partyzanex/go-admin-bootstrap/encrypt"
 	"github.com/pkg/errors"
 	"log"
 	"net/http"
@@ -88,9 +90,21 @@ func auth(ctx *AdminContext) (result User, err error) {
 		return result, errors.Wrap(err, "updating user failed")
 	}
 
+	key, iv := encrypt.KeysFromString(ctx.RealIP() + ctx.Request().UserAgent())
+
+	enc, err := encrypt.New("aes-256-cbc", key, iv)
+	if err != nil {
+		return result, errors.Wrap(err, "creating encryption failed")
+	}
+
+	tokenValue, err := enc.Encrypt([]byte(token.Token))
+	if err != nil {
+		return result, errors.Wrap(err, "encryption failed")
+	}
+
 	http.SetCookie(ctx.Response(), &http.Cookie{
 		Name:    AccessCookieName,
-		Value:   token.Token,
+		Value:   hex.EncodeToString(tokenValue),
 		Expires: token.DTExpired,
 		Path:    "/",
 	})
@@ -123,8 +137,25 @@ func authByCookie(ctx *AdminContext) (*User, error) {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
+	value, err := hex.DecodeString(t.Value)
+	if err != nil {
+		return nil, errors.Wrap(err, "decoding cookie value failed")
+	}
+
+	key, iv := encrypt.KeysFromString(ctx.RealIP() + ctx.Request().UserAgent())
+
+	enc, err := encrypt.New("aes-256-cbc", key, iv)
+	if err != nil {
+		return nil, errors.Wrap(err, "creating encryption failed")
+	}
+
+	tokenValue, err := enc.Decrypt(value)
+	if err != nil {
+		return nil, errors.Wrap(err, "decryption failed")
+	}
+
 	c := ctx.Request().Context()
-	token, err := ctx.UserCase().SearchToken(c, t.Value)
+	token, err := ctx.UserCase().SearchToken(c, string(tokenValue))
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 	}

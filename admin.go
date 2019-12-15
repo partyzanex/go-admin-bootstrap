@@ -2,8 +2,10 @@ package goadmin
 
 import (
 	"fmt"
+	"github.com/patrickmn/go-cache"
 	"os"
 	"path/filepath"
+	"time"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
@@ -17,9 +19,11 @@ import (
 )
 
 const (
-	DefaultAssetsPath = "./assets"
-	DefaultViewsPath  = "./views"
-	Version           = "v0.0.1"
+	DefaultAssetsPath               = "./assets"
+	DefaultViewsPath                = "./views"
+	DefaultCacheTTL   time.Duration = 30 * time.Minute
+	DefaultCacheClean time.Duration = 5 * time.Second
+	Version                         = "v0.0.1"
 )
 
 type AdminHandler func(ctx *AdminContext) error
@@ -30,6 +34,7 @@ type Admin struct {
 	e      *echo.Echo
 	static *echo.Group
 	group  *echo.Group
+	cache  *cache.Cache
 }
 
 func (admin *Admin) Serve() error {
@@ -46,6 +51,7 @@ func (admin *Admin) Echo() *echo.Echo {
 }
 
 func (admin *Admin) configure() error {
+	admin.configureCache()
 	admin.configureMiddleware()
 	admin.configureRenderer()
 	admin.configureErrorHandler()
@@ -129,6 +135,18 @@ func (admin *Admin) configureAssets() {
 
 	admin.static = admin.e.Group(admin.baseURL.Path + "/assets")
 	admin.static.Static("/", admin.AssetsPath)
+}
+
+func (admin *Admin) configureCache() {
+	if admin.CacheTTL == 0 {
+		admin.CacheTTL = DefaultCacheTTL
+	}
+
+	if admin.CacheClean == 0 {
+		admin.CacheClean = DefaultCacheClean
+	}
+
+	admin.cache = cache.New(admin.CacheTTL, admin.CacheClean)
 }
 
 func (admin *Admin) hasEcho() error {
