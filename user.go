@@ -41,10 +41,6 @@ type User struct {
 	Current           bool `db:"-" json:"-"`
 }
 
-func (user User) Validate(create bool) error {
-
-}
-
 var (
 	ErrRequiredUserName     = errors.New("required user name")
 	ErrRequiredUserLogin    = errors.New("required user login")

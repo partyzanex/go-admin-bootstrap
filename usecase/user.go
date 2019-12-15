@@ -9,14 +9,15 @@ import (
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
 )
 
 type userCase struct {
-	Users  goadmin.UserRepository
-	Tokens goadmin.TokenRepository
+	users  goadmin.UserRepository
+	tokens goadmin.TokenRepository
 }
 
 func (uc *userCase) Validate(user *goadmin.User, create bool) error {
@@ -32,7 +33,7 @@ func (uc *userCase) Validate(user *goadmin.User, create bool) error {
 		return goadmin.ErrRequiredUserLogin
 	}
 
-	if govalidator.IsEmail(user.Login) {
+	if !govalidator.IsEmail(user.Login) {
 		return goadmin.ErrInvalidUserLogin
 	}
 
@@ -48,7 +49,7 @@ func (uc *userCase) Validate(user *goadmin.User, create bool) error {
 }
 
 func (uc *userCase) SearchByLogin(ctx context.Context, login string) (*goadmin.User, error) {
-	users, err := uc.Users.Search(ctx, &goadmin.UserFilter{
+	users, err := uc.users.Search(ctx, &goadmin.UserFilter{
 		Limit:  1,
 		Offset: 0,
 		Login:  login,
@@ -65,7 +66,7 @@ func (uc *userCase) SearchByLogin(ctx context.Context, login string) (*goadmin.U
 }
 
 func (uc *userCase) SearchByID(ctx context.Context, id int64) (*goadmin.User, error) {
-	users, err := uc.Users.Search(ctx, &goadmin.UserFilter{
+	users, err := uc.users.Search(ctx, &goadmin.UserFilter{
 		IDs:    []int64{id},
 		Limit:  1,
 		Offset: 0,
@@ -84,10 +85,30 @@ func (uc *userCase) SearchByID(ctx context.Context, id int64) (*goadmin.User, er
 func (uc *userCase) SetLastLogged(ctx context.Context, user *goadmin.User) error {
 	user.DTLastLogged = time.Now()
 
-	_, err := uc.Users.Update(ctx, *user)
+	_, err := uc.users.Update(ctx, *user)
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (uc *userCase) Register(ctx context.Context, user *goadmin.User) error {
+	if err := uc.Validate(user, true); err != nil {
+		return err
+	}
+
+	err := uc.EncodePassword(user)
+	if err != nil {
+		return err
+	}
+
+	u, err := uc.users.Create(ctx, *user)
+	if err != nil {
+		return err
+	}
+
+	*user = *u
 
 	return nil
 }
@@ -114,8 +135,11 @@ func (uc *userCase) ComparePassword(user *goadmin.User, password string) (bool, 
 		return false, err
 	}
 
+	log.Println(user.Password, password)
+
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
+		log.Println(err)
 		err = goadmin.ErrWrongPassword
 	}
 
@@ -139,7 +163,7 @@ func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User) (*g
 		DTExpired: time.Now().Add(24 * time.Hour),
 	}
 
-	token, err := uc.Tokens.Create(ctx, *token)
+	token, err := uc.tokens.Create(ctx, *token)
 	if err != nil {
 		return nil, errors.Wrap(err, "creating token failed")
 	}
@@ -148,7 +172,7 @@ func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User) (*g
 }
 
 func (uc *userCase) SearchToken(ctx context.Context, token string) (*goadmin.Token, error) {
-	authToken, err := uc.Tokens.Search(ctx, token)
+	authToken, err := uc.tokens.Search(ctx, token)
 	if err != nil {
 		return nil, errors.Wrap(err, "search token failed")
 	}
@@ -158,16 +182,20 @@ func (uc *userCase) SearchToken(ctx context.Context, token string) (*goadmin.Tok
 		return nil, errors.Wrap(err, "search user failed")
 	}
 
-	if authToken.DTExpired.After(time.Now()) {
-		return nil, goadmin.ErrTokenExpired
+	if authToken.DTExpired.Before(time.Now()) {
+		return authToken, goadmin.ErrTokenExpired
 	}
 
 	return authToken, nil
 }
 
+func (uc *userCase) UserRepository() goadmin.UserRepository {
+	return uc.users
+}
+
 func NewUserCase(users goadmin.UserRepository, tokens goadmin.TokenRepository) *userCase {
 	return &userCase{
-		Users:  users,
-		Tokens: tokens,
+		users:  users,
+		tokens: tokens,
 	}
 }

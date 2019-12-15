@@ -26,7 +26,37 @@ var (
 		},
 		{
 			Path: "css/style.css",
-			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/v0.0.1/assets/css/style.css",
+			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/assets/css/style.css",
+		},
+	}
+	views = []AssetSource{
+		{
+			Path: "layouts/nav.jet",
+			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/views/layouts/nav.jet",
+		},
+		{
+			Path: "layouts/main.jet",
+			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/views/layouts/main.jet",
+		},
+		{
+			Path: "widgets/breadcrumbs.jet",
+			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/views/widgets/breadcrumbs.jet",
+		},
+		{
+			Path: "widgets/pagination.jet",
+			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/views/widgets/pagination.jet",
+		},
+		{
+			Path: "index/dashboard.jet",
+			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/views/index/dashboard.jet",
+		},
+		{
+			Path: "errors/error.jet",
+			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/views/errors/error.jet",
+		},
+		{
+			Path: "auth/login.jet",
+			URL:  "https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/views/auth/login.jet",
 		},
 	}
 )
@@ -46,6 +76,14 @@ func (admin *Admin) LoadAssets() error {
 	}
 
 	for _, source := range css {
+		err := admin.loadAsset(source)
+		if err != nil {
+			// todo: wrap error
+			return err
+		}
+	}
+
+	for _, source := range views {
 		err := admin.loadAsset(source)
 		if err != nil {
 			// todo: wrap error

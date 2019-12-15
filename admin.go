@@ -2,20 +2,24 @@ package goadmin
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/lib/pq"
+
 	"github.com/CloudyKit/jet"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
-	"os"
-	"path/filepath"
 )
 
 const (
 	DefaultAssetsPath = "./assets"
+	DefaultViewsPath  = "./views"
+	Version           = "v0.0.1"
 )
 
 type AdminHandler func(ctx *AdminContext) error
@@ -90,8 +94,8 @@ func (admin *Admin) configureRoutes() {
 	admin.group = admin.e.Group(admin.baseURL.Path, withViewData)
 	admin.group.GET(LoginURL, WrapHandler(Login))
 	admin.group.POST(LoginURL, WrapHandler(Login))
-	admin.group.Any(LogoutURL, WrapHandler(Logout))
-	admin.group.GET(DashboardURL, WrapHandler(Dashboard))
+	admin.group.Any(LogoutURL, WrapHandler(Logout), AuthByCookie)
+	admin.group.GET(DashboardURL, WrapHandler(Dashboard), AuthByCookie)
 }
 
 func (admin *Admin) configureMiddleware() {

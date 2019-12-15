@@ -3,6 +3,7 @@ package goadmin
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+	"log"
 	"net/http"
 	"time"
 )
@@ -68,6 +69,7 @@ func auth(ctx *AdminContext) (result User, err error) {
 	}
 
 	ok, err := ctx.UserCase().ComparePassword(user, password)
+	log.Println(ok, err)
 	if err != nil {
 		return result, err
 	}

@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS goadmin.auth_token;
+DROP TABLE IF EXISTS goadmin.user;
+
+DROP TYPE IF EXISTS goadmin.TOKEN_TYPE;
+DROP TYPE IF EXISTS goadmin.USER_STATUS;
+
+DROP SCHEMA IF EXISTS goadmin;
+

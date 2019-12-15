@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/boil"
 	"github.com/volatiletech/sqlboiler/queries/qm"
+	"time"
 )
 
 type userRepository struct {
@@ -89,10 +90,6 @@ func (*userRepository) applyFilter(filter *goadmin.UserFilter, mods []qm.QueryMo
 }
 
 func (repo *userRepository) Create(ctx context.Context, user goadmin.User) (result *goadmin.User, err error) {
-	if err := user.Validate(true); err != nil {
-		return nil, errors.Wrap(err, "validation failed")
-	}
-
 	c, tr := layer.GetTransactor(ctx)
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
@@ -101,11 +98,15 @@ func (repo *userRepository) Create(ctx context.Context, user goadmin.User) (resu
 		}
 
 		defer func() {
-			err = layer.ExecuteTransaction(tr, err)
+			errTr := layer.ExecuteTransaction(tr, err)
+			if errTr != nil {
+				err = errors.Wrap(errTr, "transaction error")
+			}
 		}()
 	}
 
 	model := userToModel(&user)
+	model.DTCreated = time.Now()
 
 	err = model.Insert(c, tr, boil.Infer())
 	if err != nil {
@@ -116,10 +117,6 @@ func (repo *userRepository) Create(ctx context.Context, user goadmin.User) (resu
 }
 
 func (repo *userRepository) Update(ctx context.Context, user goadmin.User) (result *goadmin.User, err error) {
-	if err := user.Validate(false); err != nil {
-		return nil, errors.Wrap(err, "validation failed")
-	}
-
 	c, tr := layer.GetTransactor(ctx)
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
@@ -128,11 +125,15 @@ func (repo *userRepository) Update(ctx context.Context, user goadmin.User) (resu
 		}
 
 		defer func() {
-			err = layer.ExecuteTransaction(tr, err)
+			errTr := layer.ExecuteTransaction(tr, err)
+			if errTr != nil {
+				err = errors.Wrap(errTr, "transaction error")
+			}
 		}()
 	}
 
 	model := userToModel(&user)
+	model.DTUpdated = time.Now()
 
 	_, err = model.Update(c, tr, boil.Infer())
 	if err != nil {
@@ -155,7 +156,10 @@ func (repo *userRepository) Delete(ctx context.Context, user goadmin.User) (err 
 		}
 
 		defer func() {
-			err = layer.ExecuteTransaction(tr, err)
+			errTr := layer.ExecuteTransaction(tr, err)
+			if errTr != nil {
+				err = errors.Wrap(errTr, "transaction error")
+			}
 		}()
 	}
 

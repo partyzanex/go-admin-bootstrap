@@ -8,5 +8,5 @@ output="models/postgres"
   user="postgres"
   pass=""
   sslmode="disable"
-  schema="public"
+  schema="goadmin"
   blacklist=["schema_migrations"]

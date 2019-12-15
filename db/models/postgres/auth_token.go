@@ -113,12 +113,12 @@ var AuthTokenWhere = struct {
 	DTExpired whereHelpertime_Time
 	DTCreated whereHelpertime_Time
 }{
-	ID:        whereHelperint64{field: "\"auth_token\".\"id\""},
-	UserID:    whereHelperint64{field: "\"auth_token\".\"user_id\""},
-	Token:     whereHelperstring{field: "\"auth_token\".\"token\""},
-	Type:      whereHelperstring{field: "\"auth_token\".\"type\""},
-	DTExpired: whereHelpertime_Time{field: "\"auth_token\".\"dt_expired\""},
-	DTCreated: whereHelpertime_Time{field: "\"auth_token\".\"dt_created\""},
+	ID:        whereHelperint64{field: "\"goadmin\".\"auth_token\".\"id\""},
+	UserID:    whereHelperint64{field: "\"goadmin\".\"auth_token\".\"user_id\""},
+	Token:     whereHelperstring{field: "\"goadmin\".\"auth_token\".\"token\""},
+	Type:      whereHelperstring{field: "\"goadmin\".\"auth_token\".\"type\""},
+	DTExpired: whereHelpertime_Time{field: "\"goadmin\".\"auth_token\".\"dt_expired\""},
+	DTCreated: whereHelpertime_Time{field: "\"goadmin\".\"auth_token\".\"dt_created\""},
 }
 
 // AuthTokenRels is where relationship names are stored.
@@ -432,7 +432,7 @@ func (o *AuthToken) User(mods ...qm.QueryMod) userQuery {
 	queryMods = append(queryMods, mods...)
 
 	query := Users(queryMods...)
-	queries.SetFrom(query.Query, "\"user\"")
+	queries.SetFrom(query.Query, "\"goadmin\".\"user\"")
 
 	return query
 }
@@ -478,7 +478,7 @@ func (authTokenL) LoadUser(ctx context.Context, e boil.ContextExecutor, singular
 		return nil
 	}
 
-	query := NewQuery(qm.From(`user`), qm.WhereIn(`user.id in ?`, args...))
+	query := NewQuery(qm.From(`goadmin.user`), qm.WhereIn(`goadmin.user.id in ?`, args...))
 	if mods != nil {
 		mods.Apply(query)
 	}
@@ -550,7 +550,7 @@ func (o *AuthToken) SetUser(ctx context.Context, exec boil.ContextExecutor, inse
 	}
 
 	updateQuery := fmt.Sprintf(
-		"UPDATE \"auth_token\" SET %s WHERE %s",
+		"UPDATE \"goadmin\".\"auth_token\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, []string{"user_id"}),
 		strmangle.WhereClause("\"", "\"", 2, authTokenPrimaryKeyColumns),
 	)
@@ -587,7 +587,7 @@ func (o *AuthToken) SetUser(ctx context.Context, exec boil.ContextExecutor, inse
 
 // AuthTokens retrieves all the records using an executor.
 func AuthTokens(mods ...qm.QueryMod) authTokenQuery {
-	mods = append(mods, qm.From("\"auth_token\""))
+	mods = append(mods, qm.From("\"goadmin\".\"auth_token\""))
 	return authTokenQuery{NewQuery(mods...)}
 }
 
@@ -601,7 +601,7 @@ func FindAuthToken(ctx context.Context, exec boil.ContextExecutor, iD int64, sel
 		sel = strings.Join(strmangle.IdentQuoteSlice(dialect.LQ, dialect.RQ, selectCols), ",")
 	}
 	query := fmt.Sprintf(
-		"select %s from \"auth_token\" where \"id\"=$1", sel,
+		"select %s from \"goadmin\".\"auth_token\" where \"id\"=$1", sel,
 	)
 
 	q := queries.Raw(query, iD)
@@ -654,9 +654,9 @@ func (o *AuthToken) Insert(ctx context.Context, exec boil.ContextExecutor, colum
 			return err
 		}
 		if len(wl) != 0 {
-			cache.query = fmt.Sprintf("INSERT INTO \"auth_token\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
+			cache.query = fmt.Sprintf("INSERT INTO \"goadmin\".\"auth_token\" (\"%s\") %%sVALUES (%s)%%s", strings.Join(wl, "\",\""), strmangle.Placeholders(dialect.UseIndexPlaceholders, len(wl), 1, 1))
 		} else {
-			cache.query = "INSERT INTO \"auth_token\" %sDEFAULT VALUES%s"
+			cache.query = "INSERT INTO \"goadmin\".\"auth_token\" %sDEFAULT VALUES%s"
 		}
 
 		var queryOutput, queryReturning string
@@ -722,7 +722,7 @@ func (o *AuthToken) Update(ctx context.Context, exec boil.ContextExecutor, colum
 			return 0, errors.New("postgres: unable to update auth_token, could not build whitelist")
 		}
 
-		cache.query = fmt.Sprintf("UPDATE \"auth_token\" SET %s WHERE %s",
+		cache.query = fmt.Sprintf("UPDATE \"goadmin\".\"auth_token\" SET %s WHERE %s",
 			strmangle.SetParamNames("\"", "\"", 1, wl),
 			strmangle.WhereClause("\"", "\"", len(wl)+1, authTokenPrimaryKeyColumns),
 		)
@@ -803,7 +803,7 @@ func (o AuthTokenSlice) UpdateAll(ctx context.Context, exec boil.ContextExecutor
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := fmt.Sprintf("UPDATE \"auth_token\" SET %s WHERE %s",
+	sql := fmt.Sprintf("UPDATE \"goadmin\".\"auth_token\" SET %s WHERE %s",
 		strmangle.SetParamNames("\"", "\"", 1, colNames),
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), len(colNames)+1, authTokenPrimaryKeyColumns, len(o)))
 
@@ -892,7 +892,7 @@ func (o *AuthToken) Upsert(ctx context.Context, exec boil.ContextExecutor, updat
 			conflict = make([]string, len(authTokenPrimaryKeyColumns))
 			copy(conflict, authTokenPrimaryKeyColumns)
 		}
-		cache.query = buildUpsertQueryPostgres(dialect, "\"auth_token\"", updateOnConflict, ret, update, conflict, insert)
+		cache.query = buildUpsertQueryPostgres(dialect, "\"goadmin\".\"auth_token\"", updateOnConflict, ret, update, conflict, insert)
 
 		cache.valueMapping, err = queries.BindMapping(authTokenType, authTokenMapping, insert)
 		if err != nil {
@@ -951,7 +951,7 @@ func (o *AuthToken) Delete(ctx context.Context, exec boil.ContextExecutor) (int6
 	}
 
 	args := queries.ValuesFromMapping(reflect.Indirect(reflect.ValueOf(o)), authTokenPrimaryKeyMapping)
-	sql := "DELETE FROM \"auth_token\" WHERE \"id\"=$1"
+	sql := "DELETE FROM \"goadmin\".\"auth_token\" WHERE \"id\"=$1"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)
@@ -1016,7 +1016,7 @@ func (o AuthTokenSlice) DeleteAll(ctx context.Context, exec boil.ContextExecutor
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "DELETE FROM \"auth_token\" WHERE " +
+	sql := "DELETE FROM \"goadmin\".\"auth_token\" WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, authTokenPrimaryKeyColumns, len(o))
 
 	if boil.IsDebug(ctx) {
@@ -1071,7 +1071,7 @@ func (o *AuthTokenSlice) ReloadAll(ctx context.Context, exec boil.ContextExecuto
 		args = append(args, pkeyArgs...)
 	}
 
-	sql := "SELECT \"auth_token\".* FROM \"auth_token\" WHERE " +
+	sql := "SELECT \"goadmin\".\"auth_token\".* FROM \"goadmin\".\"auth_token\" WHERE " +
 		strmangle.WhereClauseRepeated(string(dialect.LQ), string(dialect.RQ), 1, authTokenPrimaryKeyColumns, len(*o))
 
 	q := queries.Raw(sql, args...)
@@ -1089,7 +1089,7 @@ func (o *AuthTokenSlice) ReloadAll(ctx context.Context, exec boil.ContextExecuto
 // AuthTokenExists checks if the AuthToken row exists.
 func AuthTokenExists(ctx context.Context, exec boil.ContextExecutor, iD int64) (bool, error) {
 	var exists bool
-	sql := "select exists(select 1 from \"auth_token\" where \"id\"=$1 limit 1)"
+	sql := "select exists(select 1 from \"goadmin\".\"auth_token\" where \"id\"=$1 limit 1)"
 
 	if boil.IsDebug(ctx) {
 		writer := boil.DebugWriterFrom(ctx)

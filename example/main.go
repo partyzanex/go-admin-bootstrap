@@ -2,19 +2,28 @@ package main
 
 import (
 	"database/sql"
-	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	"log"
+	"os"
 	"time"
 
 	_ "github.com/lib/pq"
+
+	"github.com/partyzanex/go-admin-bootstrap/repository/postgres"
+	"github.com/partyzanex/go-admin-bootstrap/usecase"
+
+	goadmin "github.com/partyzanex/go-admin-bootstrap"
 )
 
 func main() {
-	db, err := sql.Open("postgres", "dbname=goadmin user=postgres password=535353 sslmode=disable")
+	db, err := sql.Open("postgres", os.Getenv("PG_DSN"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	db.SetConnMaxLifetime(time.Second)
+
+	userRepo := postgres.NewUserRepository(db)
+	tokenRepo := postgres.NewTokenRepository(db)
+	userCase := usecase.NewUserCase(userRepo, tokenRepo)
 
 	admin, err := goadmin.New(goadmin.Config{
 		Host:       "localhost",
@@ -29,6 +38,7 @@ func main() {
 			DatabaseName:   "goadmin",
 			MigrationsPath: "../db/migrations/postgres",
 		},
+		UserCase: userCase,
 	})
 	if err != nil {
 		log.Fatal(err)

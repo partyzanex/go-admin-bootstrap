@@ -62,14 +62,19 @@ func (config *Config) Validate() error {
 
 type UserUseCase interface {
 	Validate(user *User, create bool) error
+
 	SearchByLogin(ctx context.Context, login string) (*User, error)
 	SearchByID(ctx context.Context, id int64) (*User, error)
+	SetLastLogged(ctx context.Context, user *User) error
 	Register(ctx context.Context, user *User) error
+
 	ComparePassword(user *User, password string) (bool, error)
 	EncodePassword(user *User) error
+
 	CreateAuthToken(ctx context.Context, user *User) (*Token, error)
-	SetLastLogged(ctx context.Context, user *User) error
 	SearchToken(ctx context.Context, token string) (*Token, error)
+
+	UserRepository() UserRepository
 }
 
 type UserFilter struct {
@@ -91,5 +96,4 @@ type UserRepository interface {
 type TokenRepository interface {
 	Search(ctx context.Context, token string) (*Token, error)
 	Create(ctx context.Context, token Token) (*Token, error)
-	Update(ctx context.Context, token Token) (*Token, error)
 }
