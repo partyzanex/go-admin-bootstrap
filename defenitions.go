@@ -34,6 +34,7 @@ var (
 	UserDeleteURL = "/users/:id/delete"
 
 	AccessCookieName = "auth_token"
+	MigrationsTable  = "goadmin_migrations"
 )
 
 var (

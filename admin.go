@@ -66,7 +66,9 @@ func (a *Admin) configure() error {
 }
 
 func (a *Admin) configureDatabase() error {
-	driver, err := postgres.WithInstance(a.DBConfig.DB, &postgres.Config{})
+	driver, err := postgres.WithInstance(a.DBConfig.DB, &postgres.Config{
+		MigrationsTable: MigrationsTable,
+	})
 	if err != nil {
 		return errors.Wrap(err, "creating postgres instance failed")
 	}
