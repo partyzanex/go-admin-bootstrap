@@ -21,7 +21,7 @@ require (
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/lib/pq v1.2.0
 	github.com/mattn/go-isatty v0.0.11 // indirect
-	github.com/partyzanex/layer v0.0.2
+	github.com/partyzanex/layer v0.0.3
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.1
@@ -39,7 +39,6 @@ require (
 	golang.org/x/sys v0.0.0-20191210023423-ac6580df4449 // indirect
 	golang.org/x/tools v0.0.0-20191217011448-c39ce2148d8e // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
-	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/genproto v0.0.0-20191216205247-b31c10ee225f // indirect
 	google.golang.org/grpc v1.25.1 // indirect
 )
