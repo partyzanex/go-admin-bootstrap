@@ -61,6 +61,10 @@ var (
 			"https://code.jquery.com/jquery-3.4.1.min.js",
 		},
 		{
+			"plugins/popper/popper.min.js",
+			"https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js",
+		},
+		{
 			"plugins/bootstrap/js/bootstrap.min.js",
 			"https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js",
 		},

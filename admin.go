@@ -139,6 +139,10 @@ func (a *Admin) configureAssets() {
 		a.AssetsPath = DefaultAssetsPath
 	}
 
+	if a.ViewsPath == "" {
+		a.ViewsPath = DefaultViewsPath
+	}
+
 	a.static = a.e.Group(a.baseURL.Path + "/assets")
 	a.static.Static("/", a.AssetsPath)
 }
