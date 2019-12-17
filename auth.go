@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"github.com/partyzanex/go-admin-bootstrap/encrypt"
 	"github.com/pkg/errors"
+	"github.com/xxtea/xxtea-go/xxtea"
 )
 
 func auth(ctx *AdminContext) (result User, err error) {
@@ -40,17 +40,8 @@ func auth(ctx *AdminContext) (result User, err error) {
 		return result, errors.Wrap(err, "updating user failed")
 	}
 
-	key, iv := encrypt.KeysFromString(ctx.RealIP() + ctx.Request().UserAgent())
-
-	enc, err := encrypt.New("aes-256-cbc", key, iv)
-	if err != nil {
-		return result, errors.Wrap(err, "creating encryption failed")
-	}
-
-	tokenValue, err := enc.Encrypt([]byte(token.Token))
-	if err != nil {
-		return result, errors.Wrap(err, "encryption failed")
-	}
+	key := ctx.RealIP() + ctx.Request().UserAgent()
+	tokenValue := xxtea.Encrypt([]byte(token.Token), []byte(key))
 
 	http.SetCookie(ctx.Response(), &http.Cookie{
 		Name:    AccessCookieName,
@@ -73,17 +64,8 @@ func authByCookie(ctx *AdminContext) (*User, error) {
 		return nil, errors.Wrap(err, "decoding cookie value failed")
 	}
 
-	key, iv := encrypt.KeysFromString(ctx.RealIP() + ctx.Request().UserAgent())
-
-	enc, err := encrypt.New("aes-256-cbc", key, iv)
-	if err != nil {
-		return nil, errors.Wrap(err, "creating encryption failed")
-	}
-
-	tokenValue, err := enc.Decrypt(value)
-	if err != nil {
-		return nil, errors.Wrap(err, "decryption failed")
-	}
+	key := ctx.RealIP() + ctx.Request().UserAgent()
+	tokenValue := xxtea.Decrypt(value, []byte(key))
 
 	c := ctx.Request().Context()
 	token, err := ctx.UserCase().SearchToken(c, string(tokenValue))
