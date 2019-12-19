@@ -30,8 +30,8 @@ func (data viewData) JetVars() jet.VarMap {
 	vars.Set("error", data.Error)
 	vars.Set("title", data.Title)
 	vars.Set("details", data.Details)
-	vars.Set("scripts", js)
-	vars.Set("styles", css)
+	vars.Set("scripts", JS)
+	vars.Set("styles", CSS)
 
 	return vars
 }

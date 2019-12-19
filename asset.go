@@ -5,17 +5,23 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/pkg/errors"
 )
 
 type Asset struct {
-	Path string
-	URL  string
+	Path      string
+	URL       string
+	SortOrder int
 }
 
 func (a *Admin) LoadSources() error {
-	for _, source := range js {
+	sort.Slice(JS, func(i, j int) bool {
+		return JS[i].SortOrder < JS[j].SortOrder
+	})
+
+	for _, source := range JS {
 		err := a.loadSource(a.AssetsPath, source)
 		if err != nil {
 			// todo: wrap error
@@ -23,7 +29,11 @@ func (a *Admin) LoadSources() error {
 		}
 	}
 
-	for _, source := range css {
+	sort.Slice(CSS, func(i, j int) bool {
+		return CSS[i].SortOrder < CSS[j].SortOrder
+	})
+
+	for _, source := range CSS {
 		err := a.loadSource(a.AssetsPath, source)
 		if err != nil {
 			// todo: wrap error

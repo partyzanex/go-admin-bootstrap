@@ -32,6 +32,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	goadmin.AccessCookieName = "access_token"
+
 	admin, err := goadmin.New(goadmin.Config{
 		Host:       "localhost",
 		Port:       9900,
