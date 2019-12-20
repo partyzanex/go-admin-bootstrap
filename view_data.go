@@ -49,3 +49,16 @@ func (data *Data) Set(name string, value interface{}) {
 
 	data.VarMap.Set(name, value)
 }
+
+func (data Data) Has(key string) bool {
+	if data.VarMap == nil {
+		return false
+	}
+
+	v, ok := data.VarMap[key]
+	if ok && !v.IsNil() {
+		return true
+	}
+
+	return false
+}
