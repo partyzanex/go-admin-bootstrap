@@ -9,7 +9,7 @@ import (
 )
 
 func errorHandler(e error, ctx echo.Context) {
-	if strings.HasPrefix(ctx.Path(), "/api") {
+	if strings.HasSuffix(ctx.Path(), "json") {
 		JSONError(e, ctx)
 		return
 	}
