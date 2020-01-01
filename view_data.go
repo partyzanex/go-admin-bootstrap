@@ -56,9 +56,9 @@ func (data Data) Has(key string) bool {
 	}
 
 	v, ok := data.VarMap[key]
-	if ok && !v.IsNil() {
-		return true
+	if !ok || v.IsNil() {
+		return false
 	}
 
-	return false
+	return true
 }
