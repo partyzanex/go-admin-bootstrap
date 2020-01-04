@@ -24,7 +24,7 @@ func Login(ctx *AdminContext) error {
 	data := &Data{
 		Title: "Login",
 	}
-	data.Breadcrumbs.Add("Login", ctx.URL(LoginURL))
+	data.Breadcrumbs.Add("Login", ctx.URL(LoginURL), -1)
 
 	if ctx.Request().Method == http.MethodPost {
 		result, err := auth(ctx)
@@ -99,15 +99,15 @@ func UserList(ctx *AdminContext) error {
 	data.Set("users", users)
 	data.Set("count", count)
 	data.Set("pagination", nav)
-	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL))
+	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), 0)
 
 	return ctx.Render(http.StatusOK, "user/index", data)
 }
 
 func UserCreate(ctx *AdminContext) error {
 	data := ctx.Data()
-	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL))
-	data.Breadcrumbs.Add("Create User", ctx.URL(UserCreateURL))
+	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), 1)
+	data.Breadcrumbs.Add("Create User", ctx.URL(UserCreateURL), 2)
 
 	user := &User{}
 
@@ -178,8 +178,8 @@ func UserUpdate(ctx *AdminContext) error {
 
 	data.Set("user", user)
 	data.Set("formAction", strings.Replace(UserUpdateURL, ":id", strconv.FormatInt(user.ID, 10), -1))
-	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL))
-	data.Breadcrumbs.Add(user.Name, ctx.URL(UserCreateURL))
+	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), 1)
+	data.Breadcrumbs.Add(user.Name, ctx.URL(UserCreateURL), 2)
 
 	return ctx.Render(http.StatusOK, "user/form", data)
 }
