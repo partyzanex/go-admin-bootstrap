@@ -2,6 +2,7 @@ package goadmin
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -13,8 +14,8 @@ type AdminContext struct {
 	admin *Admin
 }
 
-func (c AdminContext) URL(path string) string {
-	result := Path(c.admin.baseURL.Path, path)
+func (c AdminContext) URL(path string, args ...interface{}) string {
+	result := Path(c.admin.baseURL.Path, fmt.Sprintf(path, args...))
 	return result
 }
 
