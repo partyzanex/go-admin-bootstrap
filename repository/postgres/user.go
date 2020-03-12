@@ -18,7 +18,7 @@ type userRepository struct {
 	ex layer.BoilExecutor
 }
 
-func NewUserRepository(ex layer.BoilExecutor) *userRepository {
+func NewUserRepository(ex layer.BoilExecutor) goadmin.UserRepository {
 	return &userRepository{ex: ex}
 }
 
@@ -176,17 +176,16 @@ func (repo *userRepository) Delete(ctx context.Context, user goadmin.User) (err 
 		}()
 	}
 
-	c, ex := layer.GetExecutor(ctx, repo.ex)
-
 	model, err := postgres.Users(qm.Where("id = ?", user.ID)).One(c, tr)
 	if err == sql.ErrNoRows {
 		return goadmin.ErrUserNotFound
 	}
+
 	if err != nil {
 		return errors.Wrap(err, "search user failed")
 	}
 
-	_, err = model.Delete(c, ex)
+	_, err = model.Delete(c, tr)
 	if err != nil {
 		return errors.Wrap(err, "deleting user failed")
 	}

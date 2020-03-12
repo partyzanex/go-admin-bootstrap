@@ -46,6 +46,7 @@ func (p *Pagination) Exists() bool {
 	}
 
 	pages := int(math.Ceil(float64(p.Total) / float64(p.Limit)))
+
 	return pages > 1
 }
 
@@ -115,6 +116,7 @@ func (p *Pagination) Items() []PaginationItem {
 
 	start := 1
 	end := pages
+
 	if pages > p.NumLinks {
 		part := int(math.Floor(float64(p.NumLinks) / 2))
 		start = p.Page - part
@@ -134,6 +136,7 @@ func (p *Pagination) Items() []PaginationItem {
 	items := make([]PaginationItem, end-start+1)
 
 	j := 0
+
 	for i := start; i <= end; i++ {
 		items[j] = PaginationItem{
 			PageNum: i,

@@ -52,12 +52,13 @@ func withViewData(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 		ac := ctx.(*AdminContext)
 
 		data := &Data{}
+
 		user, ok := ac.Get(UserContextKey).(*User)
 		if ok {
 			data.User = user
 		}
-		data.Breadcrumbs.Add("Dashboard", ac.URL("/"), -100)
 
+		data.Breadcrumbs.Add("Dashboard", ac.URL("/"), -100)
 		ac.Set(DataContextKey, data)
 
 		return handlerFunc(ctx)

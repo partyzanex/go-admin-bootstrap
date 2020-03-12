@@ -43,6 +43,7 @@ func (viewData) JetData() map[string]interface{} {
 func HTMLError(e error, ctx echo.Context) {
 	code := http.StatusInternalServerError
 	title, details := "", ""
+
 	if he, ok := e.(*echo.HTTPError); ok {
 		code = he.Code
 
@@ -58,8 +59,6 @@ func HTMLError(e error, ctx echo.Context) {
 				title = "Not Found"
 			}
 		}
-
-		//details = he.Internal.Error()
 	}
 
 	data := &viewData{

@@ -194,7 +194,7 @@ func (uc *userCase) UserRepository() goadmin.UserRepository {
 	return uc.users
 }
 
-func NewUserCase(users goadmin.UserRepository, tokens goadmin.TokenRepository) *userCase {
+func NewUserCase(users goadmin.UserRepository, tokens goadmin.TokenRepository) goadmin.UserUseCase {
 	return &userCase{
 		users:  users,
 		tokens: tokens,

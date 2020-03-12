@@ -26,6 +26,7 @@ func (data *Data) JetVars() jet.VarMap {
 	data.Set("scripts", JS)
 	data.Set("styles", CSS)
 	data.Set("title", data.Title)
+
 	return data.VarMap
 }
 
@@ -35,6 +36,7 @@ func (data *Data) JetData() map[string]interface{} {
 	if data.User != nil {
 		result["User"] = data.User
 	}
+
 	if data.Breadcrumbs != nil {
 		result["Breadcrumbs"] = data.Breadcrumbs
 	}

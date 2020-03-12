@@ -31,11 +31,12 @@ func Login(ctx *AdminContext) error {
 		if err != nil && err != ErrUserNotFound && err != ErrWrongPassword {
 			return err
 		}
+
 		if err == nil {
 			return ctx.Redirect(http.StatusFound, ctx.URL(DashboardURL))
-		} else {
-			data.Set("err", err.Error())
 		}
+
+		data.Set("err", err.Error())
 
 		data.Set("login", result.Login)
 		data.Set("password", result.Password)

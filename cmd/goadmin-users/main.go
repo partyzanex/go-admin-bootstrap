@@ -68,5 +68,5 @@ func main() {
 		return
 	}
 
-	fmt.Printf("user successfull created with id %d\n", user.ID)
+	fmt.Printf("user successful created with id %d\n", user.ID)
 }

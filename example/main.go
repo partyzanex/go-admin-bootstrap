@@ -2,14 +2,14 @@ package main
 
 import (
 	"database/sql"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"log"
 	"os"
 	"time"
 
 	_ "github.com/lib/pq"
 
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/partyzanex/go-admin-bootstrap/repository/postgres"
 	"github.com/partyzanex/go-admin-bootstrap/usecase"
 
@@ -21,6 +21,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	db.SetConnMaxLifetime(time.Second)
 
 	userRepo := postgres.NewUserRepository(db)

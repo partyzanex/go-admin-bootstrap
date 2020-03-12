@@ -2,6 +2,7 @@ package goadmin
 
 import (
 	"database/sql"
+
 	"github.com/golang-migrate/migrate/database"
 	"github.com/labstack/echo/v4"
 )
@@ -16,6 +17,7 @@ type (
 		MigrationsPath string
 	}
 
+	// nolint:maligned
 	Config struct {
 		Host string
 		Port uint16

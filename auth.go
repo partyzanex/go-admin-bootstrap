@@ -68,6 +68,7 @@ func authByCookie(ctx *AdminContext) (*User, error) {
 	tokenValue := xxtea.Decrypt(value, []byte(key))
 
 	c := ctx.Request().Context()
+
 	token, err := ctx.UserCase().SearchToken(c, string(tokenValue))
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)

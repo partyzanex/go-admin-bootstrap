@@ -24,6 +24,7 @@ func (repo *authTokenRepository) Search(ctx context.Context, token string) (*goa
 	if err == sql.ErrNoRows {
 		return nil, goadmin.ErrTokenNotFound
 	}
+
 	if err != nil {
 		return nil, errors.Wrap(err, "search token failed")
 	}
@@ -84,6 +85,6 @@ func modelToToken(model *postgres.AuthToken) *goadmin.Token {
 	return token
 }
 
-func NewTokenRepository(ex layer.BoilExecutor) *authTokenRepository {
+func NewTokenRepository(ex layer.BoilExecutor) goadmin.TokenRepository {
 	return &authTokenRepository{ex: ex}
 }

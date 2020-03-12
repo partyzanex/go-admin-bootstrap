@@ -61,8 +61,10 @@ func (Admin) loadSource(path string, source Asset) error {
 			source.Path, source.URL,
 		)
 	}
+
 	if os.IsNotExist(err) {
 		sourceDir := filepath.Dir(sourcePath)
+
 		err = os.MkdirAll(sourceDir, os.ModePerm)
 		if err != nil {
 			return errors.Wrapf(err, "make assets dir %s failed",

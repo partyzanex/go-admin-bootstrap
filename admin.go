@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	_ "github.com/golang-migrate/migrate/v4/source/aws_s3"
+	_ "github.com/golang-migrate/migrate/v4/source/aws_s3" /* nolint */
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/golang-migrate/migrate/v4/source/github"
 	_ "github.com/golang-migrate/migrate/v4/source/github_ee"
@@ -36,6 +36,7 @@ func (a *Admin) Serve() error {
 	}
 
 	addr := fmt.Sprintf("%s:%d", a.Host, a.Port)
+
 	return a.e.Start(addr)
 }
 
