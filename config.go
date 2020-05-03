@@ -3,14 +3,12 @@ package goadmin
 import (
 	"database/sql"
 
-	"github.com/golang-migrate/migrate/database"
 	"github.com/labstack/echo/v4"
 )
 
 type (
 	DBConfig struct {
-		DB       *sql.DB
-		Instance database.Driver
+		DB *sql.DB
 
 		Driver         string
 		DBName         string

@@ -15,11 +15,14 @@ import (
 )
 
 var (
-	dsn      = pflag.String("dsn", "", "postgres dsn")
-	login    = pflag.String("login", "", "user login")
-	password = pflag.String("password", "", "user password")
-	name     = pflag.String("name", "", "user name")
-	role     = pflag.String("role", "", "user role name, available: owner, root, user")
+	dsn         = pflag.String("dsn", "", "postgres dsn")
+	login       = pflag.String("login", "", "user login")
+	password    = pflag.String("password", "", "user password")
+	name        = pflag.String("name", "", "user name")
+	role        = pflag.String("role", "", "user role name, available: owner, root, user")
+	migrate     = pflag.Bool("mig", false, "if need up migrations")
+	githubUser  = pflag.String("github-user", "", "Github User")
+	githubToken = pflag.String("github-token", "", "Github Access Token")
 )
 
 func main() {
@@ -34,6 +37,22 @@ func main() {
 	if *login == "" || *password == "" || *name == "" || *role == "" {
 		fmt.Println("user name, login and password are required")
 		return
+	}
+
+	if *migrate {
+		err := goadmin.Migrate(&goadmin.DBConfig{
+			DB:     db,
+			Driver: "postgres",
+			MigrationsPath: fmt.Sprintf(
+				"github://%s:%s@partyzanex/go-admin-bootstrap/db/migrations/postgres",
+				*githubUser,
+				*githubToken,
+			),
+		})
+		if err != nil {
+			fmt.Println("migration failed")
+			return
+		}
 	}
 
 	userRepo := postgres.NewUserRepository(db)
