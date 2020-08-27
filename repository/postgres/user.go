@@ -8,8 +8,8 @@ import (
 	"github.com/partyzanex/go-admin-bootstrap/db/models/postgres"
 	"github.com/partyzanex/layer"
 	"github.com/pkg/errors"
-	"github.com/volatiletech/sqlboiler/boil"
-	"github.com/volatiletech/sqlboiler/queries/qm"
+	"github.com/volatiletech/sqlboiler/v4/boil"
+	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 )
