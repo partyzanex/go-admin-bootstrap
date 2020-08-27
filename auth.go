@@ -82,6 +82,11 @@ func authByCookie(ctx *AdminContext) (*User, error) {
 		return nil, echo.NewHTTPError(http.StatusNotFound)
 	}
 
+	err = ctx.UserCase().SetLastLogged(c, token.User)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+	}
+
 	token.User.Current = true
 
 	return token.User, nil
