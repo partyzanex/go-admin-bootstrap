@@ -54,13 +54,13 @@ func (p *Pagination) ParsePage() {
 	page := p.Ctx.QueryParam(p.PageParam)
 	p.Page, _ = strconv.Atoi(page)
 
+	if p.Page == 0 {
+		p.Page = 1
+	}
+
 	p.View = p.Page * p.Limit
 	if p.View > int(p.Total) {
 		p.View = int(p.Total)
-	}
-
-	if p.Page == 0 {
-		p.Page = 1
 	}
 
 	if p.Page > 1 {
