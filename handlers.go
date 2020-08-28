@@ -41,10 +41,11 @@ func Login(ctx *AdminContext) error {
 func Logout(ctx *AdminContext) error {
 	if user := ctx.User(); user != nil {
 		ctx.SetCookie(&http.Cookie{
-			Name:    AccessCookieName,
-			Expires: time.Now().Add(-24 * time.Hour),
-			Domain:  ctx.Request().Host,
-			Path:    "/",
+			Name:     AccessCookieName,
+			Value:    "",
+			Expires:  time.Now().Add(-48 * time.Hour),
+			Path:     "/",
+			HttpOnly: true,
 		})
 	}
 
