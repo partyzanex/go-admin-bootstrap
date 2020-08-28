@@ -27,19 +27,12 @@ func Login(ctx *AdminContext) error {
 	data.Breadcrumbs.Add("Login", ctx.URL(LoginURL), -1)
 
 	if ctx.Request().Method == http.MethodPost {
-		result, err := auth(ctx)
+		_, err := auth(ctx)
 		if err != nil && err != ErrUserNotFound && err != ErrWrongPassword {
 			return err
 		}
 
-		if err == nil {
-			return ctx.Redirect(http.StatusFound, ctx.URL(DashboardURL))
-		}
-
-		data.Set("err", err.Error())
-
-		data.Set("login", result.Login)
-		data.Set("password", result.Password)
+		return ctx.Redirect(http.StatusFound, ctx.URL(DashboardURL))
 	}
 
 	return ctx.Render(http.StatusOK, "auth/login", data)

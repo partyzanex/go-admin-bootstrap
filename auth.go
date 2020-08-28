@@ -44,10 +44,11 @@ func auth(ctx *AdminContext) (result User, err error) {
 	tokenValue := xxtea.Encrypt([]byte(token.Token), []byte(key))
 
 	http.SetCookie(ctx.Response(), &http.Cookie{
-		Name:    AccessCookieName,
-		Value:   hex.EncodeToString(tokenValue),
-		Expires: token.DTExpired,
-		Path:    "/",
+		Name:     AccessCookieName,
+		Value:    hex.EncodeToString(tokenValue),
+		Expires:  token.DTExpired,
+		Path:     "/",
+		HttpOnly: true,
 	})
 
 	return result, nil
