@@ -40,12 +40,7 @@ func (repo *authTokenRepository) Create(ctx context.Context, token goadmin.Token
 			return nil, errors.Wrap(err, layer.ErrCreateTransaction.Error())
 		}
 
-		defer func() {
-			errTr := layer.ExecuteTransaction(tr, err)
-			if errTr != nil {
-				err = errors.Wrap(errTr, "transaction error")
-			}
-		}()
+		defer layer.ExecuteTransaction(tr, &err)
 	}
 
 	model := tokenToModel(&token)

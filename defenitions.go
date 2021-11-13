@@ -107,7 +107,7 @@ var (
 			0,
 		},
 		{
-			"index/dashboard.jet",
+			"index/dashgoadmin_migrationsboard.jet",
 			"https://raw.githubusercontent.com/partyzanex/go-admin-bootstrap/" + Version + "/views/index/dashboard.jet",
 			0,
 		},

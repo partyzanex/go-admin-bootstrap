@@ -110,12 +110,7 @@ func (repo *userRepository) Create(ctx context.Context, user goadmin.User) (resu
 			return nil, errors.Wrap(err, layer.ErrCreateTransaction.Error())
 		}
 
-		defer func() {
-			errTr := layer.ExecuteTransaction(tr, err)
-			if errTr != nil {
-				err = errors.Wrap(errTr, "transaction error")
-			}
-		}()
+		defer layer.ExecuteTransaction(tr, &err)
 	}
 
 	model := userToModel(&user)
@@ -137,12 +132,7 @@ func (repo *userRepository) Update(ctx context.Context, user goadmin.User) (resu
 			return nil, errors.Wrap(err, layer.ErrCreateTransaction.Error())
 		}
 
-		defer func() {
-			errTr := layer.ExecuteTransaction(tr, err)
-			if errTr != nil {
-				err = errors.Wrap(errTr, "transaction error")
-			}
-		}()
+		defer layer.ExecuteTransaction(tr, &err)
 	}
 
 	model := userToModel(&user)
@@ -168,12 +158,7 @@ func (repo *userRepository) Delete(ctx context.Context, user goadmin.User) (err 
 			return errors.Wrap(err, layer.ErrCreateTransaction.Error())
 		}
 
-		defer func() {
-			errTr := layer.ExecuteTransaction(tr, err)
-			if errTr != nil {
-				err = errors.Wrap(errTr, "transaction error")
-			}
-		}()
+		defer layer.ExecuteTransaction(tr, &err)
 	}
 
 	model, err := postgres.Users(qm.Where("id = ?", user.ID)).One(c, tr)

@@ -28,11 +28,6 @@ func main() {
 	tokenRepo := postgres.NewTokenRepository(db)
 	userCase := usecase.NewUserCase(userRepo, tokenRepo)
 
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	goadmin.AccessCookieName = "access_token"
 
 	admin, err := goadmin.New(goadmin.Config{
@@ -43,10 +38,8 @@ func main() {
 		ViewsPath:  "./views",
 		AssetsPath: "./assets",
 		DBConfig: goadmin.DBConfig{
-			DB:             db,
-			Driver:         "postgres",
-			DBName:         "goadmin",
-			MigrationsPath: "file:///" + dir + "/../db/migrations/postgres",
+			DB:              db,
+			MigrationsTable: goadmin.MigrationsTable,
 		},
 		UserCase: userCase,
 		Middleware: []echo.MiddlewareFunc{

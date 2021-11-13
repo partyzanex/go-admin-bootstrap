@@ -8,11 +8,8 @@ import (
 
 type (
 	DBConfig struct {
-		DB *sql.DB
-
-		Driver         string
-		DBName         string
-		MigrationsPath string
+		DB              *sql.DB
+		MigrationsTable string
 	}
 
 	// nolint:maligned

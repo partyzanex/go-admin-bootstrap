@@ -7,6 +7,8 @@ import (
 	"github.com/CloudyKit/jet"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
+
+	migration "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
 )
 
 type Admin struct {
@@ -55,7 +57,7 @@ func (a *Admin) configure() error {
 }
 
 func (a *Admin) configureDatabase() error {
-	return Migrate(&a.DBConfig)
+	return migration.Up(a.DBConfig.DB, a.DBConfig.MigrationsTable)
 }
 
 func (a *Admin) configureRoutes() {

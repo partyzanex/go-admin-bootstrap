@@ -1,5 +1,5 @@
 SQLBOILER_VERSION=v4.7.1
-MIGRATE_VERSION=v4.15.1
+GOOSE_VERSION=v3.3.1
 PG_WAIT_VERSION=v0.1.3
 
 LOCAL_BIN=$(CURDIR)/bin
@@ -7,7 +7,7 @@ MAKE_PATH=$(LOCAL_BIN):/bin:/usr/bin:/usr/local/bin
 
 SQLBOILER_BIN=$(LOCAL_BIN)/sqlboiler
 SQLBOILER_DRIVER_BIN=$(LOCAL_BIN)/sqlboiler-psql
-MIGRATE_BIN=$(LOCAL_BIN)/migrate
+GOOSE_BIN=$(LOCAL_BIN)/goose
 PG_WAIT_BIN=$(LOCAL_BIN)/pg-wait
 
 POSTGRES_DSN=postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable
@@ -23,9 +23,9 @@ sqlboiler-install:
 	go run ./cmd/go-install github.com/volatiletech/sqlboiler/v4@$(SQLBOILER_VERSION) $(SQLBOILER_BIN) && \
 	go run ./cmd/go-install github.com/volatiletech/sqlboiler/v4/drivers/sqlboiler-psql@$(SQLBOILER_VERSION) $(SQLBOILER_DRIVER_BIN)
 
-.PHONY: migrate-install
-migrate-install:
-	go run ./cmd/go-install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@$(MIGRATE_VERSION) $(MIGRATE_BIN)
+.PHONY: goose-install
+goose-install:
+	go run ./cmd/go-install github.com/pressly/goose/v3/cmd/goose@$(GOOSE_VERSION) $(GOOSE_BIN)
 
 .PHONY: pg-wait-install
 pg-wait-install:
@@ -40,17 +40,26 @@ local-db-down:
 	docker-compose stop postgresql
 
 .PHONY: migration-up
-migration-up: pg-wait-install migrate-install local-db-up
+migration-up: pg-wait-install goose-install local-db-up
 	$(PG_WAIT_BIN) -d $(POSTGRES_DSN) && \
-	$(MIGRATE_BIN) -source file://$(CURDIR)/db/migrations/postgres -database $(POSTGRES_DSN) up
+	$(GOOSE_BIN) -dir $(CURDIR)/db/migrations/postgres -table goadmin_migrations postgres $(POSTGRES_DSN) up
 
 .PHONY: migration-down
-migration-down: pg-wait-install migrate-install local-db-up
+migration-down: pg-wait-install goose-install local-db-up
 	$(PG_WAIT_BIN) -d $(POSTGRES_DSN) && \
-	$(MIGRATE_BIN) -source file://$(CURDIR)/db/migrations/postgres -database $(POSTGRES_DSN) down -all
+	$(GOOSE_BIN) -dir $(CURDIR)/db/migrations/postgres -table goadmin_migrations postgres $(POSTGRES_DSN) down
 
 .PHONY: sqlboiler-gen
 sqlboiler-gen: local-db-up migration-up
 	cd $(CURDIR)/db && PATH=$(MAKE_PATH) $(SQLBOILER_BIN) psql
 
+.PHONY: create-default-user
+create-default-user: migration-up
+	go run $(CURDIR)/cmd/goadmin-users --dsn=$(POSTGRES_DSN) \
+	--login="admin@example.com" --password="123456" --name="Admin" --role="owner"
 
+.PHONY: run-example
+run-example: create-default-user
+	$(PG_WAIT_BIN) -d $(POSTGRES_DSN) && \
+	cd $(CURDIR)/example && \
+	PG_DSN=$(POSTGRES_DSN) go run main.go
