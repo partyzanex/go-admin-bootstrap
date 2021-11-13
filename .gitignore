@@ -15,7 +15,6 @@
 bin/
 vendor/
 .idea
-/assets/plugins/*
 users
-/example/assets
-/example/views
+example/assets/
+example/views/
