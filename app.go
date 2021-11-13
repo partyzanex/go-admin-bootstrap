@@ -28,7 +28,7 @@ type App struct {
 	baseURL *url.URL
 }
 
-func New(config Config) (*App, error) {
+func New(config *Config) (*App, error) {
 	if err := config.Validate(); err != nil {
 		return nil, errors.Wrap(err, "invalid config")
 	}
@@ -42,9 +42,12 @@ func New(config Config) (*App, error) {
 		return nil, errors.Wrapf(err, "cannot parse %q as base url", config.BaseURL)
 	}
 
+	e := echo.New()
+	e.HTTPErrorHandler = errorHandler
+
 	app := new(App)
-	app.config = &config
-	app.echo = echo.New()
+	app.config = config.Clone()
+	app.echo = e
 	app.baseURL = baseURL
 
 	app.setStaticGroup()
@@ -203,6 +206,7 @@ func (app *App) setDefaultRoutes() {
 	app.admin.GET(UserDeleteURL, WrapHandler(UserDelete), auth)
 	app.admin.GET(UserUpdateURL, WrapHandler(UserUpdate), auth)
 	app.admin.POST(UserUpdateURL, WrapHandler(UserUpdate), auth)
+	app.admin.GET(FaviconPrefix, Favicon)
 }
 
 func (app *App) setDefaultMiddleware() {

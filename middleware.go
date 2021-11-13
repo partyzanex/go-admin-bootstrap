@@ -58,7 +58,9 @@ func withViewData(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 			data.User = user
 		}
 
-		data.Breadcrumbs.Add("Dashboard", ac.URL("/"), -100)
+		sortOrder := -100
+
+		data.Breadcrumbs.Add("Dashboard", ac.URL("/"), &sortOrder)
 		ac.Set(DataContextKey, data)
 
 		return handlerFunc(ctx)

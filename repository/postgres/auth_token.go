@@ -32,7 +32,7 @@ func (repo *authTokenRepository) Search(ctx context.Context, token string) (*goa
 	return modelToToken(model), nil
 }
 
-func (repo *authTokenRepository) Create(ctx context.Context, token goadmin.Token) (result *goadmin.Token, err error) {
+func (repo *authTokenRepository) Create(ctx context.Context, token *goadmin.Token) (result *goadmin.Token, err error) {
 	c, tr := layer.GetTransactor(ctx)
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
@@ -43,7 +43,7 @@ func (repo *authTokenRepository) Create(ctx context.Context, token goadmin.Token
 		defer layer.ExecuteTransaction(tr, &err)
 	}
 
-	model := tokenToModel(&token)
+	model := tokenToModel(token)
 
 	err = model.Insert(c, tr, boil.Infer())
 	if err != nil {

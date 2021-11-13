@@ -50,14 +50,14 @@ type (
 	UserRepository interface {
 		Search(ctx context.Context, filter *UserFilter) ([]*User, error)
 		Count(ctx context.Context, filter *UserFilter) (int64, error)
-		Create(ctx context.Context, user User) (*User, error)
-		Update(ctx context.Context, user User) (*User, error)
-		Delete(ctx context.Context, user User) error
+		Create(ctx context.Context, user *User) (*User, error)
+		Update(ctx context.Context, user *User) (*User, error)
+		Delete(ctx context.Context, user *User) error
 	}
 
 	TokenRepository interface {
 		Search(ctx context.Context, token string) (*Token, error)
-		Create(ctx context.Context, token Token) (*Token, error)
+		Create(ctx context.Context, token *Token) (*Token, error)
 	}
 
 	UserUseCase interface {
@@ -96,7 +96,7 @@ func (status UserStatus) IsValid() bool {
 	return false
 }
 
-func (t Token) IsExpired() bool {
+func (t *Token) IsExpired() bool {
 	return time.Now().After(t.DTExpired)
 }
 

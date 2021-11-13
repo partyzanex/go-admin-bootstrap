@@ -46,7 +46,7 @@ func action(ctx *cli.Context) error {
 	if err != nil {
 		switch {
 		case os.IsNotExist(err):
-			err = os.MkdirAll(localBin, 0755)
+			err = os.MkdirAll(localBin, os.ModePerm)
 			if err != nil {
 				return errors.Wrap(err, "os.MkdirAll")
 			}
@@ -63,6 +63,7 @@ func action(ctx *cli.Context) error {
 	target := ctx.Args().Get(1)
 	version := ""
 
+	//nolint:gomnd
 	if parts := strings.Split(pkg, "@"); len(parts) == 2 {
 		pkg = parts[0]
 		version = parts[1]
@@ -105,7 +106,6 @@ func install(ctx context.Context, tags, pkg, target, version string, verbose boo
 	}
 
 	output, err := goBuild(ctx, workDir, tags, target+"@"+version, pkg)
-	err = goGet(ctx, workDir, pkg)
 	if err != nil {
 		return errors.Wrap(err, "goBuild")
 	}
@@ -171,6 +171,8 @@ const (
 	verboseFlagName      = "verbose"
 	skipIfExistsFlagName = "skip-if-exists"
 	goTagsFlagName       = "go-tags"
+
+	defaultLocalBinValue = "./bin"
 )
 
 func localBinFlag() *cli.PathFlag {
@@ -179,9 +181,9 @@ func localBinFlag() *cli.PathFlag {
 	f.Aliases = []string{"l", "bin"}
 	f.Usage = "to local directory path for binaries"
 	f.EnvVars = []string{"LOCAL_BIN", "GO_INSTALL_LOCAL_BIN"}
-	f.FilePath = "./bin"
+	f.FilePath = defaultLocalBinValue
 	f.Required = true
-	f.Value = "./bin"
+	f.Value = defaultLocalBinValue
 	f.HasBeenSet = true
 
 	return f

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"os"
@@ -35,7 +36,7 @@ func main() {
 
 	goadmin.AccessCookieName = "access_token"
 
-	admin, err := goadmin.New(goadmin.Config{
+	admin, err := goadmin.New(&goadmin.Config{
 		Host:       "localhost",
 		Port:       9900,
 		DevMode:    true,
@@ -66,5 +67,12 @@ func main() {
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 
-	admin.Echo().Logger.Fatal(admin.Serve())
+	const timeout = 10 * time.Second
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	if err := admin.Echo().Shutdown(ctx); err != nil {
+		log.Error(err)
+	}
 }

@@ -3,9 +3,10 @@ package cmd
 import (
 	"bytes"
 	"context"
-	"github.com/pkg/errors"
 	"os/exec"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 func Execute(ctx context.Context, workDir, binary string, args ...string) (*bytes.Buffer, error) {
@@ -45,6 +46,7 @@ func Execute(ctx context.Context, workDir, binary string, args ...string) (*byte
 			)
 		}
 	}
+
 	return stdoutBuf, nil
 }
 

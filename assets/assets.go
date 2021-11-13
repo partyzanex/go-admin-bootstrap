@@ -8,4 +8,7 @@ var (
 
 	//go:embed plugins/bootstrap/js/* plugins/jquery/* plugins/popper/*
 	JS embed.FS
+
+	//go:embed favicon/*
+	Favicon embed.FS
 )

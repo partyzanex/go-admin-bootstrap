@@ -32,6 +32,10 @@ type (
 )
 
 func (config *Config) Validate() error {
+	if config == nil {
+		return ErrRequiredConfig
+	}
+
 	if config.DBConfig.DB == nil {
 		return ErrRequiredDB
 	}
@@ -41,4 +45,10 @@ func (config *Config) Validate() error {
 	}
 
 	return nil
+}
+
+func (config *Config) Clone() *Config {
+	clone := *config
+
+	return &clone
 }

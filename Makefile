@@ -1,6 +1,7 @@
 SQLBOILER_VERSION=v4.7.1
 GOOSE_VERSION=v3.3.1
 PG_WAIT_VERSION=v0.1.3
+GOLANGCI_LINT_VERSION=v1.43.0
 
 LOCAL_BIN=$(CURDIR)/bin
 MAKE_PATH=$(LOCAL_BIN):/bin:/usr/bin:/usr/local/bin
@@ -9,6 +10,7 @@ SQLBOILER_BIN=$(LOCAL_BIN)/sqlboiler
 SQLBOILER_DRIVER_BIN=$(LOCAL_BIN)/sqlboiler-psql
 GOOSE_BIN=$(LOCAL_BIN)/goose
 PG_WAIT_BIN=$(LOCAL_BIN)/pg-wait
+GOLANGCI_LINT_BIN=$(LOCAL_BIN)/golangci-lint
 
 POSTGRES_DSN=postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable
 
@@ -30,6 +32,10 @@ goose-install:
 .PHONY: pg-wait-install
 pg-wait-install:
 	go run ./cmd/go-install github.com/partyzanex/pg-wait/cmd/pg-wait@$(PG_WAIT_VERSION) $(PG_WAIT_BIN)
+
+.PHONY: golangci-lint-install
+golangci-lint-install:
+	go run ./cmd/go-install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) $(GOLANGCI_LINT_BIN)
 
 .PHONY: local-db-up
 local-db-up: local-db-down
@@ -63,3 +69,7 @@ run-example: create-default-user
 	$(PG_WAIT_BIN) -d $(POSTGRES_DSN) && \
 	cd $(CURDIR)/example && \
 	PG_DSN=$(POSTGRES_DSN) go run main.go
+
+.PHONY: lint
+lint:
+	$(GOLANGCI_LINT_BIN) run

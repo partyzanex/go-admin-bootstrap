@@ -102,7 +102,7 @@ func (*userRepository) applyFilter(filter *goadmin.UserFilter, mods []qm.QueryMo
 	return mods
 }
 
-func (repo *userRepository) Create(ctx context.Context, user goadmin.User) (result *goadmin.User, err error) {
+func (repo *userRepository) Create(ctx context.Context, user *goadmin.User) (result *goadmin.User, err error) {
 	c, tr := layer.GetTransactor(ctx)
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
@@ -113,7 +113,7 @@ func (repo *userRepository) Create(ctx context.Context, user goadmin.User) (resu
 		defer layer.ExecuteTransaction(tr, &err)
 	}
 
-	model := userToModel(&user)
+	model := userToModel(user)
 	model.DTCreated = time.Now()
 
 	err = model.Insert(c, tr, boil.Infer())
@@ -124,7 +124,7 @@ func (repo *userRepository) Create(ctx context.Context, user goadmin.User) (resu
 	return modelToUser(model), nil
 }
 
-func (repo *userRepository) Update(ctx context.Context, user goadmin.User) (result *goadmin.User, err error) {
+func (repo *userRepository) Update(ctx context.Context, user *goadmin.User) (result *goadmin.User, err error) {
 	c, tr := layer.GetTransactor(ctx)
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
@@ -135,7 +135,7 @@ func (repo *userRepository) Update(ctx context.Context, user goadmin.User) (resu
 		defer layer.ExecuteTransaction(tr, &err)
 	}
 
-	model := userToModel(&user)
+	model := userToModel(user)
 	model.DTUpdated = time.Now()
 
 	_, err = model.Update(c, tr, boil.Infer())
@@ -146,7 +146,7 @@ func (repo *userRepository) Update(ctx context.Context, user goadmin.User) (resu
 	return modelToUser(model), err
 }
 
-func (repo *userRepository) Delete(ctx context.Context, user goadmin.User) (err error) {
+func (repo *userRepository) Delete(ctx context.Context, user *goadmin.User) (err error) {
 	if user.ID == 0 {
 		return goadmin.ErrRequiredUserID
 	}

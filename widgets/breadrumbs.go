@@ -11,17 +11,25 @@ type breadcrumb struct {
 
 type Breadcrumbs []breadcrumb
 
-func (b *Breadcrumbs) Add(name, url string, sortOrder int) {
+func (b *Breadcrumbs) Add(name, url string, sortOrder *int) {
 	items := *b
 	for i := range items {
 		items[i].Active = false
+	}
+
+	var order int
+
+	if sortOrder == nil {
+		order = len(items)
+	} else {
+		order = *sortOrder
 	}
 
 	items = append(items, breadcrumb{
 		Name:      name,
 		URL:       url,
 		Active:    true,
-		SortOrder: sortOrder,
+		SortOrder: order,
 	})
 
 	*b = items

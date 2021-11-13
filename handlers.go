@@ -2,11 +2,15 @@ package goadmin
 
 import (
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
+
+	"github.com/partyzanex/go-admin-bootstrap/assets"
 	"github.com/partyzanex/go-admin-bootstrap/widgets"
 )
 
@@ -21,10 +25,11 @@ func Login(ctx *AppContext) error {
 		return ctx.Redirect(http.StatusFound, ctx.URL("/"))
 	}
 
+	sortOrder := -1
 	data := &Data{
 		Title: "Login",
 	}
-	data.Breadcrumbs.Add("Login", ctx.URL(LoginURL), -1)
+	data.Breadcrumbs.Add("Login", ctx.URL(LoginURL), &sortOrder)
 
 	if ctx.Request().Method == http.MethodPost {
 		_, err := auth(ctx)
@@ -94,15 +99,15 @@ func UserList(ctx *AppContext) error {
 	data.Set("users", users)
 	data.Set("count", count)
 	data.Set("pagination", nav)
-	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), 0)
+	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), nil)
 
 	return ctx.Render(http.StatusOK, "user/index", data)
 }
 
 func UserCreate(ctx *AppContext) error {
 	data := ctx.Data()
-	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), 1)
-	data.Breadcrumbs.Add("Create User", ctx.URL(UserCreateURL), 2)
+	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), nil)
+	data.Breadcrumbs.Add("Create User", ctx.URL(UserCreateURL), nil)
 
 	user := &User{}
 
@@ -128,7 +133,7 @@ func UserCreate(ctx *AppContext) error {
 }
 
 func UserUpdate(ctx *AppContext) error {
-	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64) //nolint:gomnd
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
@@ -150,17 +155,17 @@ func UserUpdate(ctx *AppContext) error {
 			user.Password = password
 			user.PasswordIsEncoded = false
 
-			err := ctx.UserCase().EncodePassword(user)
+			err = ctx.UserCase().EncodePassword(user)
 			if err != nil {
 				return err
 			}
 		}
 
-		err := ctx.UserCase().Validate(user, false)
+		err = ctx.UserCase().Validate(user, false)
 		if err == nil {
 			repo := ctx.UserCase().UserRepository()
 
-			_, err := repo.Update(ctx.Ctx(), *user)
+			_, err = repo.Update(ctx.Ctx(), user)
 			if err != nil {
 				data.Set("error", err.Error())
 			} else {
@@ -172,15 +177,18 @@ func UserUpdate(ctx *AppContext) error {
 	}
 
 	data.Set("user", user)
-	data.Set("formAction", strings.Replace(UserUpdateURL, ":id", strconv.FormatInt(user.ID, 10), -1))
-	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), 1)
-	data.Breadcrumbs.Add(user.Name, ctx.URL(UserCreateURL), 2)
+	data.Set(
+		"formAction",
+		strings.Replace(UserUpdateURL, ":id", strconv.FormatInt(user.ID, 10), -1), //nolint:gomnd
+	)
+	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), nil)
+	data.Breadcrumbs.Add(user.Name, ctx.URL(UserCreateURL), nil)
 
 	return ctx.Render(http.StatusOK, "user/form", data)
 }
 
 func UserDelete(ctx *AppContext) error {
-	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64) //nolint:gomnd
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
@@ -192,10 +200,32 @@ func UserDelete(ctx *AppContext) error {
 
 	repo := ctx.UserCase().UserRepository()
 
-	err = repo.Delete(ctx.Ctx(), User{ID: userID})
+	err = repo.Delete(ctx.Ctx(), &User{ID: userID})
 	if err != nil {
 		return err
 	}
 
 	return ctx.Redirect(http.StatusFound, ctx.URL(UserListURL))
+}
+
+var (
+	loc, _       = time.LoadLocation("GMT")
+	lastModified = time.Now().In(loc).Format(time.RFC1123)
+)
+
+func Favicon(ctx echo.Context) error {
+	icon := ctx.Param("id")
+	if icon == "" {
+		return ctx.NoContent(http.StatusNotAcceptable)
+	}
+
+	b, err := assets.Favicon.ReadFile(filepath.Join("favicon", icon))
+	if err != nil {
+		return errors.Wrap(err, "cannot read file")
+	}
+
+	ctx.Response().Header().Add("Accept-Ranges", "bytes")
+	ctx.Response().Header().Add(echo.HeaderLastModified, lastModified)
+
+	return ctx.Blob(http.StatusOK, http.DetectContentType(b), b)
 }

@@ -40,7 +40,7 @@ func main() {
 	}
 
 	if *migrate {
-		err := migrations.Up(db, *migrationsTable)
+		err = migrations.Up(db, *migrationsTable)
 		if err != nil {
 			fmt.Println("migration failed")
 			return

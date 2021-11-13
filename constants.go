@@ -31,4 +31,6 @@ var (
 
 	AccessCookieName = "auth_token"
 	MigrationsTable  = "goadmin_migrations"
+
+	FaviconPrefix = "/favicon/:id"
 )
