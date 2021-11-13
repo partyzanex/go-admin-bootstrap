@@ -10,7 +10,7 @@ import (
 	"github.com/partyzanex/go-admin-bootstrap/widgets"
 )
 
-func Login(ctx *AdminContext) error {
+func Login(ctx *AppContext) error {
 	_, err := ctx.Cookie(AccessCookieName)
 	if err == nil {
 		return ctx.Redirect(http.StatusFound, ctx.URL("/"))
@@ -38,7 +38,7 @@ func Login(ctx *AdminContext) error {
 	return ctx.Render(http.StatusOK, "auth/login", data)
 }
 
-func Logout(ctx *AdminContext) error {
+func Logout(ctx *AppContext) error {
 	if user := ctx.User(); user != nil {
 		ctx.SetCookie(&http.Cookie{
 			Name:     AccessCookieName,
@@ -52,7 +52,7 @@ func Logout(ctx *AdminContext) error {
 	return ctx.Redirect(http.StatusFound, ctx.URL(LoginURL))
 }
 
-func Dashboard(ctx *AdminContext) error {
+func Dashboard(ctx *AppContext) error {
 	user := ctx.User()
 	if user == nil {
 		return ctx.Redirect(http.StatusFound, ctx.URL(LoginURL))
@@ -61,7 +61,7 @@ func Dashboard(ctx *AdminContext) error {
 	return ctx.Render(http.StatusOK, "index/dashboard", ctx.Data())
 }
 
-func UserList(ctx *AdminContext) error {
+func UserList(ctx *AppContext) error {
 	repo := ctx.UserCase().UserRepository()
 
 	nav := &widgets.Pagination{
@@ -99,7 +99,7 @@ func UserList(ctx *AdminContext) error {
 	return ctx.Render(http.StatusOK, "user/index", data)
 }
 
-func UserCreate(ctx *AdminContext) error {
+func UserCreate(ctx *AppContext) error {
 	data := ctx.Data()
 	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), 1)
 	data.Breadcrumbs.Add("Create User", ctx.URL(UserCreateURL), 2)
@@ -127,7 +127,7 @@ func UserCreate(ctx *AdminContext) error {
 	return ctx.Render(http.StatusOK, "user/form", data)
 }
 
-func UserUpdate(ctx *AdminContext) error {
+func UserUpdate(ctx *AppContext) error {
 	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
@@ -179,7 +179,7 @@ func UserUpdate(ctx *AdminContext) error {
 	return ctx.Render(http.StatusOK, "user/form", data)
 }
 
-func UserDelete(ctx *AdminContext) error {
+func UserDelete(ctx *AppContext) error {
 	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)

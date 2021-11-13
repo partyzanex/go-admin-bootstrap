@@ -1,98 +1,38 @@
 package goadmin
 
-import (
-	"io/ioutil"
-	"net/http"
-	"os"
-	"path/filepath"
-	"sort"
+type AssetKind uint8
 
-	"github.com/pkg/errors"
+const (
+	JavaScript AssetKind = iota
+	Stylesheet
+	View
 )
 
 type Asset struct {
 	Path      string
-	URL       string
 	SortOrder int
+	Kind      AssetKind
 }
 
-func (a *Admin) LoadSources() error {
-	sort.Slice(JS, func(i, j int) bool {
-		return JS[i].SortOrder < JS[j].SortOrder
-	})
-
-	for _, source := range JS {
-		err := a.loadSource(a.AssetsPath, source)
-		if err != nil {
-			// todo: wrap error
-			return err
-		}
+var (
+	JS = []*Asset{
+		{"plugins/jquery/jquery-3.4.1.min.js", -1000, JavaScript},
+		{"plugins/popper/popper.min.js", -900, JavaScript},
+		{"plugins/bootstrap/js/bootstrap.min.js", -800, JavaScript},
 	}
-
-	sort.Slice(CSS, func(i, j int) bool {
-		return CSS[i].SortOrder < CSS[j].SortOrder
-	})
-
-	for _, source := range CSS {
-		err := a.loadSource(a.AssetsPath, source)
-		if err != nil {
-			// todo: wrap error
-			return err
-		}
+	CSS = []*Asset{
+		{"plugins/bootstrap/css/bootstrap.min.css", -1000, Stylesheet},
+		{"css/style.css", -900, Stylesheet},
 	}
-
-	for _, source := range views {
-		err := a.loadSource(a.ViewsPath, source)
-		if err != nil {
-			// todo: wrap error
-			return err
-		}
+	Views = []*Asset{
+		{"layouts/nav.jet", 0, View},
+		{"layouts/main.jet", 0, View},
+		{"widgets/breadcrumbs.jet", 0, View},
+		{"widgets/pagination.jet", 0, View},
+		{"index/dashboard.jet", 0, View},
+		{"errors/error.jet", 0, View},
+		{"auth/login.jet", 0, View},
+		{"user/form.jet", 0, View},
+		{"user/index.jet", 0, View},
 	}
-
-	return nil
-}
-
-func (Admin) loadSource(path string, source Asset) error {
-	sourcePath := filepath.Join(path, source.Path)
-
-	_, err := os.Stat(sourcePath)
-	if err != nil && !os.IsNotExist(err) {
-		return errors.Wrapf(err, "loading asset %s (%s) source failed",
-			source.Path, source.URL,
-		)
-	}
-
-	if os.IsNotExist(err) {
-		sourceDir := filepath.Dir(sourcePath)
-
-		err = os.MkdirAll(sourceDir, os.ModePerm)
-		if err != nil {
-			return errors.Wrapf(err, "make assets dir %s failed",
-				sourceDir,
-			)
-		}
-
-		resp, err := http.Get(source.URL)
-		if err != nil {
-			return errors.Wrapf(err, "loading asset source from url %s failed", source.URL)
-		}
-
-		defer func() {
-			_ = resp.Body.Close()
-		}()
-
-		b, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			// todo: wrap error
-			return err
-		}
-
-		err = ioutil.WriteFile(sourcePath, b, os.ModePerm)
-		if err != nil {
-			// todo: wrap error
-			return err
-		}
-	}
-
-	return nil
-}
+)

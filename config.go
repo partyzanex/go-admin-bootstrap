@@ -27,6 +27,7 @@ type (
 		UserCase UserUseCase
 
 		Middleware []echo.MiddlewareFunc
+		Assets     []*Asset
 	}
 )
 
