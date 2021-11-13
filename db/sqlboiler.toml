@@ -1,12 +1,12 @@
-pkgname="models"
+pkgname="postgres"
 output="models/postgres"
 
 [psql]
-  dbname="example"
+  dbname="postgres"
   host="localhost"
   port=5432
   user="postgres"
-  pass=""
+  pass="postgres"
   sslmode="disable"
   schema="goadmin"
   blacklist=["schema_migrations"]
