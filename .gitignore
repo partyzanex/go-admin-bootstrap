@@ -15,7 +15,6 @@
 bin/
 vendor/
 .idea
-sqlboiler.toml
 /assets/plugins/*
 users
 /example/assets
