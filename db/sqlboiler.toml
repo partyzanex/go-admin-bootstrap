@@ -1,5 +1,7 @@
 pkgname="postgres"
 output="models/postgres"
+no-tests = true
+no-auto-timestamps = true
 
 [psql]
   dbname="postgres"

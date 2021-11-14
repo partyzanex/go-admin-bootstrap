@@ -32,8 +32,8 @@ func Login(ctx *AppContext) error {
 	data.Breadcrumbs.Add("Login", ctx.URL(LoginURL), &sortOrder)
 
 	if ctx.Request().Method == http.MethodPost {
-		_, err := auth(ctx)
-		if err != nil && err != ErrUserNotFound && err != ErrWrongPassword {
+		_, err = auth(ctx)
+		if err != nil && !errors.Is(err, ErrUserNotFound) && !errors.Is(err, ErrWrongPassword) {
 			return err
 		}
 
@@ -143,39 +143,14 @@ func UserUpdate(ctx *AppContext) error {
 		return err
 	}
 
-	data := ctx.Data()
-
 	if ctx.Request().Method == http.MethodPost {
-		user.Login = ctx.FormValue("login")
-		user.Name = ctx.FormValue("name")
-		user.Role = UserRole(ctx.FormValue("role"))
-		user.Status = UserStatus(ctx.FormValue("status"))
-
-		if password := ctx.FormValue("password"); password != "" {
-			user.Password = password
-			user.PasswordIsEncoded = false
-
-			err = ctx.UserCase().EncodePassword(user)
-			if err != nil {
-				return err
-			}
-		}
-
-		err = ctx.UserCase().Validate(user, false)
-		if err == nil {
-			repo := ctx.UserCase().UserRepository()
-
-			_, err = repo.Update(ctx.Ctx(), user)
-			if err != nil {
-				data.Set("error", err.Error())
-			} else {
-				return ctx.Redirect(http.StatusFound, ctx.URL(UserListURL))
-			}
-		} else {
-			data.Set("error", err.Error())
+		err = updateUser(ctx, user)
+		if err != nil {
+			return err
 		}
 	}
 
+	data := ctx.Data()
 	data.Set("user", user)
 	data.Set(
 		"formAction",
@@ -185,6 +160,41 @@ func UserUpdate(ctx *AppContext) error {
 	data.Breadcrumbs.Add(user.Name, ctx.URL(UserCreateURL), nil)
 
 	return ctx.Render(http.StatusOK, "user/form", data)
+}
+
+func updateUser(ctx *AppContext, user *User) error {
+	user.Login = ctx.FormValue("login")
+	user.Name = ctx.FormValue("name")
+	user.Role = UserRole(ctx.FormValue("role"))
+	user.Status = UserStatus(ctx.FormValue("status"))
+
+	if password := ctx.FormValue("password"); password != "" {
+		user.Password = password
+		user.PasswordIsEncoded = false
+
+		err := ctx.UserCase().EncodePassword(user)
+		if err != nil {
+			return err
+		}
+	}
+
+	data := ctx.Data()
+
+	err := ctx.UserCase().Validate(user, false)
+	if err == nil {
+		repo := ctx.UserCase().UserRepository()
+
+		_, err = repo.Update(ctx.Ctx(), user)
+		if err != nil {
+			data.Set("error", err.Error())
+		} else {
+			return ctx.Redirect(http.StatusFound, ctx.URL(UserListURL))
+		}
+	} else {
+		data.Set("error", err.Error())
+	}
+
+	return nil
 }
 
 func UserDelete(ctx *AppContext) error {

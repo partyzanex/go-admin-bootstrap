@@ -73,3 +73,9 @@ run-example: create-default-user
 .PHONY: lint
 lint:
 	$(GOLANGCI_LINT_BIN) run
+
+.PHONY: test
+test: migration-up
+	$(PG_WAIT_BIN) -d $(POSTGRES_DSN) && \
+	TEST_PG=$(POSTGRES_DSN) go test -race -v -count=1 -tags 'integration' ./...
+

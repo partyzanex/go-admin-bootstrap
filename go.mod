@@ -11,6 +11,7 @@ require (
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/lib/pq v1.10.4
 	github.com/partyzanex/layer v0.1.4
+	github.com/partyzanex/testutils v0.1.1
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.3.1
 	github.com/sirupsen/logrus v1.8.1

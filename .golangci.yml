@@ -98,22 +98,22 @@ linters:
     - varcheck
     - whitespace
     - wsl
+    - nestif
+    - gocognit
+    - godot
+    - goerr113
+    - prealloc
+    - revive
+    - asciicheck
 
   # don't enable:
   # - asciicheck
   # - scopelint
   # - gochecknoglobals
-  # - gocognit
-  # - godot
   # - godox
-  # - goerr113
   # - interfacer
   # - maligned
-  # - nestif
-  # - prealloc
   # - testpackage
-  # - revive
-  # - wsl
 
 issues:
   exclude:

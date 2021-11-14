@@ -14,6 +14,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/partyzanex/go-admin-bootstrap/repository/postgres"
 	"github.com/partyzanex/go-admin-bootstrap/usecase"
+	"github.com/pkg/errors"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	log "github.com/sirupsen/logrus"
@@ -58,7 +59,7 @@ func main() {
 	}
 
 	go func() {
-		if err := admin.Serve(); err != nil && err != http.ErrServerClosed {
+		if err := admin.Serve(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Errorf("shutting down the server: %s", err)
 		}
 	}()

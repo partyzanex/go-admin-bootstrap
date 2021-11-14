@@ -21,7 +21,7 @@ func (repo *authTokenRepository) Search(ctx context.Context, token string) (*goa
 	c, ex := layer.GetExecutor(ctx, repo.ex)
 
 	model, err := postgres.AuthTokens(qm.Where("token = ?", token)).One(c, ex)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, goadmin.ErrTokenNotFound
 	}
 
