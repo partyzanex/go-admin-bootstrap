@@ -21,7 +21,7 @@ func (repo *authTokenRepository) Search(ctx context.Context, token string) (*goa
 	c, ex := layer.GetExecutor(ctx, repo.ex)
 
 	model, err := postgres.AuthTokens(qm.Where("token = ?", token)).One(c, ex)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, goadmin.ErrTokenNotFound
 	}
 
@@ -32,7 +32,7 @@ func (repo *authTokenRepository) Search(ctx context.Context, token string) (*goa
 	return modelToToken(model), nil
 }
 
-func (repo *authTokenRepository) Create(ctx context.Context, token goadmin.Token) (result *goadmin.Token, err error) {
+func (repo *authTokenRepository) Create(ctx context.Context, token *goadmin.Token) (result *goadmin.Token, err error) {
 	c, tr := layer.GetTransactor(ctx)
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
@@ -40,15 +40,10 @@ func (repo *authTokenRepository) Create(ctx context.Context, token goadmin.Token
 			return nil, errors.Wrap(err, layer.ErrCreateTransaction.Error())
 		}
 
-		defer func() {
-			errTr := layer.ExecuteTransaction(tr, err)
-			if errTr != nil {
-				err = errors.Wrap(errTr, "transaction error")
-			}
-		}()
+		defer layer.ExecuteTransaction(tr, &err)
 	}
 
-	model := tokenToModel(&token)
+	model := tokenToModel(token)
 
 	err = model.Insert(c, tr, boil.Infer())
 	if err != nil {

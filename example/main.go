@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"database/sql"
-	"log"
+	"net/http"
 	"os"
+	"os/signal"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -12,11 +14,16 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/partyzanex/go-admin-bootstrap/repository/postgres"
 	"github.com/partyzanex/go-admin-bootstrap/usecase"
+	"github.com/pkg/errors"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
+	log.SetLevel(log.DebugLevel)
+	log.SetFormatter(&log.JSONFormatter{})
+
 	db, err := sql.Open("postgres", os.Getenv("PG_DSN"))
 	if err != nil {
 		log.Fatal(err)
@@ -28,14 +35,9 @@ func main() {
 	tokenRepo := postgres.NewTokenRepository(db)
 	userCase := usecase.NewUserCase(userRepo, tokenRepo)
 
-	dir, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	goadmin.AccessCookieName = "access_token"
 
-	admin, err := goadmin.New(goadmin.Config{
+	admin, err := goadmin.New(&goadmin.Config{
 		Host:       "localhost",
 		Port:       9900,
 		DevMode:    true,
@@ -43,10 +45,8 @@ func main() {
 		ViewsPath:  "./views",
 		AssetsPath: "./assets",
 		DBConfig: goadmin.DBConfig{
-			DB:             db,
-			Driver:         "postgres",
-			DBName:         "goadmin",
-			MigrationsPath: "file:///" + dir + "/../db/migrations/postgres",
+			DB:              db,
+			MigrationsTable: goadmin.MigrationsTable,
 		},
 		UserCase: userCase,
 		Middleware: []echo.MiddlewareFunc{
@@ -58,5 +58,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	admin.Echo().Logger.Fatal(admin.Serve())
+	go func() {
+		if err := admin.Serve(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Errorf("shutting down the server: %s", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+
+	const timeout = 10 * time.Second
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	if err := admin.Echo().Shutdown(ctx); err != nil {
+		log.Error(err)
+	}
 }

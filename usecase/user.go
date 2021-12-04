@@ -90,7 +90,7 @@ func (uc *userCase) SearchByID(ctx context.Context, id int64) (*goadmin.User, er
 func (uc *userCase) SetLastLogged(ctx context.Context, user *goadmin.User) error {
 	user.DTLastLogged = time.Now()
 
-	_, err := uc.users.Update(ctx, *user)
+	_, err := uc.users.Update(ctx, user)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func (uc *userCase) Register(ctx context.Context, user *goadmin.User) error {
 		return err
 	}
 
-	u, err := uc.users.Create(ctx, *user)
+	u, err := uc.users.Create(ctx, user)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func (uc *userCase) EncodePassword(user *goadmin.User) error {
 		return nil
 	}
 
-	p, err := bcrypt.GenerateFromPassword([]byte(user.Password), 15)
+	p, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return errors.Wrap(err, "encoding password failed")
 	}
@@ -149,22 +149,27 @@ func (uc *userCase) ComparePassword(user *goadmin.User, password string) (bool, 
 }
 
 func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User) (*goadmin.Token, error) {
+	const (
+		day       = 24 * time.Hour
+		randomLen = 32
+		baseInt   = 10
+	)
+
 	uniq := []string{
-		strconv.FormatInt(user.ID, 10),
-		strconv.FormatInt(time.Now().Unix(), 10),
-		user.Login, astistring.RandomString(32),
+		strconv.FormatInt(user.ID, baseInt),
+		strconv.FormatInt(time.Now().Unix(), baseInt),
+		user.Login, astistring.RandomString(randomLen),
 	}
 
 	t := sha256.Sum256([]byte(strings.Join(uniq, "_")))
-	token := &goadmin.Token{
+
+	token, err := uc.tokens.Create(ctx, &goadmin.Token{
 		User:      user,
 		UserID:    user.ID,
 		Type:      goadmin.AuthToken,
 		Token:     hex.EncodeToString(t[:]),
-		DTExpired: time.Now().Add(24 * time.Hour),
-	}
-
-	token, err := uc.tokens.Create(ctx, *token)
+		DTExpired: time.Now().Add(day),
+	})
 	if err != nil {
 		return nil, errors.Wrap(err, "creating token failed")
 	}

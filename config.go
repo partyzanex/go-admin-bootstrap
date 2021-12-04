@@ -8,11 +8,8 @@ import (
 
 type (
 	DBConfig struct {
-		DB *sql.DB
-
-		Driver         string
-		DBName         string
-		MigrationsPath string
+		DB              *sql.DB
+		MigrationsTable string
 	}
 
 	// nolint:maligned
@@ -30,10 +27,15 @@ type (
 		UserCase UserUseCase
 
 		Middleware []echo.MiddlewareFunc
+		Assets     []*Asset
 	}
 )
 
 func (config *Config) Validate() error {
+	if config == nil {
+		return ErrRequiredConfig
+	}
+
 	if config.DBConfig.DB == nil {
 		return ErrRequiredDB
 	}
@@ -43,4 +45,10 @@ func (config *Config) Validate() error {
 	}
 
 	return nil
+}
+
+func (config *Config) Clone() *Config {
+	clone := *config
+
+	return &clone
 }

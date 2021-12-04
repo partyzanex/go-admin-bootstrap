@@ -1,3 +1,5 @@
+-- +goose Up
+-- +goose StatementBegin
 CREATE SCHEMA IF NOT EXISTS goadmin;
 
 CREATE TYPE goadmin.USER_STATUS AS ENUM ('new', 'active', 'blocked');
@@ -16,7 +18,7 @@ CREATE TABLE IF NOT EXISTS goadmin."user"
     dt_last_logged TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     CONSTRAINT user_pkey PRIMARY KEY (id),
     CONSTRAINT user_login_ukey UNIQUE (login)
-);
+    );
 
 CREATE TYPE goadmin.TOKEN_TYPE AS ENUM ('auth');
 
@@ -31,5 +33,19 @@ CREATE TABLE IF NOT EXISTS goadmin.auth_token
     CONSTRAINT auth_token_pkey PRIMARY KEY (id),
     CONSTRAINT auth_token_ukey UNIQUE (token),
     CONSTRAINT user_auth_token_fkey FOREIGN KEY (user_id) REFERENCES goadmin."user" (id)
-        ON DELETE CASCADE
-);
+                         ON DELETE CASCADE
+    );
+
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+DROP TABLE IF EXISTS goadmin.auth_token;
+DROP TABLE IF EXISTS goadmin.user;
+
+DROP TYPE IF EXISTS goadmin.TOKEN_TYPE;
+DROP TYPE IF EXISTS goadmin.USER_STATUS;
+DROP TYPE IF EXISTS goadmin.USER_ROLE;
+
+DROP SCHEMA IF EXISTS goadmin;
+-- +goose StatementEnd

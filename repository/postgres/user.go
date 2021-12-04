@@ -23,14 +23,18 @@ func NewUserRepository(ex layer.BoilExecutor) goadmin.UserRepository {
 }
 
 func (repo *userRepository) Search(ctx context.Context, filter *goadmin.UserFilter) ([]*goadmin.User, error) {
-	mods := repo.applyFilter(filter, []qm.QueryMod{
-		qm.OrderBy("id"),
-	})
+	var mods []qm.QueryMod
+
+	if filter != nil {
+		mods = repo.applyFilter(filter, []qm.QueryMod{
+			qm.OrderBy("id"),
+		})
+	}
 
 	c, ex := layer.GetExecutor(ctx, repo.ex)
 
 	models, err := postgres.Users(mods...).All(c, ex)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.Wrap(err, "search users failed")
 	}
 
@@ -67,42 +71,40 @@ func (*userRepository) applyFilter(filter *goadmin.UserFilter, mods []qm.QueryMo
 		mods = []qm.QueryMod{}
 	}
 
-	if filter != nil {
-		if n := len(filter.IDs); n > 0 {
-			ids := make([]interface{}, n)
-			for i, id := range filter.IDs {
-				ids[i] = id
-			}
-
-			mods = append(mods, qm.WhereIn("id in ?", ids...))
+	if n := len(filter.IDs); n > 0 {
+		ids := make([]interface{}, n)
+		for i, id := range filter.IDs {
+			ids[i] = id
 		}
 
-		if filter.Name != "" {
-			clause := "%" + filter.Name + "%"
-			mods = append(mods, qm.Where("name like ?", clause))
-		}
+		mods = append(mods, qm.WhereIn("id in ?", ids...))
+	}
 
-		if filter.Status != "" {
-			mods = append(mods, qm.Where("status = ?", filter.Status))
-		}
+	if filter.Name != "" {
+		clause := "%" + filter.Name + "%"
+		mods = append(mods, qm.Where("name like ?", clause))
+	}
 
-		if filter.Login != "" {
-			mods = append(mods, qm.Where("login = ?", filter.Login))
-		}
+	if filter.Status != "" {
+		mods = append(mods, qm.Where("status = ?", filter.Status))
+	}
 
-		if filter.Limit > 0 {
-			mods = append(mods, qm.Limit(filter.Limit))
+	if filter.Login != "" {
+		mods = append(mods, qm.Where("login = ?", filter.Login))
+	}
 
-			if filter.Offset >= 0 {
-				mods = append(mods, qm.Offset(filter.Offset))
-			}
+	if filter.Limit > 0 {
+		mods = append(mods, qm.Limit(filter.Limit))
+
+		if filter.Offset >= 0 {
+			mods = append(mods, qm.Offset(filter.Offset))
 		}
 	}
 
 	return mods
 }
 
-func (repo *userRepository) Create(ctx context.Context, user goadmin.User) (result *goadmin.User, err error) {
+func (repo *userRepository) Create(ctx context.Context, user *goadmin.User) (result *goadmin.User, err error) {
 	c, tr := layer.GetTransactor(ctx)
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
@@ -110,16 +112,11 @@ func (repo *userRepository) Create(ctx context.Context, user goadmin.User) (resu
 			return nil, errors.Wrap(err, layer.ErrCreateTransaction.Error())
 		}
 
-		defer func() {
-			errTr := layer.ExecuteTransaction(tr, err)
-			if errTr != nil {
-				err = errors.Wrap(errTr, "transaction error")
-			}
-		}()
+		defer layer.ExecuteTransaction(tr, &err)
 	}
 
-	model := userToModel(&user)
-	model.DTCreated = time.Now()
+	model := userToModel(user)
+	model.DTCreated = time.Now().UTC()
 
 	err = model.Insert(c, tr, boil.Infer())
 	if err != nil {
@@ -129,7 +126,7 @@ func (repo *userRepository) Create(ctx context.Context, user goadmin.User) (resu
 	return modelToUser(model), nil
 }
 
-func (repo *userRepository) Update(ctx context.Context, user goadmin.User) (result *goadmin.User, err error) {
+func (repo *userRepository) Update(ctx context.Context, user *goadmin.User) (result *goadmin.User, err error) {
 	c, tr := layer.GetTransactor(ctx)
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
@@ -137,16 +134,11 @@ func (repo *userRepository) Update(ctx context.Context, user goadmin.User) (resu
 			return nil, errors.Wrap(err, layer.ErrCreateTransaction.Error())
 		}
 
-		defer func() {
-			errTr := layer.ExecuteTransaction(tr, err)
-			if errTr != nil {
-				err = errors.Wrap(errTr, "transaction error")
-			}
-		}()
+		defer layer.ExecuteTransaction(tr, &err)
 	}
 
-	model := userToModel(&user)
-	model.DTUpdated = time.Now()
+	model := userToModel(user)
+	model.DTUpdated = time.Now().UTC()
 
 	_, err = model.Update(c, tr, boil.Infer())
 	if err != nil {
@@ -156,7 +148,7 @@ func (repo *userRepository) Update(ctx context.Context, user goadmin.User) (resu
 	return modelToUser(model), err
 }
 
-func (repo *userRepository) Delete(ctx context.Context, user goadmin.User) (err error) {
+func (repo *userRepository) Delete(ctx context.Context, user *goadmin.User) (err error) {
 	if user.ID == 0 {
 		return goadmin.ErrRequiredUserID
 	}
@@ -168,16 +160,11 @@ func (repo *userRepository) Delete(ctx context.Context, user goadmin.User) (err 
 			return errors.Wrap(err, layer.ErrCreateTransaction.Error())
 		}
 
-		defer func() {
-			errTr := layer.ExecuteTransaction(tr, err)
-			if errTr != nil {
-				err = errors.Wrap(errTr, "transaction error")
-			}
-		}()
+		defer layer.ExecuteTransaction(tr, &err)
 	}
 
 	model, err := postgres.Users(qm.Where("id = ?", user.ID)).One(c, tr)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return goadmin.ErrUserNotFound
 	}
 

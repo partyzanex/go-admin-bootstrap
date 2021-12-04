@@ -9,12 +9,18 @@ import (
 )
 
 func errorHandler(e error, ctx echo.Context) {
-	if strings.HasSuffix(ctx.Path(), "json") {
-		JSONError(e, ctx)
-		return
-	}
+	accept := ctx.Request().Header.Get(echo.HeaderAccept)
 
-	HTMLError(e, ctx)
+	switch {
+	case strings.HasSuffix(ctx.Path(), "json"):
+		JSONError(e, ctx)
+	case strings.Contains(accept, "/json"):
+		JSONError(e, ctx)
+	case strings.Contains(accept, "text/html"):
+		HTMLError(e, ctx)
+	default:
+		HTTPError(e, ctx)
+	}
 }
 
 type viewData struct {
@@ -41,6 +47,8 @@ func (viewData) JetData() map[string]interface{} {
 }
 
 func HTMLError(e error, ctx echo.Context) {
+	defer ctx.Logger().Errorf("html error: %s", e)
+
 	code := http.StatusInternalServerError
 	title, details := "", ""
 
@@ -72,11 +80,11 @@ func HTMLError(e error, ctx echo.Context) {
 	if err != nil {
 		ctx.Logger().Error(err)
 	}
-
-	ctx.Logger().Error(e)
 }
 
 func JSONError(e error, ctx echo.Context) {
+	defer ctx.Logger().Errorf("json error: %s", e)
+
 	code := http.StatusInternalServerError
 	if he, ok := e.(*echo.HTTPError); ok {
 		code = he.Code
@@ -90,12 +98,23 @@ func JSONError(e error, ctx echo.Context) {
 	if err := ctx.JSON(code, resp); err != nil {
 		ctx.Logger().Error(err)
 	}
-
-	ctx.Logger().Error(e)
 }
 
 type Response struct {
 	Success bool        `json:"success"`
 	Error   string      `json:"error,omitempty"`
 	Data    interface{} `json:"data,omitempty"`
+}
+
+func HTTPError(e error, ctx echo.Context) {
+	defer ctx.Logger().Errorf("http error: %s", e)
+
+	code := http.StatusInternalServerError
+	if he, ok := e.(*echo.HTTPError); ok {
+		code = he.Code
+	}
+
+	if err := ctx.NoContent(code); err != nil {
+		ctx.Logger().Error(err)
+	}
 }

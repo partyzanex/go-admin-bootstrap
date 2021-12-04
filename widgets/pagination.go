@@ -118,7 +118,7 @@ func (p *Pagination) Items() []PaginationItem {
 	end := pages
 
 	if pages > p.NumLinks {
-		part := int(math.Floor(float64(p.NumLinks) / 2))
+		part := int(math.Floor(float64(p.NumLinks) / 2)) //nolint:gomnd
 		start = p.Page - part
 		end = p.Page + part
 	}
@@ -150,6 +150,6 @@ func (p *Pagination) Items() []PaginationItem {
 	return items
 }
 
-func (p Pagination) url(pageNum int) string {
+func (p *Pagination) url(pageNum int) string {
 	return strings.Replace(p.URLTemplate, "{page}", strconv.Itoa(pageNum), 1)
 }

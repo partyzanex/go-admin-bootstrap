@@ -9,7 +9,7 @@ import (
 	"github.com/xxtea/xxtea-go/xxtea"
 )
 
-func auth(ctx *AdminContext) (result User, err error) {
+func auth(ctx *AppContext) (result User, err error) {
 	login := ctx.FormValue("login")
 	password := ctx.FormValue("password")
 
@@ -54,7 +54,7 @@ func auth(ctx *AdminContext) (result User, err error) {
 	return result, nil
 }
 
-func authByCookie(ctx *AdminContext) (*User, error) {
+func authByCookie(ctx *AppContext) (*User, error) {
 	t, err := ctx.Cookie(AccessCookieName)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, err)

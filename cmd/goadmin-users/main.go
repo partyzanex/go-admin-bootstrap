@@ -12,20 +12,20 @@ import (
 	"github.com/spf13/pflag"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
-)
-
-var (
-	dsn         = pflag.String("dsn", "", "postgres dsn")
-	login       = pflag.String("login", "", "user login")
-	password    = pflag.String("password", "", "user password")
-	name        = pflag.String("name", "", "user name")
-	role        = pflag.String("role", "", "user role name, available: owner, root, user")
-	migrate     = pflag.Bool("mig", false, "if need up migrations")
-	githubUser  = pflag.String("github-user", "", "Github User")
-	githubToken = pflag.String("github-token", "", "Github Access Token")
+	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
 )
 
 func main() {
+	var (
+		dsn             = pflag.String("dsn", "", "postgres dsn")
+		login           = pflag.String("login", "", "user login")
+		password        = pflag.String("password", "", "user password")
+		name            = pflag.String("name", "", "user name")
+		role            = pflag.String("role", "", "user role name, available: owner, root, user")
+		migrate         = pflag.Bool("mig", false, "if need up migrations")
+		migrationsTable = pflag.String("migrations-table", "goadmin-migrations", "migration table name")
+	)
+
 	pflag.Parse()
 
 	db, err := sql.Open("postgres", *dsn)
@@ -40,15 +40,7 @@ func main() {
 	}
 
 	if *migrate {
-		err := goadmin.Migrate(&goadmin.DBConfig{
-			DB:     db,
-			Driver: "postgres",
-			MigrationsPath: fmt.Sprintf(
-				"github://%s:%s@partyzanex/go-admin-bootstrap/db/migrations/postgres",
-				*githubUser,
-				*githubToken,
-			),
-		})
+		err = migrations.Up(db, *migrationsTable)
 		if err != nil {
 			fmt.Println("migration failed")
 			return

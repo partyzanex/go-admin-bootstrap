@@ -12,10 +12,9 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
+bin/
 vendor/
 .idea
-sqlboiler.toml
-/assets/plugins/*
 users
-/example/assets
-/example/views
+example/assets/
+example/views/

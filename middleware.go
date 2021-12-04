@@ -2,11 +2,11 @@ package goadmin
 
 import "github.com/labstack/echo/v4"
 
-type AdminHandler func(ctx *AdminContext) error
+type AdminHandler func(ctx *AppContext) error
 
 func WrapHandler(handleFunc AdminHandler) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		ac, ok := ctx.(*AdminContext)
+		ac, ok := ctx.(*AppContext)
 		if !ok {
 			return ErrContextNotConfigured
 		}
@@ -17,7 +17,7 @@ func WrapHandler(handleFunc AdminHandler) echo.HandlerFunc {
 
 func AuthByCookie(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		ac, ok := ctx.(*AdminContext)
+		ac, ok := ctx.(*AppContext)
 		if !ok {
 			return ErrContextNotConfigured
 		}
@@ -34,12 +34,12 @@ func AuthByCookie(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func withAdminContext(admin *Admin) echo.MiddlewareFunc {
+func withAppContext(app *App) echo.MiddlewareFunc {
 	return func(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {
-			ac := &AdminContext{
+			ac := &AppContext{
 				Context: ctx,
-				admin:   admin,
+				app:     app,
 			}
 
 			return handlerFunc(ac)
@@ -49,7 +49,7 @@ func withAdminContext(admin *Admin) echo.MiddlewareFunc {
 
 func withViewData(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
-		ac := ctx.(*AdminContext)
+		ac := ctx.(*AppContext)
 
 		data := &Data{}
 
@@ -58,7 +58,9 @@ func withViewData(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 			data.User = user
 		}
 
-		data.Breadcrumbs.Add("Dashboard", ac.URL("/"), -100)
+		sortOrder := -100
+
+		data.Breadcrumbs.Add("Dashboard", ac.URL("/"), &sortOrder)
 		ac.Set(DataContextKey, data)
 
 		return handlerFunc(ctx)

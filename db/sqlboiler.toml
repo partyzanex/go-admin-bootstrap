@@ -1,0 +1,14 @@
+pkgname="postgres"
+output="models/postgres"
+no-tests = true
+no-auto-timestamps = true
+
+[psql]
+  dbname="postgres"
+  host="localhost"
+  port=5432
+  user="postgres"
+  pass="postgres"
+  sslmode="disable"
+  schema="goadmin"
+  blacklist=["schema_migrations"]

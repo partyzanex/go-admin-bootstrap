@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  postgresql:
+    image: postgres:13-alpine
+    restart: on-failure
+    networks:
+      - goadmin_net
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+
+networks:
+  goadmin_net:
+    name: goadmin_net
