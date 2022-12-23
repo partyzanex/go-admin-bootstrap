@@ -55,7 +55,7 @@ func action(ctx *cli.Context) error {
 		}
 	}
 
-	if !dirInfo.IsDir() {
+	if dirInfo == nil || !dirInfo.IsDir() {
 		return errors.Errorf("%q is not a directory", localBin)
 	}
 

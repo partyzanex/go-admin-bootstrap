@@ -3,10 +3,5 @@
 
 package postgres
 
-var TableNames = struct {
-	AuthToken string
-	User      string
-}{
-	AuthToken: "auth_token",
-	User:      "user",
-}
+var ViewNames = struct {
+}{}
