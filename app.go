@@ -195,8 +195,6 @@ func (app *App) setStaticGroup() {
 		app.config.ViewsPath = DefaultViewsPath
 	}
 
-	println(app.baseURL.Path + assetsRelativePath)
-
 	app.static = app.echo.Group(app.baseURL.Path + assetsRelativePath)
 	app.static.Static("/", app.config.AssetsPath)
 }
