@@ -52,6 +52,7 @@ type (
 		Count(ctx context.Context, filter *UserFilter) (int64, error)
 		Create(ctx context.Context, user *User) (*User, error)
 		Update(ctx context.Context, user *User) (*User, error)
+		SetLastLogged(ctx context.Context, user *User) error
 		Delete(ctx context.Context, user *User) error
 	}
 
@@ -77,6 +78,18 @@ type (
 		UserRepository() UserRepository
 	}
 )
+
+func (user *User) GetDTCreated() string {
+	return user.DTCreated.Format(time.RFC3339)
+}
+
+func (user *User) GetDTUpdated() string {
+	return user.DTUpdated.Format(time.RFC3339)
+}
+
+func (user *User) GetDTLastLogged() string {
+	return user.DTLastLogged.Format(time.RFC3339)
+}
 
 func (role UserRole) IsValid() bool {
 	switch role {

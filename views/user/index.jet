@@ -1,5 +1,5 @@
-{{ extends "layouts/main.jet" }}
-{{ import "widgets/pagination.jet" }}
+{{ extends "../layouts/main.jet" }}
+{{ import "../widgets/pagination.jet" }}
 
 {{ block documentBody() }}
 
@@ -29,9 +29,9 @@
         <td>{{ user.Role }}</td>
         <td>{{ user.Status }}</td>
         <td class="text-muted">
-          <span class="badge badge-success">Created: {{ user.DTCreated }}</span><br>
-          <span class="badge badge-primary">Updated: {{ user.DTUpdated }}</span><br>
-          <span class="badge badge-info">Last logged: {{ user.DTLastLogged }}</span>
+          <span class="badge badge-success">Created: {{ user.GetDTCreated() }}</span><br>
+          <span class="badge badge-primary">Updated: {{ user.GetDTUpdated() }}</span><br>
+          <span class="badge badge-info">Last logged: {{ user.GetDTLastLogged() }}</span>
         </td>
         <td class="text-right">
           <a href="{{ adminPath }}/users/{{ user.ID }}/update" class="btn-sm btn btn-outline-primary">Edit</a>

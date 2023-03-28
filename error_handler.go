@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/CloudyKit/jet"
+	"github.com/CloudyKit/jet/v6"
 	"github.com/labstack/echo/v4"
 )
 

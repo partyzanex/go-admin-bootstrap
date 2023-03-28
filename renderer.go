@@ -4,7 +4,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/CloudyKit/jet"
+	"github.com/CloudyKit/jet/v6"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 )
@@ -13,7 +13,7 @@ type Renderer struct {
 	Views *jet.Set
 }
 
-func (r *Renderer) Render(w io.Writer, name string, data interface{}, ctx echo.Context) error {
+func (r *Renderer) Render(w io.Writer, name string, data interface{}, _ echo.Context) error {
 	if !strings.HasSuffix(name, ".jet") {
 		name += ".jet"
 	}
@@ -22,7 +22,7 @@ func (r *Renderer) Render(w io.Writer, name string, data interface{}, ctx echo.C
 		return errors.New("data cannot be empty")
 	}
 
-	viewData, ok := data.(ViewData)
+	v, ok := data.(ViewData)
 	if !ok {
 		return errors.New("data is not implements TemplateData interface")
 	}
@@ -32,7 +32,7 @@ func (r *Renderer) Render(w io.Writer, name string, data interface{}, ctx echo.C
 		return errors.Wrap(err, "getting template failed")
 	}
 
-	err = view.Execute(w, viewData.JetVars(), viewData.JetData())
+	err = view.Execute(w, v.JetVars(), v.JetData())
 	if err != nil {
 		return errors.Wrap(err, "executing template failed")
 	}

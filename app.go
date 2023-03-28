@@ -3,13 +3,12 @@ package goadmin
 import (
 	"embed"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
 
-	"github.com/CloudyKit/jet"
+	"github.com/CloudyKit/jet/v6"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
@@ -79,6 +78,10 @@ func (app *App) Serve() error {
 	return app.echo.Start(app.getAddr())
 }
 
+func (app *App) Close() error {
+	return app.echo.Close()
+}
+
 func (app *App) CreateAssets() error {
 	assetsByKind := make(map[AssetKind][]*Asset)
 
@@ -144,31 +147,36 @@ func (app *App) CreateAssets() error {
 	return nil
 }
 
-func (*App) createSource(path string, source *Asset, fs *embed.FS) error {
+func (*App) createSource(path string, source *Asset, fs *embed.FS) (err error) {
 	sourcePath := filepath.Join(path, source.Path)
 
-	_, err := os.Stat(sourcePath)
+	stat, err := os.Stat(sourcePath)
 	if err != nil && !os.IsNotExist(err) {
 		return errors.Wrapf(err, "loading asset %s source failed", source.Path)
 	}
 
-	if os.IsNotExist(err) {
-		sourceDir := filepath.Dir(sourcePath)
+	if stat != nil {
+		return nil
+	}
 
-		b, err := fs.ReadFile(source.Path)
-		if err != nil {
-			return errors.Wrapf(err, "cannot read file %q", source.Path)
-		}
+	var (
+		b         []byte
+		sourceDir = filepath.Dir(sourcePath)
+	)
 
-		err = os.MkdirAll(sourceDir, os.ModePerm)
-		if err != nil {
-			return errors.Wrapf(err, "make assets dir %s failed", sourceDir)
-		}
+	b, err = fs.ReadFile(source.Path)
+	if err != nil {
+		return errors.Wrapf(err, "cannot read file %q", source.Path)
+	}
 
-		err = ioutil.WriteFile(sourcePath, b, os.ModePerm)
-		if err != nil {
-			return errors.Wrapf(err, "cannot write file %q", sourcePath)
-		}
+	err = os.MkdirAll(sourceDir, os.ModePerm)
+	if err != nil {
+		return errors.Wrapf(err, "make assets dir %s failed", sourceDir)
+	}
+
+	err = os.WriteFile(sourcePath, b, os.ModePerm)
+	if err != nil {
+		return errors.Wrapf(err, "cannot write file %q", sourcePath)
 	}
 
 	return nil
@@ -187,7 +195,9 @@ func (app *App) setStaticGroup() {
 		app.config.ViewsPath = DefaultViewsPath
 	}
 
-	app.static = app.echo.Group(app.baseURL.Path + "/assets")
+	println(app.baseURL.Path + assetsRelativePath)
+
+	app.static = app.echo.Group(app.baseURL.Path + assetsRelativePath)
 	app.static.Static("/", app.config.AssetsPath)
 }
 
@@ -196,16 +206,14 @@ func (app *App) setDefaultRoutes() {
 	app.admin.GET(LoginURL, WrapHandler(Login))
 	app.admin.POST(LoginURL, WrapHandler(Login))
 
-	auth := AuthByCookie
-
-	app.admin.Any(LogoutURL, WrapHandler(Logout), auth)
-	app.admin.GET(DashboardURL, WrapHandler(Dashboard), auth)
-	app.admin.GET(UserListURL, WrapHandler(UserList), auth)
-	app.admin.GET(UserCreateURL, WrapHandler(UserCreate), auth)
-	app.admin.POST(UserCreateURL, WrapHandler(UserCreate), auth)
-	app.admin.GET(UserDeleteURL, WrapHandler(UserDelete), auth)
-	app.admin.GET(UserUpdateURL, WrapHandler(UserUpdate), auth)
-	app.admin.POST(UserUpdateURL, WrapHandler(UserUpdate), auth)
+	app.admin.Any(LogoutURL, WrapHandler(Logout), AuthByCookie)
+	app.admin.GET(DashboardURL, WrapHandler(Dashboard), AuthByCookie)
+	app.admin.GET(UserListURL, WrapHandler(UserList), AuthByCookie)
+	app.admin.GET(UserCreateURL, WrapHandler(UserCreate), AuthByCookie)
+	app.admin.POST(UserCreateURL, WrapHandler(UserCreate), AuthByCookie)
+	app.admin.GET(UserDeleteURL, WrapHandler(UserDelete), AuthByCookie)
+	app.admin.GET(UserUpdateURL, WrapHandler(UserUpdate), AuthByCookie)
+	app.admin.POST(UserUpdateURL, WrapHandler(UserUpdate), AuthByCookie)
 	app.admin.GET(FaviconPrefix, Favicon)
 }
 
@@ -218,15 +226,23 @@ func (app *App) setDefaultMiddleware() {
 }
 
 func (app *App) setDefaultRenderer() {
-	renderer := &Renderer{
-		Views: jet.NewHTMLSet(app.config.ViewsPath),
+	opts := make([]jet.Option, 0)
+
+	if app.config.DevMode {
+		opts = append(opts, jet.InDevelopmentMode())
 	}
 
-	renderer.Views.SetDevelopmentMode(app.config.DevMode)
-	renderer.Views.AddGlobal("adminPath", app.baseURL.Path)
-	renderer.Views.AddGlobal("loginURL", LoginURL)
-	renderer.Views.AddGlobal("logoutURL", LogoutURL)
-	renderer.Views.AddGlobal("userListURL", UserListURL)
+	renderer := &Renderer{
+		Views: jet.NewSet(
+			jet.NewOSFileSystemLoader(app.config.ViewsPath),
+			opts...,
+		),
+	}
+
+	renderer.Views.AddGlobal(adminPathVar, app.baseURL.Path)
+	renderer.Views.AddGlobal(loginURLVar, LoginURL)
+	renderer.Views.AddGlobal(logoutURLVar, LogoutURL)
+	renderer.Views.AddGlobal(userListURLVar, UserListURL)
 
 	app.echo.Renderer = renderer
 }

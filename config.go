@@ -12,7 +12,7 @@ type (
 		MigrationsTable string
 	}
 
-	// nolint:maligned
+	//nolint:maligned
 	Config struct {
 		Host string
 		Port uint16

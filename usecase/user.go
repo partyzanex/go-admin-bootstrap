@@ -90,7 +90,7 @@ func (uc *userCase) SearchByID(ctx context.Context, id int64) (*goadmin.User, er
 func (uc *userCase) SetLastLogged(ctx context.Context, user *goadmin.User) error {
 	user.DTLastLogged = time.Now()
 
-	_, err := uc.users.Update(ctx, user)
+	err := uc.users.SetLastLogged(ctx, user)
 	if err != nil {
 		return err
 	}

@@ -59,8 +59,8 @@ func main() {
 	}
 
 	go func() {
-		if err := admin.Serve(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Errorf("shutting down the server: %s", err)
+		if errServe := admin.Serve(); errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
+			log.Errorf("shutting down the server: %s", errServe)
 		}
 	}()
 
@@ -73,7 +73,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	if err := admin.Echo().Shutdown(ctx); err != nil {
+	if err = admin.Echo().Shutdown(ctx); err != nil {
 		log.Error(err)
 	}
 }

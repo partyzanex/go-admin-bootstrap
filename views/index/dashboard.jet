@@ -1,4 +1,4 @@
-{{ extends "layouts/main.jet" }}
+{{ extends "../layouts/main.jet" }}
 
 {{ block documentBody() }}
 <h3>Dashboard content</h3>

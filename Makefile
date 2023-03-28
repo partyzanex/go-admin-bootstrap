@@ -1,4 +1,4 @@
-SQLBOILER_VERSION=v4.14.0
+SQLBOILER_VERSION=v4.14.2
 GOOSE_VERSION=v3.7.0
 PG_WAIT_VERSION=v0.1.3
 GOLANGCI_LINT_VERSION=v1.50.1
@@ -56,7 +56,7 @@ migration-down: pg-wait-install goose-install local-db-up
 	$(GOOSE_BIN) -dir $(CURDIR)/db/migrations/postgres -table goadmin_migrations postgres $(POSTGRES_DSN) down
 
 .PHONY: sqlboiler-gen
-sqlboiler-gen: local-db-up migration-up
+sqlboiler-gen: sqlboiler-install local-db-up migration-up
 	cd $(CURDIR)/db && PATH=$(MAKE_PATH) $(SQLBOILER_BIN) psql
 
 .PHONY: create-default-user
@@ -71,7 +71,7 @@ run-example: create-default-user
 	PG_DSN=$(POSTGRES_DSN) go run main.go
 
 .PHONY: lint
-lint:
+lint: golangci-lint-install
 	$(GOLANGCI_LINT_BIN) run
 
 .PHONY: test

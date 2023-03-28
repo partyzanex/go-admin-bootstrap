@@ -2,5 +2,5 @@ package views
 
 import "embed"
 
-//go:embed auth/* errors/* index/* layouts/* user/* widgets/*
+//go:embed *
 var Sources embed.FS

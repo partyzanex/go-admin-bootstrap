@@ -1,7 +1,7 @@
 package goadmin
 
 import (
-	"github.com/CloudyKit/jet"
+	"github.com/CloudyKit/jet/v6"
 	"github.com/partyzanex/go-admin-bootstrap/widgets"
 )
 

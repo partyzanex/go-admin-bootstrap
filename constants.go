@@ -34,3 +34,12 @@ var (
 
 	FaviconPrefix = "/favicon/:id"
 )
+
+const (
+	adminPathVar   = "adminPath"
+	loginURLVar    = "loginURL"
+	logoutURLVar   = "logoutURL"
+	userListURLVar = "userListURL"
+
+	assetsRelativePath = "/assets"
+)

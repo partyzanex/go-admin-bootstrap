@@ -133,7 +133,7 @@ func UserCreate(ctx *AppContext) error {
 }
 
 func UserUpdate(ctx *AppContext) error {
-	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64) //nolint:gomnd
+	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
@@ -154,7 +154,7 @@ func UserUpdate(ctx *AppContext) error {
 	data.Set("user", user)
 	data.Set(
 		"formAction",
-		strings.Replace(UserUpdateURL, ":id", strconv.FormatInt(user.ID, 10), -1), //nolint:gomnd
+		strings.Replace(UserUpdateURL, ":id", strconv.FormatInt(user.ID, 10), -1),
 	)
 	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), nil)
 	data.Breadcrumbs.Add(user.Name, ctx.URL(UserCreateURL), nil)
@@ -198,7 +198,7 @@ func updateUser(ctx *AppContext, user *User) error {
 }
 
 func UserDelete(ctx *AppContext) error {
-	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64) //nolint:gomnd
+	userID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}

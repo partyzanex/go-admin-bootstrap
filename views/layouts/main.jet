@@ -1,5 +1,5 @@
 {{ import "nav.jet" }}
-{{ import "widgets/breadcrumbs.jet" }}
+{{ import "../widgets/breadcrumbs.jet" }}
 <!DOCTYPE html>
 <html lang="en">
   <head>

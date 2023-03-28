@@ -148,6 +148,28 @@ func (repo *userRepository) Update(ctx context.Context, user *goadmin.User) (res
 	return modelToUser(model), err
 }
 
+func (repo *userRepository) SetLastLogged(ctx context.Context, user *goadmin.User) (err error) {
+	c, tr := layer.GetTransactor(ctx)
+	if tr == nil {
+		tr, err = repo.ex.BeginTx(ctx, nil)
+		if err != nil {
+			return errors.Wrap(err, layer.ErrCreateTransaction.Error())
+		}
+
+		defer layer.ExecuteTransaction(tr, &err)
+	}
+
+	model := userToModel(user)
+	model.DTLastLogged = time.Now().UTC()
+
+	_, err = model.Update(c, tr, boil.Infer())
+	if err != nil {
+		return errors.Wrap(err, "updating user failed")
+	}
+
+	return err
+}
+
 func (repo *userRepository) Delete(ctx context.Context, user *goadmin.User) (err error) {
 	if user.ID == 0 {
 		return goadmin.ErrRequiredUserID
