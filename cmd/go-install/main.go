@@ -158,7 +158,7 @@ func goModInit(ctx context.Context, workDir string) error {
 }
 
 func mkTempDir() (string, error) {
-	tempDir, err := os.MkdirTemp("/tmp", "install*")
+	tempDir, err := os.MkdirTemp(os.TempDir(), "go-install*")
 	if err != nil {
 		return "", errors.Wrap(err, "os.MkdirTemp")
 	}
