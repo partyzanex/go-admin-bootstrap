@@ -50,7 +50,9 @@ func Logout(ctx *AppContext) error {
 			Value:    "",
 			Expires:  time.Now().Add(-48 * time.Hour),
 			Path:     "/",
+			Secure:   true,
 			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
 		})
 	}
 

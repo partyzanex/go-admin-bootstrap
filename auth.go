@@ -1,13 +1,21 @@
 package goadmin
 
 import (
-	"encoding/hex"
+	"crypto/rand"
+	"encoding/base64"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
-	"github.com/xxtea/xxtea-go/xxtea"
 )
+
+func generateSecureToken(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(bytes), nil
+}
 
 func auth(ctx *AppContext) (result User, err error) {
 	login := ctx.FormValue("login")
@@ -30,7 +38,12 @@ func auth(ctx *AppContext) (result User, err error) {
 		return result, ErrWrongPassword
 	}
 
-	token, err := ctx.UserCase().CreateAuthToken(ctx.Ctx(), user)
+	cookieToken, err := generateSecureToken(32)
+	if err != nil {
+		return result, errors.Wrap(err, "generating secure token failed")
+	}
+
+	token, err := ctx.UserCase().CreateAuthToken(ctx.Ctx(), user, cookieToken)
 	if err != nil {
 		return result, errors.Wrap(err, "creating auth token failed")
 	}
@@ -40,37 +53,28 @@ func auth(ctx *AppContext) (result User, err error) {
 		return result, errors.Wrap(err, "updating user failed")
 	}
 
-	key := ctx.RealIP() + ctx.Request().UserAgent()
-	tokenValue := xxtea.Encrypt([]byte(token.Token), []byte(key))
-
 	http.SetCookie(ctx.Response(), &http.Cookie{
 		Name:     AccessCookieName,
-		Value:    hex.EncodeToString(tokenValue),
+		Value:    cookieToken,
 		Expires:  token.DTExpired,
 		Path:     "/",
+		Secure:   true,
 		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
 	})
 
 	return result, nil
 }
 
 func authByCookie(ctx *AppContext) (*User, error) {
-	t, err := ctx.Cookie(AccessCookieName)
+	cookie, err := ctx.Cookie(AccessCookieName)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	value, err := hex.DecodeString(t.Value)
-	if err != nil {
-		return nil, errors.Wrap(err, "decoding cookie value failed")
-	}
-
-	key := ctx.RealIP() + ctx.Request().UserAgent()
-	tokenValue := xxtea.Decrypt(value, []byte(key))
-
 	c := ctx.Request().Context()
 
-	token, err := ctx.UserCase().SearchToken(c, string(tokenValue))
+	token, err := ctx.UserCase().SearchToken(c, cookie.Value)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 	}

@@ -72,7 +72,7 @@ type (
 		ComparePassword(user *User, password string) (bool, error)
 		EncodePassword(user *User) error
 
-		CreateAuthToken(ctx context.Context, user *User) (*Token, error)
+		CreateAuthToken(ctx context.Context, user *User, cookieToken string) (*Token, error)
 		SearchToken(ctx context.Context, token string) (*Token, error)
 
 		UserRepository() UserRepository

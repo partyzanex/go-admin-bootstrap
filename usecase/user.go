@@ -2,17 +2,12 @@ package usecase
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 
-	astistring "github.com/asticode/go-astitools/string"
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 )
 
@@ -148,26 +143,14 @@ func (uc *userCase) ComparePassword(user *goadmin.User, password string) (bool, 
 	return err == nil, err
 }
 
-func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User) (*goadmin.Token, error) {
-	const (
-		day       = 24 * time.Hour
-		randomLen = 32
-		baseInt   = 10
-	)
-
-	uniq := []string{
-		strconv.FormatInt(user.ID, baseInt),
-		strconv.FormatInt(time.Now().Unix(), baseInt),
-		user.Login, astistring.RandomString(randomLen),
-	}
-
-	t := sha256.Sum256([]byte(strings.Join(uniq, "_")))
+func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User, cookieToken string) (*goadmin.Token, error) {
+	const day = 24 * time.Hour
 
 	token, err := uc.tokens.Create(ctx, &goadmin.Token{
 		User:      user,
 		UserID:    user.ID,
 		Type:      goadmin.AuthToken,
-		Token:     hex.EncodeToString(t[:]),
+		Token:     cookieToken,
 		DTExpired: time.Now().Add(day),
 	})
 	if err != nil {

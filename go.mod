@@ -1,11 +1,10 @@
 module github.com/partyzanex/go-admin-bootstrap
 
-go 1.20
+go 1.26
 
 require (
 	github.com/CloudyKit/jet/v6 v6.2.0
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
-	github.com/asticode/go-astitools v1.3.0
 	github.com/friendsofgo/errors v0.9.2
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/lib/pq v1.10.7
@@ -19,7 +18,6 @@ require (
 	github.com/urfave/cli/v2 v2.25.1
 	github.com/volatiletech/sqlboiler/v4 v4.14.2
 	github.com/volatiletech/strmangle v0.0.4
-	github.com/xxtea/xxtea-go v1.0.0
 	golang.org/x/crypto v0.7.0
 )
 
