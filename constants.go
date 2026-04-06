@@ -1,11 +1,16 @@
 package goadmin
 
+import "time"
+
 const (
 	DefaultAssetsPath    = "./assets"
 	DefaultViewsPath     = "./views"
 	DefaultLimit         = 20
 	LoginRateLimitPerSec = 5
 	SecureTokenLength    = 32
+
+	DefaultAccessTokenTTL  = 15 * time.Minute
+	DefaultRefreshTokenTTL = 30 * 24 * time.Hour
 
 	UserContextKey   = "goadmin_user"
 	DataContextKey   = "goadmin_data"

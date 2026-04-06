@@ -16,7 +16,7 @@ import (
 )
 
 func Login(ctx *AppContext) error {
-	_, err := ctx.Cookie(ctx.CookieName())
+	_, err := ctx.Cookie(ctx.CookieName() + accessCookieSuffix)
 	if err == nil {
 		return ctx.Redirect(http.StatusFound, ctx.URL("/"))
 	}
@@ -50,15 +50,7 @@ func Login(ctx *AppContext) error {
 }
 
 func Logout(ctx *AppContext) error {
-	ctx.SetCookie(&http.Cookie{
-		Name:     ctx.CookieName(),
-		Value:    "",
-		MaxAge:   -1,
-		Path:     "/",
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	})
+	clearAuthCookies(ctx)
 
 	return ctx.Redirect(http.StatusFound, ctx.URL(LoginURL))
 }

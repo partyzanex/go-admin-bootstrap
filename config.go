@@ -2,6 +2,7 @@ package goadmin
 
 import (
 	"log/slog"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/uptrace/bun"
@@ -21,6 +22,10 @@ type (
 		ViewsPath        string
 		AssetsPath       string
 		AccessCookieName string
+
+		JWTSecret       []byte
+		AccessTokenTTL  time.Duration
+		RefreshTokenTTL time.Duration
 
 		DevMode bool
 
@@ -44,6 +49,10 @@ func (config *Config) Validate() error {
 
 	if config.Port == 0 {
 		return ErrInvalidPort
+	}
+
+	if len(config.JWTSecret) == 0 {
+		return ErrRequiredJWTSecret
 	}
 
 	return nil

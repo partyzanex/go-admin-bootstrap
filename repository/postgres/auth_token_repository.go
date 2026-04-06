@@ -61,3 +61,15 @@ func (repo *authTokenRepository) DeleteExpired(ctx context.Context) (int64, erro
 
 	return rows, nil
 }
+
+func (repo *authTokenRepository) DeleteByUserID(ctx context.Context, userID int64) error {
+	_, err := repo.db.NewDelete().
+		Model((*tokenModel)(nil)).
+		Where("user_id = ?", userID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("delete tokens by user id: %w", err)
+	}
+
+	return nil
+}

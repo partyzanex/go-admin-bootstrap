@@ -137,15 +137,15 @@ func (uc *userCase) ComparePassword(user *goadmin.User, password string) (bool, 
 	return err == nil, err
 }
 
-func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User, cookieToken string) (*goadmin.Token, error) {
-	const day = 24 * time.Hour
-
+func (uc *userCase) CreateAuthToken(
+	ctx context.Context, user *goadmin.User, cookieToken string, ttl time.Duration,
+) (*goadmin.Token, error) {
 	token, err := uc.tokens.Create(ctx, &goadmin.Token{
 		User:      user,
 		UserID:    user.ID,
 		Type:      goadmin.AuthToken,
 		Token:     cookieToken,
-		DTExpired: time.Now().Add(day),
+		DTExpired: time.Now().Add(ttl),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("creating token failed: %w", err)

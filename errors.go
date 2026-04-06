@@ -18,4 +18,5 @@ var (
 	ErrTokenNotFound        = errors.New("token not found")
 	ErrTokenExpired         = errors.New("token expired")
 	ErrRequiredConfig       = errors.New("required config")
+	ErrRequiredJWTSecret    = errors.New("required jwt secret")
 )

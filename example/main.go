@@ -52,6 +52,7 @@ func run() error {
 		ViewsPath:        "./views",
 		AssetsPath:       "./assets",
 		AccessCookieName: "access_token",
+		JWTSecret:        []byte(os.Getenv("JWT_SECRET")),
 		Logger:           logger,
 		DBConfig: goadmin.DBConfig{
 			DB: db,

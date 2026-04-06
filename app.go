@@ -61,6 +61,14 @@ func New(config *Config) (*App, error) {
 		app.config.DBConfig.MigrationsTable = DefaultMigrationsTable
 	}
 
+	if app.config.AccessTokenTTL == 0 {
+		app.config.AccessTokenTTL = DefaultAccessTokenTTL
+	}
+
+	if app.config.RefreshTokenTTL == 0 {
+		app.config.RefreshTokenTTL = DefaultRefreshTokenTTL
+	}
+
 	if config.Logger != nil {
 		app.logger = config.Logger
 	} else {

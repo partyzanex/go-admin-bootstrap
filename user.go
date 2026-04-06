@@ -60,6 +60,7 @@ type (
 		Search(ctx context.Context, token string) (*Token, error)
 		Create(ctx context.Context, token *Token) (*Token, error)
 		DeleteExpired(ctx context.Context) (int64, error)
+		DeleteByUserID(ctx context.Context, userID int64) error
 	}
 
 	UserUseCase interface {
@@ -76,7 +77,7 @@ type (
 		ComparePassword(user *User, password string) (bool, error)
 		EncodePassword(user *User) error
 
-		CreateAuthToken(ctx context.Context, user *User, cookieToken string) (*Token, error)
+		CreateAuthToken(ctx context.Context, user *User, cookieToken string, ttl time.Duration) (*Token, error)
 		SearchToken(ctx context.Context, token string) (*Token, error)
 	}
 )
