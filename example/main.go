@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -12,21 +14,22 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/partyzanex/go-admin-bootstrap/repository/postgres"
-	"github.com/partyzanex/go-admin-bootstrap/usecase"
-	"github.com/pkg/errors"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
-	log "github.com/sirupsen/logrus"
+	"github.com/partyzanex/go-admin-bootstrap/repository/postgres"
+	"github.com/partyzanex/go-admin-bootstrap/usecase"
 )
 
 func main() {
-	log.SetLevel(log.DebugLevel)
-	log.SetFormatter(&log.JSONFormatter{})
+	logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+	slog.SetDefault(logger)
 
 	db, err := sql.Open("postgres", os.Getenv("PG_DSN"))
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("open sql connection failed", "err", err)
+		os.Exit(1)
 	}
 
 	db.SetConnMaxLifetime(time.Second)
@@ -51,16 +54,30 @@ func main() {
 		UserCase: userCase,
 		Middleware: []echo.MiddlewareFunc{
 			middleware.Recover(),
-			middleware.Logger(),
+			middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+				LogStatus: true,
+				LogURI:    true,
+				LogMethod: true,
+				LogValuesFunc: func(_ echo.Context, v middleware.RequestLoggerValues) error {
+					slog.Info("request",
+						"method", v.Method,
+						"uri", v.URI,
+						"status", v.Status,
+					)
+
+					return nil
+				},
+			}),
 		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("creating admin failed", "err", err)
+		os.Exit(1)
 	}
 
 	go func() {
 		if errServe := admin.Serve(); errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
-			log.Errorf("shutting down the server: %s", errServe)
+			slog.Error("shutting down the server", "err", errServe)
 		}
 	}()
 
@@ -74,6 +91,6 @@ func main() {
 	defer cancel()
 
 	if err = admin.Echo().Shutdown(ctx); err != nil {
-		log.Error(err)
+		slog.Error("shutdown failed", "err", err)
 	}
 }

@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
@@ -84,13 +84,7 @@ func (uc *userCase) SearchByID(ctx context.Context, id int64) (*goadmin.User, er
 
 func (uc *userCase) SetLastLogged(ctx context.Context, user *goadmin.User) error {
 	user.DTLastLogged = time.Now()
-
-	err := uc.users.SetLastLogged(ctx, user)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return uc.users.SetLastLogged(ctx, user)
 }
 
 func (uc *userCase) Register(ctx context.Context, user *goadmin.User) error {
@@ -120,7 +114,7 @@ func (uc *userCase) EncodePassword(user *goadmin.User) error {
 
 	p, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return errors.Wrap(err, "encoding password failed")
+		return fmt.Errorf("encoding password failed: %w", err)
 	}
 
 	user.PasswordIsEncoded = true
@@ -154,7 +148,7 @@ func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User, coo
 		DTExpired: time.Now().Add(day),
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "creating token failed")
+		return nil, fmt.Errorf("creating token failed: %w", err)
 	}
 
 	return token, nil
@@ -163,12 +157,12 @@ func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User, coo
 func (uc *userCase) SearchToken(ctx context.Context, token string) (*goadmin.Token, error) {
 	authToken, err := uc.tokens.Search(ctx, token)
 	if err != nil {
-		return nil, errors.Wrap(err, "search token failed")
+		return nil, fmt.Errorf("search token failed: %w", err)
 	}
 
 	authToken.User, err = uc.SearchByID(ctx, authToken.UserID)
 	if err != nil {
-		return nil, errors.Wrap(err, "search user failed")
+		return nil, fmt.Errorf("search user failed: %w", err)
 	}
 
 	if authToken.DTExpired.Before(time.Now()) {

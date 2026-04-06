@@ -26,9 +26,12 @@ type AppContext struct {
 	app *App
 }
 
-func (c *AppContext) URL(path string, args ...interface{}) string {
-	result := Path(c.app.baseURL.Path, fmt.Sprintf(path, args...))
-	return result
+func (c *AppContext) URL(path string, args ...any) string {
+	if len(args) > 0 {
+		path = fmt.Sprintf(path, args...)
+	}
+
+	return Path(c.app.baseURL.Path, path)
 }
 
 func (c *AppContext) Data() *Data {

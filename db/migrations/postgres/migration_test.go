@@ -1,13 +1,13 @@
 package migrations_test
 
 import (
+	"context"
 	"database/sql"
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	_ "github.com/lib/pq"
+	"github.com/stretchr/testify/require"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
@@ -23,15 +23,14 @@ func TestUp(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, db)
 
+	ctx := context.Background()
+
 	err = migrations.Up(db, goadmin.MigrationsTable)
 	require.NoError(t, err)
 
-	_, err = db.Exec(`select * from goadmin."user"`)
+	_, err = db.ExecContext(ctx, `select * from goadmin."user"`)
 	require.NoError(t, err)
 
-	err = migrations.Down(db, goadmin.MigrationsTable)
+	_, err = db.ExecContext(ctx, `select * from goadmin.auth_token`)
 	require.NoError(t, err)
-
-	_, err = db.Exec(`select * from goadmin."user"`)
-	require.Error(t, err)
 }

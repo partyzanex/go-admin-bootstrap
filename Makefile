@@ -39,11 +39,11 @@ golangci-lint-install:
 
 .PHONY: local-db-up
 local-db-up: local-db-down
-	docker-compose up -d postgresql
+	docker compose up -d postgresql
 
 .PHONY: local-db-down
 local-db-down:
-	docker-compose stop postgresql
+	docker compose stop postgresql
 
 .PHONY: migration-up
 migration-up: pg-wait-install goose-install local-db-up
@@ -71,8 +71,8 @@ run-example: create-default-user
 	PG_DSN=$(POSTGRES_DSN) go run main.go
 
 .PHONY: lint
-lint: golangci-lint-install
-	$(GOLANGCI_LINT_BIN) run
+lint:
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest run -c .golangci.yml
 
 .PHONY: test
 test: migration-up

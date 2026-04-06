@@ -1,6 +1,6 @@
 package goadmin
 
-import "github.com/pkg/errors"
+import "errors"
 
 var (
 	ErrInvalidPort          = errors.New("invalid http port")

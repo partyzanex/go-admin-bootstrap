@@ -3,10 +3,10 @@ package cmd
 import (
 	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"os/exec"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 func Execute(ctx context.Context, workDir, binary string, args ...string) (*bytes.Buffer, error) {
@@ -22,7 +22,7 @@ func Execute(ctx context.Context, workDir, binary string, args ...string) (*byte
 			err = ErrBinNotFound
 		}
 
-		return nil, errors.Wrapf(err, "cannot start command %q with args %s", binary, joinArgs(args))
+		return nil, fmt.Errorf("cannot start command %q with args %s: %w", binary, joinArgs(args), err)
 	}
 
 	errs := make(chan error, 1)
@@ -35,14 +35,14 @@ func Execute(ctx context.Context, workDir, binary string, args ...string) (*byte
 	case <-ctx.Done():
 		err := command.Process.Kill()
 		if err != nil {
-			return combineBuffers(stdoutBuf, stderrBuf), errors.Wrap(err, "cannot kill process")
+			return combineBuffers(stdoutBuf, stderrBuf), fmt.Errorf("cannot kill process: %w", err)
 		}
 
 		return combineBuffers(stdoutBuf, stderrBuf), ErrTimeOut
 	case err := <-errs:
 		if err != nil {
-			return combineBuffers(stdoutBuf, stderrBuf), errors.Wrapf(err, "cmd.Wait: command %q, args %q",
-				binary, joinArgs(args),
+			return combineBuffers(stdoutBuf, stderrBuf), fmt.Errorf("cmd.Wait: command %q, args %q: %w",
+				binary, joinArgs(args), err,
 			)
 		}
 	}

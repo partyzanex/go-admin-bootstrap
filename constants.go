@@ -1,9 +1,11 @@
 package goadmin
 
 const (
-	DefaultAssetsPath = "./assets"
-	DefaultViewsPath  = "./views"
-	DefaultLimit      = 20
+	DefaultAssetsPath    = "./assets"
+	DefaultViewsPath     = "./views"
+	DefaultLimit         = 20
+	LoginRateLimitPerSec = 5
+	SecureTokenLength    = 32
 
 	UserContextKey = "goadmin_user"
 	DataContextKey = "goadmin_data"

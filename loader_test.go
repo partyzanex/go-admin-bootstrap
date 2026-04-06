@@ -3,8 +3,9 @@ package goadmin
 import (
 	"testing"
 
-	"github.com/partyzanex/go-admin-bootstrap/views"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/partyzanex/go-admin-bootstrap/views"
 )
 
 func TestFSLoader_Open(t *testing.T) {

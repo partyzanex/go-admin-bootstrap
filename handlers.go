@@ -1,6 +1,8 @@
 package goadmin
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -8,7 +10,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 
 	"github.com/partyzanex/go-admin-bootstrap/assets"
 	"github.com/partyzanex/go-admin-bootstrap/widgets"
@@ -33,7 +34,12 @@ func Login(ctx *AppContext) error {
 
 	if ctx.Request().Method == http.MethodPost {
 		_, err = auth(ctx)
-		if err != nil && !errors.Is(err, ErrUserNotFound) && !errors.Is(err, ErrWrongPassword) {
+		if errors.Is(err, ErrUserNotFound) || errors.Is(err, ErrWrongPassword) {
+			data.Set("err", "Неверный логин или пароль")
+			return ctx.Render(http.StatusUnauthorized, "auth/login", data)
+		}
+
+		if err != nil {
 			return err
 		}
 
@@ -44,17 +50,15 @@ func Login(ctx *AppContext) error {
 }
 
 func Logout(ctx *AppContext) error {
-	if user := ctx.User(); user != nil {
-		ctx.SetCookie(&http.Cookie{
-			Name:     AccessCookieName,
-			Value:    "",
-			Expires:  time.Now().Add(-48 * time.Hour),
-			Path:     "/",
-			Secure:   true,
-			HttpOnly: true,
-			SameSite: http.SameSiteStrictMode,
-		})
-	}
+	ctx.SetCookie(&http.Cookie{
+		Name:     AccessCookieName,
+		Value:    "",
+		MaxAge:   -1,
+		Path:     "/",
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
 
 	return ctx.Redirect(http.StatusFound, ctx.URL(LoginURL))
 }
@@ -156,7 +160,7 @@ func UserUpdate(ctx *AppContext) error {
 	data.Set("user", user)
 	data.Set(
 		"formAction",
-		strings.Replace(UserUpdateURL, ":id", strconv.FormatInt(user.ID, 10), -1),
+		strings.ReplaceAll(UserUpdateURL, ":id", strconv.FormatInt(user.ID, 10)),
 	)
 	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), nil)
 	data.Breadcrumbs.Add(user.Name, ctx.URL(UserCreateURL), nil)
@@ -220,10 +224,7 @@ func UserDelete(ctx *AppContext) error {
 	return ctx.Redirect(http.StatusFound, ctx.URL(UserListURL))
 }
 
-var (
-	loc, _       = time.LoadLocation("GMT")
-	lastModified = time.Now().In(loc).Format(time.RFC1123)
-)
+var lastModified = time.Now().UTC().Format(time.RFC1123)
 
 func Favicon(ctx echo.Context) error {
 	icon := ctx.Param("id")
@@ -233,7 +234,7 @@ func Favicon(ctx echo.Context) error {
 
 	b, err := assets.Favicon.ReadFile(filepath.Join("favicon", icon))
 	if err != nil {
-		return errors.Wrap(err, "cannot read file")
+		return fmt.Errorf("cannot read file: %w", err)
 	}
 
 	ctx.Response().Header().Add("Accept-Ranges", "bytes")

@@ -2,15 +2,21 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/partyzanex/go-admin-bootstrap/pkg/cmd"
-	"github.com/pkg/errors"
 	"github.com/urfave/cli/v2"
+
+	"github.com/partyzanex/go-admin-bootstrap/pkg/cmd"
+)
+
+var (
+	errInvalidModuleFormat = errors.New("module name should be in module@version format")
+	errNotDirectory        = errors.New("path is not a directory")
 )
 
 func main() {
@@ -36,7 +42,7 @@ func action(ctx *cli.Context) error {
 	if strings.HasPrefix(localBin, "./") || !strings.HasPrefix(localBin, "/") {
 		currDir, err := os.Getwd()
 		if err != nil {
-			return errors.New("os.Getwd")
+			return fmt.Errorf("os.Getwd: %w", err)
 		}
 
 		localBin = filepath.Join(currDir, localBin)
@@ -46,25 +52,24 @@ func action(ctx *cli.Context) error {
 	if err != nil {
 		switch {
 		case os.IsNotExist(err):
-			err = os.MkdirAll(localBin, os.ModePerm)
+			err = os.MkdirAll(localBin, 0o750) //nolint:mnd // standard directory permission
 			if err != nil {
-				return errors.Wrap(err, "os.MkdirAll")
+				return fmt.Errorf("os.MkdirAll: %w", err)
 			}
 		default:
-			return errors.Wrapf(err, "cannot open dir %q", localBin)
+			return fmt.Errorf("cannot open dir %q: %w", localBin, err)
 		}
 	}
 
 	if dirInfo == nil || !dirInfo.IsDir() {
-		return errors.Errorf("%q is not a directory", localBin)
+		return fmt.Errorf("%w: %q", errNotDirectory, localBin)
 	}
 
 	pkg := ctx.Args().First()
 	target := ctx.Args().Get(1)
 	version := ""
 
-	//nolint:gomnd
-	if parts := strings.Split(pkg, "@"); len(parts) == 2 {
+	if parts := strings.Split(pkg, "@"); len(parts) == 2 { //nolint:mnd
 		pkg = parts[0]
 		version = parts[1]
 
@@ -72,13 +77,13 @@ func action(ctx *cli.Context) error {
 			target = filepath.Join(localBin, filepath.Base(pkg))
 		}
 	} else {
-		return errors.Errorf("module name should be a module@version format, got %q", pkg)
+		return fmt.Errorf("%w: got %q", errInvalidModuleFormat, pkg)
 	}
 
 	if ctx.Bool(skipIfExistsFlagName) {
 		targetInfo, err := os.Stat(target + "@" + version)
 		if err != nil && !os.IsNotExist(err) {
-			return errors.Wrapf(err, "os.Stat(%q)", target+"@"+version)
+			return fmt.Errorf("os.Stat(%q): %w", target+"@"+version, err)
 		}
 
 		if targetInfo != nil {
@@ -92,22 +97,22 @@ func action(ctx *cli.Context) error {
 func install(ctx context.Context, tags, pkg, target, version string, verbose bool) error {
 	workDir, err := mkTempDir()
 	if err != nil {
-		return errors.Wrap(err, "mkTempDir")
+		return fmt.Errorf("mkTempDir: %w", err)
 	}
 
 	err = goModInit(ctx, workDir)
 	if err != nil {
-		return errors.Wrap(err, "goModInit")
+		return fmt.Errorf("goModInit: %w", err)
 	}
 
 	err = goGet(ctx, workDir, pkg)
 	if err != nil {
-		return errors.Wrap(err, "goGet")
+		return fmt.Errorf("goGet: %w", err)
 	}
 
 	output, err := goBuild(ctx, workDir, tags, target+"@"+version, pkg)
 	if err != nil {
-		return errors.Wrap(err, "goBuild")
+		return fmt.Errorf("goBuild: %w", err)
 	}
 
 	if verbose {
@@ -116,7 +121,7 @@ func install(ctx context.Context, tags, pkg, target, version string, verbose boo
 
 	err = os.Symlink(target+"@"+version, target)
 	if err != nil {
-		return errors.Wrap(err, "os.Symlink")
+		return fmt.Errorf("os.Symlink: %w", err)
 	}
 
 	return nil
@@ -133,7 +138,7 @@ func goBuild(ctx context.Context, workDir, tags, target, pkg string) (output str
 
 	buf, err := cmd.Execute(ctx, workDir, "go", args...)
 	if err != nil {
-		return buf.String(), errors.Wrapf(err, "cmd.Execute %q", buf.String())
+		return buf.String(), fmt.Errorf("cmd.Execute %q: %w", buf.String(), err)
 	}
 
 	return buf.String(), nil
@@ -142,7 +147,7 @@ func goBuild(ctx context.Context, workDir, tags, target, pkg string) (output str
 func goGet(ctx context.Context, workDir, pkg string) error {
 	buf, err := cmd.Execute(ctx, workDir, "go", "get", "-v", "-d", pkg)
 	if err != nil {
-		return errors.Wrapf(err, "cmd.Execute %q", buf.String())
+		return fmt.Errorf("cmd.Execute %q: %w", buf.String(), err)
 	}
 
 	return nil
@@ -151,7 +156,7 @@ func goGet(ctx context.Context, workDir, pkg string) error {
 func goModInit(ctx context.Context, workDir string) error {
 	_, err := cmd.Execute(ctx, workDir, "go", "mod", "init", "fake")
 	if err != nil {
-		return errors.Wrap(err, "cmd.Execute")
+		return fmt.Errorf("cmd.Execute: %w", err)
 	}
 
 	return nil
@@ -160,7 +165,7 @@ func goModInit(ctx context.Context, workDir string) error {
 func mkTempDir() (string, error) {
 	tempDir, err := os.MkdirTemp(os.TempDir(), "go-install*")
 	if err != nil {
-		return "", errors.Wrap(err, "os.MkdirTemp")
+		return "", fmt.Errorf("os.MkdirTemp: %w", err)
 	}
 
 	return tempDir, nil

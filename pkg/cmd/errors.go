@@ -1,6 +1,6 @@
 package cmd
 
-import "github.com/pkg/errors"
+import "errors"
 
 var (
 	ErrBinNotFound = errors.New("binary not found")

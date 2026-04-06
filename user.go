@@ -59,6 +59,7 @@ type (
 	TokenRepository interface {
 		Search(ctx context.Context, token string) (*Token, error)
 		Create(ctx context.Context, token *Token) (*Token, error)
+		DeleteExpired(ctx context.Context) (int64, error)
 	}
 
 	UserUseCase interface {

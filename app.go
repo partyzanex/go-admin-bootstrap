@@ -1,16 +1,18 @@
 package goadmin
 
 import (
+	"cmp"
 	"embed"
 	"fmt"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
-	"sort"
+	"slices"
 
 	"github.com/CloudyKit/jet/v6"
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
+	echomiddleware "github.com/labstack/echo/v4/middleware"
 
 	"github.com/partyzanex/go-admin-bootstrap/assets"
 	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
@@ -29,16 +31,16 @@ type App struct {
 
 func New(config *Config) (*App, error) {
 	if err := config.Validate(); err != nil {
-		return nil, errors.Wrap(err, "invalid config")
+		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
 	if err := migrations.Up(config.DBConfig.DB, config.DBConfig.MigrationsTable); err != nil {
-		return nil, errors.Wrap(err, "cannot up migrations")
+		return nil, fmt.Errorf("cannot up migrations: %w", err)
 	}
 
 	baseURL, err := url.Parse(config.BaseURL)
 	if err != nil {
-		return nil, errors.Wrapf(err, "cannot parse %q as base url", config.BaseURL)
+		return nil, fmt.Errorf("cannot parse %q as base url: %w", config.BaseURL, err)
 	}
 
 	e := echo.New()
@@ -56,7 +58,7 @@ func New(config *Config) (*App, error) {
 
 	err = app.CreateAssets()
 	if err != nil {
-		return nil, errors.Wrap(err, "cannot create sources")
+		return nil, fmt.Errorf("cannot create sources: %w", err)
 	}
 
 	return app, nil
@@ -106,14 +108,14 @@ func (app *App) CreateAssets() error {
 		javascriptSources = append(javascriptSources, sources...)
 	}
 
-	sort.Slice(javascriptSources, func(i, j int) bool {
-		return javascriptSources[i].SortOrder < javascriptSources[j].SortOrder
+	slices.SortFunc(javascriptSources, func(a, b *Asset) int {
+		return cmp.Compare(a.SortOrder, b.SortOrder)
 	})
 
 	for _, source := range javascriptSources {
 		err := app.createSource(app.config.AssetsPath, source, &assets.JS)
 		if err != nil {
-			return errors.Wrapf(err, "cannot create source %s", source.Path)
+			return fmt.Errorf("cannot create source %s: %w", source.Path, err)
 		}
 	}
 
@@ -121,14 +123,14 @@ func (app *App) CreateAssets() error {
 		stylesheetSources = append(stylesheetSources, sources...)
 	}
 
-	sort.Slice(stylesheetSources, func(i, j int) bool {
-		return stylesheetSources[i].SortOrder < stylesheetSources[j].SortOrder
+	slices.SortFunc(stylesheetSources, func(a, b *Asset) int {
+		return cmp.Compare(a.SortOrder, b.SortOrder)
 	})
 
 	for _, source := range stylesheetSources {
 		err := app.createSource(app.config.AssetsPath, source, &assets.CSS)
 		if err != nil {
-			return errors.Wrapf(err, "cannot create source %q", source.Path)
+			return fmt.Errorf("cannot create source %q: %w", source.Path, err)
 		}
 	}
 
@@ -139,8 +141,7 @@ func (app *App) CreateAssets() error {
 	for _, source := range viewSources {
 		err := app.createSource(app.config.ViewsPath, source, &views.Sources)
 		if err != nil {
-			// todo: wrap error
-			return err
+			return fmt.Errorf("cannot create view source %s: %w", source.Path, err)
 		}
 	}
 
@@ -152,7 +153,7 @@ func (*App) createSource(path string, source *Asset, fs *embed.FS) (err error) {
 
 	stat, err := os.Stat(sourcePath)
 	if err != nil && !os.IsNotExist(err) {
-		return errors.Wrapf(err, "loading asset %s source failed", source.Path)
+		return fmt.Errorf("loading asset %s source failed: %w", source.Path, err)
 	}
 
 	if stat != nil {
@@ -166,17 +167,17 @@ func (*App) createSource(path string, source *Asset, fs *embed.FS) (err error) {
 
 	b, err = fs.ReadFile(source.Path)
 	if err != nil {
-		return errors.Wrapf(err, "cannot read file %q", source.Path)
+		return fmt.Errorf("cannot read file %q: %w", source.Path, err)
 	}
 
-	err = os.MkdirAll(sourceDir, os.ModePerm)
+	err = os.MkdirAll(sourceDir, 0o750) //nolint:mnd // standard directory permission
 	if err != nil {
-		return errors.Wrapf(err, "make assets dir %s failed", sourceDir)
+		return fmt.Errorf("make assets dir %s failed: %w", sourceDir, err)
 	}
 
-	err = os.WriteFile(sourcePath, b, os.ModePerm)
+	err = os.WriteFile(sourcePath, b, 0o600) //nolint:mnd // standard file permission
 	if err != nil {
-		return errors.Wrapf(err, "cannot write file %q", sourcePath)
+		return fmt.Errorf("cannot write file %q: %w", sourcePath, err)
 	}
 
 	return nil
@@ -201,8 +202,13 @@ func (app *App) setStaticGroup() {
 
 func (app *App) setDefaultRoutes() {
 	app.admin = app.echo.Group(app.baseURL.Path, withViewData)
-	app.admin.GET(LoginURL, WrapHandler(Login))
-	app.admin.POST(LoginURL, WrapHandler(Login))
+
+	// Rate-limited login routes
+	loginGroup := app.admin.Group(LoginURL, echomiddleware.RateLimiter(
+		echomiddleware.NewRateLimiterMemoryStore(LoginRateLimitPerSec),
+	))
+	loginGroup.GET("", WrapHandler(Login))
+	loginGroup.POST("", WrapHandler(Login))
 
 	app.admin.Any(LogoutURL, WrapHandler(Logout), AuthByCookie)
 	app.admin.GET(DashboardURL, WrapHandler(Dashboard), AuthByCookie)
@@ -221,6 +227,16 @@ func (app *App) setDefaultMiddleware() {
 	}
 
 	app.echo.Use(withAppContext(app))
+
+	// CSRF protection for all admin routes
+	app.admin.Use(echomiddleware.CSRFWithConfig(echomiddleware.CSRFConfig{
+		TokenLength:    32,
+		TokenLookup:    "form:_csrf,header:X-CSRF-Token",
+		CookiePath:     "/",
+		CookieSecure:   !app.config.DevMode,
+		CookieHTTPOnly: true,
+		CookieSameSite: http.SameSiteStrictMode,
+	}))
 }
 
 func (app *App) setDefaultRenderer() {

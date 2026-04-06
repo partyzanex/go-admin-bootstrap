@@ -37,6 +37,12 @@ type UserSuite struct {
 
 func (s *UserSuite) BeforeTest(_, _ string) {
 	s.Require().NoError(migrations.Up(s.db, goadmin.MigrationsTable))
+
+	_, err := s.db.Exec(`DELETE FROM goadmin.auth_token`)
+	s.Require().NoError(err)
+
+	_, err = s.db.Exec(`DELETE FROM goadmin."user"`)
+	s.Require().NoError(err)
 }
 
 //nolint:funlen
@@ -250,12 +256,12 @@ func (s *UserSuite) TestSearch() {
 }
 
 func (s *UserSuite) createTestUser(ctx context.Context) *goadmin.User {
-	statuses := []interface{}{
+	statuses := []any{
 		goadmin.UserActive,
 		goadmin.UserBlocked,
 		goadmin.UserNew,
 	}
-	roles := []interface{}{
+	roles := []any{
 		goadmin.RoleUser,
 		goadmin.RoleRoot,
 		goadmin.RoleOwner,

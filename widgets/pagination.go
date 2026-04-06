@@ -118,38 +118,28 @@ func (p *Pagination) Items() []PaginationItem {
 	end := pages
 
 	if pages > p.NumLinks {
-		part := int(math.Floor(float64(p.NumLinks) / 2)) //nolint:gomnd
+		part := int(math.Floor(float64(p.NumLinks) / 2)) //nolint:mnd
 		start = p.Page - part
 		end = p.Page + part
 	}
 
-	if start < 1 {
-		end += int(math.Abs(float64(start)))
-		start = 1
-	}
-
-	if end > pages {
-		start -= end - pages
-		end = pages
-	}
+	start = max(1, start)
+	end = min(pages, end)
 
 	items := make([]PaginationItem, end-start+1)
 
-	j := 0
-
-	for i := start; i <= end; i++ {
-		items[j] = PaginationItem{
-			PageNum: i,
-			URL:     p.url(i),
-			Current: p.Page == i,
+	for i := range end - start + 1 {
+		pageNum := start + i
+		items[i] = PaginationItem{
+			PageNum: pageNum,
+			URL:     p.url(pageNum),
+			Current: p.Page == pageNum,
 		}
-
-		j++
 	}
 
 	return items
 }
 
 func (p *Pagination) url(pageNum int) string {
-	return strings.Replace(p.URLTemplate, "{page}", strconv.Itoa(pageNum), 1)
+	return strings.ReplaceAll(p.URLTemplate, "{page}", strconv.Itoa(pageNum))
 }

@@ -3,14 +3,15 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 
-	"github.com/partyzanex/go-admin-bootstrap/db/models/postgres"
 	"github.com/partyzanex/layer"
-	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
+	"github.com/partyzanex/go-admin-bootstrap/db/models/postgres"
 )
 
 type authTokenRepository struct {
@@ -26,7 +27,7 @@ func (repo *authTokenRepository) Search(ctx context.Context, token string) (*goa
 	}
 
 	if err != nil {
-		return nil, errors.Wrap(err, "search token failed")
+		return nil, fmt.Errorf("search token failed: %w", err)
 	}
 
 	return modelToToken(model), nil
@@ -37,7 +38,7 @@ func (repo *authTokenRepository) Create(ctx context.Context, token *goadmin.Toke
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
 		if err != nil {
-			return nil, errors.Wrap(err, layer.ErrCreateTransaction.Error())
+			return nil, fmt.Errorf("%s: %w", layer.ErrCreateTransaction, err)
 		}
 
 		defer layer.ExecuteTransaction(tr, &err)
@@ -47,7 +48,7 @@ func (repo *authTokenRepository) Create(ctx context.Context, token *goadmin.Toke
 
 	err = model.Insert(c, tr, boil.Infer())
 	if err != nil {
-		return nil, errors.Wrap(err, "inserting token failed")
+		return nil, fmt.Errorf("inserting token failed: %w", err)
 	}
 
 	return modelToToken(model), nil
@@ -78,6 +79,17 @@ func modelToToken(model *postgres.AuthToken) *goadmin.Token {
 	}
 
 	return token
+}
+
+func (repo *authTokenRepository) DeleteExpired(ctx context.Context) (int64, error) {
+	c, ex := layer.GetExecutor(ctx, repo.ex)
+
+	result, err := postgres.AuthTokens(qm.Where("dt_expired < NOW()")).DeleteAll(c, ex)
+	if err != nil {
+		return 0, fmt.Errorf("deleting expired tokens failed: %w", err)
+	}
+
+	return result, nil
 }
 
 func NewTokenRepository(ex layer.BoilExecutor) goadmin.TokenRepository {

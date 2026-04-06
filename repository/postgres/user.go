@@ -3,15 +3,16 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"time"
 
-	"github.com/partyzanex/go-admin-bootstrap/db/models/postgres"
 	"github.com/partyzanex/layer"
-	"github.com/pkg/errors"
 	"github.com/volatiletech/sqlboiler/v4/boil"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
+	"github.com/partyzanex/go-admin-bootstrap/db/models/postgres"
 )
 
 type userRepository struct {
@@ -35,7 +36,7 @@ func (repo *userRepository) Search(ctx context.Context, filter *goadmin.UserFilt
 
 	models, err := postgres.Users(mods...).All(c, ex)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		return nil, errors.Wrap(err, "search users failed")
+		return nil, fmt.Errorf("search users failed: %w", err)
 	}
 
 	users := make([]*goadmin.User, len(models))
@@ -60,7 +61,7 @@ func (repo *userRepository) Count(ctx context.Context, filter *goadmin.UserFilte
 
 	count, err := postgres.Users(mods...).Count(c, ex)
 	if err != nil {
-		return 0, errors.Wrap(err, "getting count of users failed")
+		return 0, fmt.Errorf("getting count of users failed: %w", err)
 	}
 
 	return count, nil
@@ -72,7 +73,7 @@ func (*userRepository) applyFilter(filter *goadmin.UserFilter, mods []qm.QueryMo
 	}
 
 	if n := len(filter.IDs); n > 0 {
-		ids := make([]interface{}, n)
+		ids := make([]any, n)
 		for i, id := range filter.IDs {
 			ids[i] = id
 		}
@@ -109,7 +110,7 @@ func (repo *userRepository) Create(ctx context.Context, user *goadmin.User) (res
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
 		if err != nil {
-			return nil, errors.Wrap(err, layer.ErrCreateTransaction.Error())
+			return nil, fmt.Errorf("%s: %w", layer.ErrCreateTransaction, err)
 		}
 
 		defer layer.ExecuteTransaction(tr, &err)
@@ -120,7 +121,7 @@ func (repo *userRepository) Create(ctx context.Context, user *goadmin.User) (res
 
 	err = model.Insert(c, tr, boil.Infer())
 	if err != nil {
-		return nil, errors.Wrap(err, "inserting user failed")
+		return nil, fmt.Errorf("inserting user failed: %w", err)
 	}
 
 	return modelToUser(model), nil
@@ -131,7 +132,7 @@ func (repo *userRepository) Update(ctx context.Context, user *goadmin.User) (res
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
 		if err != nil {
-			return nil, errors.Wrap(err, layer.ErrCreateTransaction.Error())
+			return nil, fmt.Errorf("%s: %w", layer.ErrCreateTransaction, err)
 		}
 
 		defer layer.ExecuteTransaction(tr, &err)
@@ -142,7 +143,7 @@ func (repo *userRepository) Update(ctx context.Context, user *goadmin.User) (res
 
 	_, err = model.Update(c, tr, boil.Infer())
 	if err != nil {
-		return nil, errors.Wrap(err, "updating user failed")
+		return nil, fmt.Errorf("updating user failed: %w", err)
 	}
 
 	return modelToUser(model), err
@@ -153,7 +154,7 @@ func (repo *userRepository) SetLastLogged(ctx context.Context, user *goadmin.Use
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
 		if err != nil {
-			return errors.Wrap(err, layer.ErrCreateTransaction.Error())
+			return fmt.Errorf("%s: %w", layer.ErrCreateTransaction, err)
 		}
 
 		defer layer.ExecuteTransaction(tr, &err)
@@ -162,9 +163,9 @@ func (repo *userRepository) SetLastLogged(ctx context.Context, user *goadmin.Use
 	model := userToModel(user)
 	model.DTLastLogged = time.Now().UTC()
 
-	_, err = model.Update(c, tr, boil.Infer())
+	_, err = model.Update(c, tr, boil.Whitelist(postgres.UserColumns.DTLastLogged))
 	if err != nil {
-		return errors.Wrap(err, "updating user failed")
+		return fmt.Errorf("updating user failed: %w", err)
 	}
 
 	return err
@@ -179,7 +180,7 @@ func (repo *userRepository) Delete(ctx context.Context, user *goadmin.User) (err
 	if tr == nil {
 		tr, err = repo.ex.BeginTx(ctx, nil)
 		if err != nil {
-			return errors.Wrap(err, layer.ErrCreateTransaction.Error())
+			return fmt.Errorf("%s: %w", layer.ErrCreateTransaction, err)
 		}
 
 		defer layer.ExecuteTransaction(tr, &err)
@@ -191,12 +192,12 @@ func (repo *userRepository) Delete(ctx context.Context, user *goadmin.User) (err
 	}
 
 	if err != nil {
-		return errors.Wrap(err, "search user failed")
+		return fmt.Errorf("search user failed: %w", err)
 	}
 
 	_, err = model.Delete(c, tr)
 	if err != nil {
-		return errors.Wrap(err, "deleting user failed")
+		return fmt.Errorf("deleting user failed: %w", err)
 	}
 
 	return

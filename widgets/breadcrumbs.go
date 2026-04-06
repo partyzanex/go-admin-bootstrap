@@ -1,6 +1,9 @@
 package widgets
 
-import "sort"
+import (
+	"cmp"
+	"slices"
+)
 
 type breadcrumb struct {
 	Name      string
@@ -38,8 +41,8 @@ func (b *Breadcrumbs) Add(name, url string, sortOrder *int) {
 func (b *Breadcrumbs) Sort() {
 	items := *b
 
-	sort.Slice(items, func(i, j int) bool {
-		return items[i].SortOrder < items[j].SortOrder
+	slices.SortFunc(items, func(a, c breadcrumb) int {
+		return cmp.Compare(a.SortOrder, c.SortOrder)
 	})
 
 	*b = items

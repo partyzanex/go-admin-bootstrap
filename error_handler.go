@@ -1,6 +1,7 @@
 package goadmin
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -42,7 +43,7 @@ func (data viewData) JetVars() jet.VarMap {
 	return vars
 }
 
-func (viewData) JetData() map[string]interface{} {
+func (viewData) JetData() map[string]any {
 	return nil
 }
 
@@ -50,30 +51,41 @@ func HTMLError(e error, ctx echo.Context) {
 	defer ctx.Logger().Errorf("html error: %s", e)
 
 	code := http.StatusInternalServerError
-	title, details := "", ""
+	title := ""
+	userMessage := "Внутренняя ошибка сервера"
 
 	if he, ok := e.(*echo.HTTPError); ok {
 		code = he.Code
 
-		if he.Internal != nil {
-			title = he.Internal.Error()
-		} else {
-			switch code {
-			case http.StatusBadRequest:
-				title = "Bad Request"
-			case http.StatusInternalServerError:
+		switch code {
+		case http.StatusBadRequest:
+			title = "Bad Request"
+			userMessage = fmt.Sprintf("%v", he.Message)
+		case http.StatusNotFound:
+			title = "Not Found"
+			userMessage = "Not Found"
+		case http.StatusForbidden:
+			title = "Forbidden"
+			userMessage = "Forbidden"
+		case http.StatusUnauthorized:
+			title = "Unauthorized"
+			userMessage = "Unauthorized"
+		case http.StatusInternalServerError:
+			title = "Internal Server Error"
+		default:
+			if code < http.StatusInternalServerError {
+				title = fmt.Sprintf("%v", he.Message)
+				userMessage = title
+			} else {
 				title = "Internal Server Error"
-			case http.StatusNotFound:
-				title = "Not Found"
 			}
 		}
 	}
 
 	data := &viewData{
-		Code:    code,
-		Title:   title,
-		Error:   e.Error(),
-		Details: details,
+		Code:  code,
+		Title: title,
+		Error: userMessage,
 	}
 
 	err := ctx.Render(code, "errors/error.jet", data)
@@ -86,13 +98,18 @@ func JSONError(e error, ctx echo.Context) {
 	defer ctx.Logger().Errorf("json error: %s", e)
 
 	code := http.StatusInternalServerError
+	userMessage := "Internal server error"
+
 	if he, ok := e.(*echo.HTTPError); ok {
 		code = he.Code
+		if code < http.StatusInternalServerError {
+			userMessage = fmt.Sprintf("%v", he.Message)
+		}
 	}
 
 	resp := &Response{
 		Success: false,
-		Error:   e.Error(),
+		Error:   userMessage,
 	}
 
 	if err := ctx.JSON(code, resp); err != nil {
@@ -101,9 +118,9 @@ func JSONError(e error, ctx echo.Context) {
 }
 
 type Response struct {
-	Success bool        `json:"success"`
-	Error   string      `json:"error,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+	Data    any    `json:"data,omitempty"`
 }
 
 func HTTPError(e error, ctx echo.Context) {

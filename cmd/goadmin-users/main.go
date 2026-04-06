@@ -6,13 +6,12 @@ import (
 	"fmt"
 
 	_ "github.com/lib/pq"
-
-	"github.com/partyzanex/go-admin-bootstrap/repository/postgres"
-	"github.com/partyzanex/go-admin-bootstrap/usecase"
 	"github.com/spf13/pflag"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
+	"github.com/partyzanex/go-admin-bootstrap/repository/postgres"
+	"github.com/partyzanex/go-admin-bootstrap/usecase"
 )
 
 func main() {

@@ -1,6 +1,10 @@
 package goadmin
 
-import "github.com/labstack/echo/v4"
+import (
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+)
 
 type AdminHandler func(ctx *AppContext) error
 
@@ -24,6 +28,10 @@ func AuthByCookie(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 
 		u, err := authByCookie(ac)
 		if err != nil {
+			if he, ok := err.(*echo.HTTPError); ok && he.Code == http.StatusUnauthorized {
+				return ctx.Redirect(http.StatusFound, ac.URL(LoginURL))
+			}
+
 			return err
 		}
 
@@ -56,6 +64,11 @@ func withViewData(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 		user, ok := ac.Get(UserContextKey).(*User)
 		if ok {
 			data.User = user
+		}
+
+		// Pass CSRF token to templates if available
+		if csrfToken, ok := ac.Get("csrf").(string); ok {
+			data.Set("csrf_token", csrfToken)
 		}
 
 		sortOrder := -100

@@ -2,11 +2,10 @@ package goadmin
 
 import (
 	"embed"
+	"fmt"
 	"io"
 	"path/filepath"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 type FSLoader struct {
@@ -43,7 +42,7 @@ func (l *FSLoader) Open(templatePath string) (io.ReadCloser, error) {
 
 	r, err := l.fs.Open(templatePath)
 	if err != nil {
-		return nil, errors.Wrapf(err, "cannot open %q file", templatePath)
+		return nil, fmt.Errorf("cannot open %q file: %w", templatePath, err)
 	}
 
 	return r, nil
