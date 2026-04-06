@@ -1,6 +1,7 @@
 package goadmin
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -65,7 +66,8 @@ func HTMLError(e error, ctx echo.Context) {
 	title := ""
 	userMessage := "Внутренняя ошибка сервера"
 
-	if he, ok := e.(*echo.HTTPError); ok {
+	var he *echo.HTTPError
+	if errors.As(e, &he) {
 		code = he.Code
 
 		switch code {
@@ -113,7 +115,8 @@ func JSONError(e error, ctx echo.Context) {
 	code := http.StatusInternalServerError
 	userMessage := "Internal server error"
 
-	if he, ok := e.(*echo.HTTPError); ok {
+	var he *echo.HTTPError
+	if errors.As(e, &he) {
 		code = he.Code
 		if code < http.StatusInternalServerError {
 			userMessage = fmt.Sprintf("%v", he.Message)
@@ -142,7 +145,9 @@ func HTTPError(e error, ctx echo.Context) {
 	defer logger.Error("http error", "err", e)
 
 	code := http.StatusInternalServerError
-	if he, ok := e.(*echo.HTTPError); ok {
+
+	var he *echo.HTTPError
+	if errors.As(e, &he) {
 		code = he.Code
 	}
 

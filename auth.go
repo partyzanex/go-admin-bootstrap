@@ -149,7 +149,7 @@ func authByRefreshToken(ctx *AppContext) (*User, error) {
 	}
 
 	token, err := ctx.UserCase().SearchToken(ctx.Ctx(), cookie.Value)
-	if errors.Is(err, ErrTokenExpired) || errors.Is(err, ErrTokenNotFound) {
+	if IsExpired(err) || IsNotFound(err) {
 		return nil, echo.NewHTTPError(http.StatusUnauthorized)
 	}
 

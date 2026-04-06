@@ -31,7 +31,7 @@ type App struct {
 	baseURL *url.URL
 }
 
-func New(config *Config) (*App, error) {
+func New(config *Config, opts ...Option) (*App, error) {
 	if err := config.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
@@ -48,11 +48,33 @@ func New(config *Config) (*App, error) {
 	e := echo.New()
 	e.HTTPErrorHandler = errorHandler
 
-	app := new(App)
-	app.config = config.Clone()
-	app.echo = e
-	app.baseURL = baseURL
+	app := &App{
+		config:  config.Clone(),
+		echo:    e,
+		baseURL: baseURL,
+	}
 
+	for _, opt := range opts {
+		if optErr := opt(app); optErr != nil {
+			return nil, fmt.Errorf("applying option: %w", optErr)
+		}
+	}
+
+	app.applyDefaults()
+	app.setStaticGroup()
+	app.setDefaultRoutes()
+	app.setDefaultMiddleware()
+	app.setDefaultRenderer()
+
+	err = app.CreateAssets()
+	if err != nil {
+		return nil, fmt.Errorf("cannot create sources: %w", err)
+	}
+
+	return app, nil
+}
+
+func (app *App) applyDefaults() {
 	if app.config.AccessCookieName == "" {
 		app.config.AccessCookieName = DefaultAccessCookieName
 	}
@@ -69,23 +91,11 @@ func New(config *Config) (*App, error) {
 		app.config.RefreshTokenTTL = DefaultRefreshTokenTTL
 	}
 
-	if config.Logger != nil {
-		app.logger = config.Logger
+	if app.config.Logger != nil {
+		app.logger = app.config.Logger
 	} else {
 		app.logger = slog.Default()
 	}
-
-	app.setStaticGroup()
-	app.setDefaultRoutes()
-	app.setDefaultMiddleware()
-	app.setDefaultRenderer()
-
-	err = app.CreateAssets()
-	if err != nil {
-		return nil, fmt.Errorf("cannot create sources: %w", err)
-	}
-
-	return app, nil
 }
 
 func (app *App) Static() *echo.Group {
@@ -111,7 +121,7 @@ func (app *App) Close() error {
 func (app *App) CreateAssets() error {
 	assetsByKind := make(map[AssetKind][]*Asset)
 
-	for _, source := range app.config.Assets {
+	for _, source := range app.config.assets {
 		_, ok := assetsByKind[source.Kind]
 		if !ok {
 			assetsByKind[source.Kind] = []*Asset{source}
@@ -246,7 +256,7 @@ func (app *App) setDefaultRoutes() {
 }
 
 func (app *App) setDefaultMiddleware() {
-	for _, mw := range app.config.Middleware {
+	for _, mw := range app.config.middleware {
 		app.echo.Use(mw)
 	}
 

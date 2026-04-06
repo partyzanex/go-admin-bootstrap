@@ -133,7 +133,7 @@ func (repo *userRepository) Delete(ctx context.Context, user *goadmin.User) erro
 	}
 
 	if rows == 0 {
-		return goadmin.ErrUserNotFound
+		return goadmin.NewUserNotFoundError(user.ID)
 	}
 
 	return nil
@@ -144,7 +144,7 @@ func GetUserByID(ctx context.Context, db *bun.DB, id int64) (*goadmin.User, erro
 
 	err := db.NewSelect().Model(model).Where("u.id = ?", id).Scan(ctx)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, goadmin.ErrUserNotFound
+		return nil, goadmin.NewUserNotFoundError(id)
 	}
 
 	if err != nil {

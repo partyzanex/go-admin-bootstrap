@@ -34,7 +34,7 @@ func Login(ctx *AppContext) error {
 
 	if ctx.Request().Method == http.MethodPost {
 		_, err = auth(ctx)
-		if errors.Is(err, ErrUserNotFound) || errors.Is(err, ErrWrongPassword) {
+		if IsNotFound(err) || errors.Is(err, ErrWrongPassword) {
 			data.Set("err", "Неверный логин или пароль")
 			return ctx.Render(http.StatusUnauthorized, "auth/login", data)
 		}

@@ -1,6 +1,7 @@
 package goadmin
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -29,7 +30,8 @@ func AuthByCookie(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 
 		u, err := authByCookie(ac)
 		if err != nil {
-			if he, ok := err.(*echo.HTTPError); ok && he.Code == http.StatusUnauthorized {
+			var he *echo.HTTPError
+			if errors.As(err, &he) && he.Code == http.StatusUnauthorized {
 				return ctx.Redirect(http.StatusFound, ac.URL(LoginURL))
 			}
 

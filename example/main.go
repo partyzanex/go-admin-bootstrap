@@ -44,21 +44,23 @@ func run() error {
 	tokenRepo := postgres.NewTokenRepository(db)
 	userCase := usecase.NewUserCase(userRepo, tokenRepo)
 
-	admin, err := goadmin.New(&goadmin.Config{
-		Host:             "localhost",
-		Port:             9900,
-		DevMode:          true,
-		BaseURL:          "http://localhost:9900/admin",
-		ViewsPath:        "./views",
-		AssetsPath:       "./assets",
-		AccessCookieName: "access_token",
-		JWTSecret:        []byte(os.Getenv("JWT_SECRET")),
-		Logger:           logger,
-		DBConfig: goadmin.DBConfig{
-			DB: db,
+	admin, err := goadmin.New(
+		&goadmin.Config{
+			Host:             "localhost",
+			Port:             9900,
+			DevMode:          true,
+			BaseURL:          "http://localhost:9900/admin",
+			ViewsPath:        "./views",
+			AssetsPath:       "./assets",
+			AccessCookieName: "access_token",
+			JWTSecret:        []byte(os.Getenv("JWT_SECRET")),
+			Logger:           logger,
+			DBConfig: goadmin.DBConfig{
+				DB: db,
+			},
+			UserCase: userCase,
 		},
-		UserCase: userCase,
-		Middleware: []echo.MiddlewareFunc{
+		goadmin.WithMiddleware(
 			middleware.Recover(),
 			middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 				LogStatus: true,
@@ -74,8 +76,8 @@ func run() error {
 					return nil
 				},
 			}),
-		},
-	})
+		),
+	)
 	if err != nil {
 		return fmt.Errorf("creating admin: %w", err)
 	}

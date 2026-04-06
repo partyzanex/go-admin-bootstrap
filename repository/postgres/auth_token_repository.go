@@ -24,7 +24,7 @@ func (repo *authTokenRepository) Search(ctx context.Context, token string) (*goa
 
 	err := repo.db.NewSelect().Model(model).Where("t.token = ?", token).Scan(ctx)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, goadmin.ErrTokenNotFound
+		return nil, goadmin.NewTokenNotFoundError(token)
 	}
 
 	if err != nil {

@@ -33,9 +33,11 @@ type (
 		UserCase UserUseCase
 		Logger   *slog.Logger
 
-		Middleware []echo.MiddlewareFunc
-		Assets     []*Asset
+		middleware []echo.MiddlewareFunc
+		assets     []*Asset
 	}
+
+	Option func(*App) error
 )
 
 func (config *Config) Validate() error {

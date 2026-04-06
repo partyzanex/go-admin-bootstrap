@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/spf13/pflag"
@@ -62,7 +61,7 @@ func main() {
 		return
 	}
 
-	if !errors.Is(err, goadmin.ErrUserNotFound) {
+	if !goadmin.IsNotFound(err) {
 		fmt.Printf("searching user failed: %s\n", err)
 
 		return

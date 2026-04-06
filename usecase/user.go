@@ -59,7 +59,7 @@ func (uc *userCase) SearchByLogin(ctx context.Context, login string) (*goadmin.U
 	}
 
 	if len(users) == 0 {
-		return nil, goadmin.ErrUserNotFound
+		return nil, goadmin.NewUserNotFoundError(login)
 	}
 
 	return users[0], nil
@@ -76,7 +76,7 @@ func (uc *userCase) SearchByID(ctx context.Context, id int64) (*goadmin.User, er
 	}
 
 	if len(users) == 0 {
-		return nil, goadmin.ErrUserNotFound
+		return nil, goadmin.NewUserNotFoundError(id)
 	}
 
 	return users[0], nil
@@ -166,7 +166,7 @@ func (uc *userCase) SearchToken(ctx context.Context, token string) (*goadmin.Tok
 	}
 
 	if authToken.DTExpired.Before(time.Now()) {
-		return authToken, goadmin.ErrTokenExpired
+		return authToken, goadmin.NewTokenExpiredError(token)
 	}
 
 	return authToken, nil
