@@ -45,7 +45,7 @@ migration-down: pg-wait-install goose-install local-db-up
 create-default-user: migration-up
 	go run $(CURDIR)/cmd/goadmin-users create-user \
 		--dsn=$(POSTGRES_DSN) \
-		--login="admin@example.com" --password="Admin123" --name="Admin" --role="owner"
+		--login="admin@example.com" --password="Admin123" --name="Admin" --role="owner" # dev only — use GOADMIN_PASSWORD in production
 
 .PHONY: run-example
 run-example: create-default-user
@@ -61,3 +61,9 @@ lint:
 test: migration-up
 	$(PG_WAIT_BIN) -d $(POSTGRES_DSN) && \
 	TEST_PG=$(POSTGRES_DSN) go test -race -v -count=1 -tags 'integration' ./...
+
+.PHONY: cover
+cover: migration-up
+	$(PG_WAIT_BIN) -d $(POSTGRES_DSN) && \
+	TEST_PG=$(POSTGRES_DSN) go test -race -count=1 -tags 'integration' -coverprofile=coverage.out ./... && \
+	go tool cover -html=coverage.out -o coverage.html

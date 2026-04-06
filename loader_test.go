@@ -18,3 +18,18 @@ func TestFSLoader_Open(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, r)
 }
+
+func TestFSLoader_Exists_NonExistentDir(t *testing.T) {
+	loader := NewFSLoader(&views.Sources)
+
+	// Directory does not exist → ReadDir will return an error → Exists will return false
+	assert.False(t, loader.Exists("nonexistent/template.jet"))
+}
+
+func TestFSLoader_Open_NonExistent(t *testing.T) {
+	loader := NewFSLoader(&views.Sources)
+
+	_, err := loader.Open("auth/nonexistent.jet")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot open")
+}

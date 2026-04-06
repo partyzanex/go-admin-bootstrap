@@ -1,6 +1,6 @@
 module github.com/partyzanex/go-admin-bootstrap
 
-go 1.26.0
+go 1.26.1
 
 require (
 	github.com/CloudyKit/jet/v6 v6.3.2
@@ -16,6 +16,7 @@ require (
 	github.com/uptrace/bun/driver/pgdriver v1.2.18
 	github.com/urfave/cli/v3 v3.8.0
 	golang.org/x/crypto v0.49.0
+	golang.org/x/term v0.41.0
 )
 
 require (
@@ -42,8 +43,8 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
-	go.opentelemetry.io/otel v1.40.0 // indirect
-	go.opentelemetry.io/otel/trace v1.40.0 // indirect
+	go.opentelemetry.io/otel v1.43.0 // indirect
+	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.52.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect

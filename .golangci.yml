@@ -8,9 +8,22 @@ formatters:
     goimports:
       local-prefixes:
         - github.com/partyzanex/go-admin-bootstrap
-
 linters:
   default: none
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - mnd
+          - noctx
+          - gosec
+          - err113
+          - goconst
+          - gocritic
+          - unparam
+          - wsl_v5
+          - funlen
+          - dupl
   enable:
     - asciicheck
     - bodyclose
@@ -104,10 +117,3 @@ linters:
         - name: package-comments
           disabled: true
 
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - mnd
-        - noctx
-        - gosec

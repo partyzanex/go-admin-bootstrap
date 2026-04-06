@@ -209,6 +209,121 @@ func (s *UserSuite) TestSearch() {
 	}
 }
 
+func (s *UserSuite) TestCreate() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	user, err := s.repo.Create(ctx, &goadmin.User{
+		Login:    fmt.Sprintf("%s@example.com", testutils.RandomString(10)),
+		Password: testutils.RandomString(64),
+		Status:   goadmin.UserActive,
+		Name:     testutils.RandomString(20),
+		Role:     goadmin.RoleUser,
+	})
+	s.Require().NoError(err)
+	s.Require().NotNil(user)
+	s.NotZero(user.ID)
+	s.NotZero(user.DTCreated)
+	s.NotZero(user.DTUpdated)
+	s.True(user.PasswordIsEncoded)
+}
+
+func (s *UserSuite) TestUpdate() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	created := s.createTestUser(ctx)
+
+	created.Name = testutils.RandomString(20)
+	created.Status = goadmin.UserBlocked
+	created.Role = goadmin.RoleOwner
+
+	updated, err := s.repo.Update(ctx, created)
+	s.Require().NoError(err)
+	s.Require().NotNil(updated)
+	s.Equal(created.ID, updated.ID)
+	s.Equal(created.Name, updated.Name)
+	s.Equal(goadmin.UserBlocked, updated.Status)
+	s.Equal(goadmin.RoleOwner, updated.Role)
+}
+
+func (s *UserSuite) TestSetLastLogged() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	user := s.createTestUser(ctx)
+	s.Zero(user.DTLastLogged)
+
+	err := s.repo.SetLastLogged(ctx, user)
+	s.Require().NoError(err)
+
+	result, err := GetUserByID(ctx, s.db, user.ID)
+	s.Require().NoError(err)
+	s.NotZero(result.DTLastLogged)
+}
+
+func (s *UserSuite) TestDelete() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	user := s.createTestUser(ctx)
+
+	err := s.repo.Delete(ctx, user)
+	s.Require().NoError(err)
+
+	_, err = GetUserByID(ctx, s.db, user.ID)
+	s.Require().Error(err)
+
+	var notFound *goadmin.NotFoundError
+	s.ErrorAs(err, &notFound)
+}
+
+func (s *UserSuite) TestDelete_ZeroID() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := s.repo.Delete(ctx, &goadmin.User{ID: 0})
+	s.ErrorIs(err, goadmin.ErrRequiredUserID)
+}
+
+func (s *UserSuite) TestDelete_NotFound() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := s.repo.Delete(ctx, &goadmin.User{ID: testutils.RandInt64(999999, 9999999)})
+	s.Require().Error(err)
+
+	var notFound *goadmin.NotFoundError
+	s.ErrorAs(err, &notFound)
+}
+
+func (s *UserSuite) TestGetUserByID() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	created := s.createTestUser(ctx)
+
+	got, err := GetUserByID(ctx, s.db, created.ID)
+	s.Require().NoError(err)
+	s.Require().NotNil(got)
+	s.Equal(created.ID, got.ID)
+	s.Equal(created.Login, got.Login)
+	s.Equal(created.Name, got.Name)
+	s.Equal(created.Status, got.Status)
+	s.Equal(created.Role, got.Role)
+}
+
+func (s *UserSuite) TestGetUserByID_NotFound() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	_, err := GetUserByID(ctx, s.db, testutils.RandInt64(999999, 9999999))
+	s.Require().Error(err)
+
+	var notFound *goadmin.NotFoundError
+	s.ErrorAs(err, &notFound)
+}
+
 func (s *UserSuite) createTestUser(ctx context.Context) *goadmin.User {
 	statuses := []any{
 		goadmin.UserActive,

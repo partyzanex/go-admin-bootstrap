@@ -55,7 +55,7 @@ func (p *Pagination) ParsePage() {
 	page := p.Ctx.QueryParam(p.PageParam)
 	p.Page, _ = strconv.Atoi(page)
 
-	if p.Page == 0 {
+	if p.Page < 1 {
 		p.Page = 1
 	}
 

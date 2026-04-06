@@ -2,6 +2,7 @@ package urfavecli
 
 import (
 	"context"
+	"os"
 
 	"github.com/urfave/cli/v3"
 
@@ -16,7 +17,7 @@ func CreateUserCommand() *cli.Command {
 		Flags: []cli.Flag{
 			&cli.StringFlag{Name: "dsn", Required: true, Usage: "PostgreSQL DSN"},
 			&cli.StringFlag{Name: "login", Required: true, Usage: "user email"},
-			&cli.StringFlag{Name: "password", Required: true, Usage: "user password"},
+			&cli.StringFlag{Name: "password", Usage: "password (dev/CI shortcut; prefer GOADMIN_PASSWORD env or interactive prompt)"},
 			&cli.StringFlag{Name: "name", Required: true, Usage: "user display name"},
 			&cli.StringFlag{Name: "role", Value: "user", Usage: "user role (owner|root|user)"},
 			&cli.BoolFlag{Name: "migrate", Usage: "run migrations before creating user"},
@@ -31,6 +32,7 @@ func CreateUserCommand() *cli.Command {
 				Role:            cmd.String("role"),
 				Migrate:         cmd.Bool("migrate"),
 				MigrationsTable: cmd.String("migrations-table"),
+				Stdin:           os.Stdin,
 			})
 		},
 	}

@@ -7,7 +7,9 @@ Bootstrap library for building Go admin panels with Echo v4, PostgreSQL (uptrace
 - User management (CRUD) with role-based access control (owner, root, user)
 - JWT access tokens + refresh tokens in PostgreSQL
 - Structured logging via `log/slog`
-- CSRF protection, rate limiting, secure cookies
+- CSRF protection on all state-changing routes (POST only; GET requests to destructive endpoints return 405)
+- Rate limiting on login endpoint
+- Secure cookies (HttpOnly, SameSite=Strict, Secure in production)
 - Embedded assets (JS, CSS, views) served from `embed.FS` in production
 - Goose migrations with embedded SQL
 - CLI adapters for cobra and urfave/cli v3
@@ -86,7 +88,25 @@ See `example/main.go` for a complete example with middleware and logging.
 
 ### Create User (cobra)
 
+Password is resolved in priority order: `--password` flag → `GOADMIN_PASSWORD` env → interactive prompt → piped stdin.
+Use the flag only in dev/CI environments; prefer the env var or prompt in production.
+
 ```bash
+# Interactive prompt (production-safe — password is not visible in process list or shell history)
+go run ./cmd/goadmin-users create-user \
+    --dsn="postgres://user:pass@localhost:5432/db?sslmode=disable" \
+    --login="admin@example.com" \
+    --name="Admin" \
+    --role="owner"
+
+# Environment variable (CI/CD)
+GOADMIN_PASSWORD="Admin123" go run ./cmd/goadmin-users create-user \
+    --dsn="postgres://user:pass@localhost:5432/db?sslmode=disable" \
+    --login="admin@example.com" \
+    --name="Admin" \
+    --role="owner"
+
+# --password flag (dev shortcut only)
 go run ./cmd/goadmin-users create-user \
     --dsn="postgres://user:pass@localhost:5432/db?sslmode=disable" \
     --login="admin@example.com" \
@@ -109,7 +129,8 @@ make local-db-up     # Start PostgreSQL via docker compose
 make migration-up    # Run migrations
 make create-default-user  # Create admin user
 make run-example     # Start example application
-make test            # Run all tests (requires PostgreSQL)
+make test            # Run unit tests
+make cover           # Run all tests (requires PostgreSQL) with coverage report
 make lint            # Run golangci-lint v2
 ```
 
@@ -131,3 +152,10 @@ make lint            # Run golangci-lint v2
 | Logger | *slog.Logger | no | slog.Default() | Structured logger |
 
 Options via `goadmin.WithMiddleware(...)` and `goadmin.WithAssets(...)`.
+
+## Security
+
+- **CSRF**: All admin routes use Echo's CSRF middleware. State-changing operations (logout, delete) are POST-only — GET requests return 405. Tokens are validated via cookie + header/form double-submit pattern.
+- **Authentication**: JWT access tokens in HttpOnly cookies. Refresh tokens stored in PostgreSQL and invalidated on logout.
+- **Rate limiting**: Login endpoint is rate-limited to prevent brute-force attacks.
+- **Roles**: `owner` and `root` users can manage other users. `user` role has read-only dashboard access. Users cannot delete themselves.

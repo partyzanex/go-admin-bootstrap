@@ -57,6 +57,10 @@ func (config *Config) Validate() error {
 		return ErrRequiredJWTSecret
 	}
 
+	if !config.DevMode && len(config.JWTSecret) < MinJWTSecretLen {
+		return ErrJWTSecretTooShort
+	}
+
 	if config.UserCase == nil {
 		return ErrRequiredUserCase
 	}

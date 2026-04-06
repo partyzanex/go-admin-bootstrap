@@ -22,9 +22,15 @@ func Login(ctx *AppContext) error {
 	}
 
 	sortOrder := -1
+
 	data := &Data{
 		Title: "Login",
 	}
+
+	if csrfToken, ok := ctx.Get("csrf").(string); ok {
+		data.Set("csrf_token", csrfToken)
+	}
+
 	data.Breadcrumbs.Add("Login", ctx.URL(LoginURL), &sortOrder)
 
 	if ctx.Request().Method == http.MethodPost {
@@ -45,12 +51,30 @@ func Login(ctx *AppContext) error {
 }
 
 func Logout(ctx *AppContext) error {
-	// Extract user ID from JWT without status check — blocked users must be able to logout
 	cfg := ctx.app.config
+
+	// Try to identify user from JWT access cookie
+	var userID int64
 
 	if cookie, err := ctx.Cookie(cfg.AccessCookieName + accessCookieSuffix); err == nil {
 		if claims, parseErr := parseAccessToken(cookie.Value, cfg.JWTSecret); parseErr == nil {
-			_ = ctx.UserCase().RevokeUserTokens(ctx.Ctx(), claims.UserID)
+			userID = claims.UserID
+		}
+	}
+
+	// Fallback: look up user via refresh cookie if JWT is expired/missing
+	if userID == 0 {
+		if cookie, err := ctx.Cookie(cfg.AccessCookieName + refreshCookieSuffix); err == nil {
+			if token, searchErr := ctx.UserCase().SearchToken(ctx.Ctx(), cookie.Value); searchErr == nil {
+				userID = token.UserID
+			}
+		}
+	}
+
+	// Revoke all server-side refresh tokens
+	if userID > 0 {
+		if err := ctx.UserCase().RevokeUserTokens(ctx.Ctx(), userID); err != nil {
+			return fmt.Errorf("revoking tokens: %w", err)
 		}
 	}
 
@@ -221,4 +245,8 @@ func Favicon(ctx echo.Context) error {
 	ctx.Response().Header().Add(echo.HeaderLastModified, lastModified)
 
 	return ctx.Blob(http.StatusOK, http.DetectContentType(b), b)
+}
+
+func methodNotAllowed(ctx echo.Context) error {
+	return echo.ErrMethodNotAllowed
 }

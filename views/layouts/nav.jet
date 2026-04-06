@@ -10,7 +10,12 @@
       {{ if .User.Role == "owner" || .User.Role == "root" }}
       <li class="nav-item"><a href="{{ adminPath }}/users" class="nav-link">Users</a></li>
       {{ end }}
-      <li class="nav-item"><a href="{{ adminPath }}/logout" class="nav-link">Logout [{{ .User.Name }}]</a></li>
+      <li class="nav-item">
+        <form method="POST" action="{{ adminPath }}/logout" style="display:inline;">
+          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+          <button type="submit" class="nav-link btn btn-link" style="padding:0;border:none;background:none;color:inherit;">Logout [{{ .User.Name }}]</button>
+        </form>
+      </li>
     {{ else }}
       <li class="nav-item"><a href="{{ adminPath }}/login" class="nav-link">Login</a></li>
     {{ end }}

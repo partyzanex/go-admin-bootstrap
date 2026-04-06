@@ -1,8 +1,11 @@
 package goadmin
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -15,6 +18,15 @@ const (
 	accessCookieSuffix  = ""
 	refreshCookieSuffix = "_refresh"
 )
+
+// hashRefreshToken returns a hex-encoded HMAC-SHA256 of the raw token value.
+// Only the hash is stored in the database; the raw value lives only in the cookie.
+func hashRefreshToken(key []byte, token string) string {
+	mac := hmac.New(sha256.New, key)
+	mac.Write([]byte(token))
+
+	return hex.EncodeToString(mac.Sum(nil))
+}
 
 func generateSecureToken(length int) (string, error) {
 	bytes := make([]byte, length)
@@ -79,7 +91,7 @@ func setAuthCookies(ctx *AppContext, user *User) error {
 		return fmt.Errorf("creating access token: %w", err)
 	}
 
-	http.SetCookie(ctx.Response(), &http.Cookie{
+	http.SetCookie(ctx.Response(), &http.Cookie{ // #nosec G124 -- Secure is false only in DevMode; HttpOnly and SameSite=Strict are always set
 		Name:     cfg.AccessCookieName + accessCookieSuffix,
 		Value:    accessToken,
 		Expires:  accessExpires,
@@ -89,18 +101,20 @@ func setAuthCookies(ctx *AppContext, user *User) error {
 		SameSite: http.SameSiteStrictMode,
 	})
 
-	// Refresh token (random, stored in DB)
+	// Refresh token: raw value goes to the cookie, HMAC-SHA256 hash is stored in DB.
 	refreshValue, err := generateSecureToken(SecureTokenLength)
 	if err != nil {
 		return fmt.Errorf("generating refresh token: %w", err)
 	}
 
-	refreshToken, err := ctx.UserCase().CreateAuthToken(ctx.Ctx(), user, refreshValue, cfg.RefreshTokenTTL)
+	refreshToken, err := ctx.UserCase().CreateAuthToken(
+		ctx.Ctx(), user, hashRefreshToken(cfg.JWTSecret, refreshValue), cfg.RefreshTokenTTL,
+	)
 	if err != nil {
 		return fmt.Errorf("creating refresh token: %w", err)
 	}
 
-	http.SetCookie(ctx.Response(), &http.Cookie{
+	http.SetCookie(ctx.Response(), &http.Cookie{ // #nosec G124 -- Secure is false only in DevMode; HttpOnly and SameSite=Strict are always set
 		Name:     cfg.AccessCookieName + refreshCookieSuffix,
 		Value:    refreshValue,
 		Expires:  refreshToken.DTExpired,
@@ -116,22 +130,30 @@ func setAuthCookies(ctx *AppContext, user *User) error {
 func authByCookie(ctx *AppContext) (*User, error) {
 	cfg := ctx.app.config
 
-	// Try JWT access token first (no DB hit)
-	cookie, err := ctx.Cookie(cfg.AccessCookieName + accessCookieSuffix)
-	if err == nil {
-		user, jwtErr := authByJWT(ctx, cookie.Value)
-		if jwtErr == nil {
-			return user, nil
-		}
-
-		// JWT expired or invalid — fall through to refresh
-		if !errors.Is(jwtErr, jwt.ErrTokenExpired) {
-			return nil, echo.NewHTTPError(http.StatusUnauthorized)
-		}
+	// No access cookie — skip directly to refresh.
+	cookie, cookieErr := ctx.Cookie(cfg.AccessCookieName + accessCookieSuffix)
+	if cookieErr != nil {
+		return authByRefreshToken(ctx)
 	}
 
-	// Try refresh token (DB hit)
-	return authByRefreshToken(ctx)
+	user, jwtErr := authByJWT(ctx, cookie.Value)
+	if jwtErr == nil {
+		return user, nil
+	}
+
+	// Expired token — try refresh.
+	if errors.Is(jwtErr, jwt.ErrTokenExpired) {
+		return authByRefreshToken(ctx)
+	}
+
+	// Forbidden (blocked user) or infrastructure error (5xx) — propagate as-is.
+	var he *echo.HTTPError
+	if errors.As(jwtErr, &he) && (he.Code == http.StatusForbidden || he.Code >= http.StatusInternalServerError) {
+		return nil, jwtErr
+	}
+
+	// Invalid JWT or user not found — treat as unauthenticated.
+	return nil, echo.NewHTTPError(http.StatusUnauthorized)
 }
 
 func authByJWT(ctx *AppContext, tokenStr string) (*User, error) {
@@ -142,7 +164,12 @@ func authByJWT(ctx *AppContext, tokenStr string) (*User, error) {
 
 	user, err := ctx.UserCase().SearchByID(ctx.Ctx(), claims.UserID)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusUnauthorized)
+		if IsNotFound(err) {
+			return nil, echo.NewHTTPError(http.StatusUnauthorized)
+		}
+
+		return nil, echo.NewHTTPError(http.StatusInternalServerError).
+			SetInternal(fmt.Errorf("looking up user %d: %w", claims.UserID, err))
 	}
 
 	if user.Status != UserActive {
@@ -162,7 +189,7 @@ func authByRefreshToken(ctx *AppContext) (*User, error) {
 		return nil, echo.NewHTTPError(http.StatusUnauthorized)
 	}
 
-	token, err := ctx.UserCase().SearchToken(ctx.Ctx(), cookie.Value)
+	token, err := ctx.UserCase().SearchToken(ctx.Ctx(), hashRefreshToken(cfg.JWTSecret, cookie.Value))
 	if IsExpired(err) || IsNotFound(err) {
 		return nil, echo.NewHTTPError(http.StatusUnauthorized)
 	}
@@ -202,6 +229,7 @@ func clearAuthCookies(ctx *AppContext) {
 	cfg := ctx.app.config
 
 	for _, suffix := range []string{accessCookieSuffix, refreshCookieSuffix} {
+		// #nosec G124 -- Secure is false only in DevMode; HttpOnly and SameSite=Strict are always set
 		http.SetCookie(ctx.Response(), &http.Cookie{
 			Name:     cfg.AccessCookieName + suffix,
 			Value:    "",

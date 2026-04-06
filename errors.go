@@ -19,6 +19,7 @@ var (
 	ErrInvalidUserRole      = errors.New("invalid user role")
 	ErrRequiredConfig       = errors.New("required config")
 	ErrRequiredJWTSecret    = errors.New("required jwt secret")
+	ErrJWTSecretTooShort    = fmt.Errorf("jwt secret must be at least %d bytes for HS256", MinJWTSecretLen)
 	ErrUserBlocked          = errors.New("user account is not active")
 	ErrRequiredUserCase     = errors.New("required user use case")
 )

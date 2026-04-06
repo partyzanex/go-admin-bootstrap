@@ -59,7 +59,7 @@ func (data Data) Has(key string) bool {
 	}
 
 	v, ok := data.VarMap[key]
-	if !ok || v.IsNil() {
+	if !ok || !v.IsValid() {
 		return false
 	}
 

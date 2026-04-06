@@ -120,6 +120,9 @@ const defaultShutdownTimeout = 10 * time.Second
 const tokenCleanupInterval = 1 * time.Hour
 
 func (app *App) Serve(ctx context.Context) error {
+	internalCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	errCh := make(chan error, 1)
 
 	go func() {
@@ -130,12 +133,12 @@ func (app *App) Serve(ctx context.Context) error {
 		close(errCh)
 	}()
 
-	go app.runTokenCleanup(ctx)
+	go app.runTokenCleanup(internalCtx)
 
 	select {
 	case <-ctx.Done():
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), defaultShutdownTimeout)
-		defer cancel()
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), defaultShutdownTimeout)
+		defer shutdownCancel()
 
 		return app.echo.Shutdown(shutdownCtx)
 	case err := <-errCh:
@@ -308,7 +311,7 @@ func (app *App) setDefaultRoutes() {
 	app.admin = app.echo.Group(app.baseURL.Path, withViewData)
 
 	// CSRF protection for all admin routes
-	app.admin.Use(echomiddleware.CSRFWithConfig(echomiddleware.CSRFConfig{
+	app.admin.Use(echomiddleware.CSRFWithConfig(echomiddleware.CSRFConfig{ // #nosec G101 -- TokenLookup is a field-name spec, not a credential
 		TokenLength:    32,
 		TokenLookup:    "form:_csrf,header:X-CSRF-Token",
 		CookiePath:     "/",
@@ -324,14 +327,16 @@ func (app *App) setDefaultRoutes() {
 	loginGroup.GET("", WrapHandler(Login))
 	loginGroup.POST("", WrapHandler(Login))
 
-	app.admin.Any(LogoutURL, WrapHandler(Logout))
+	app.admin.POST(LogoutURL, WrapHandler(Logout))
+	app.admin.GET(LogoutURL, methodNotAllowed)
 	app.admin.GET(DashboardURL, WrapHandler(Dashboard), AuthByCookie)
 
 	adminOnly := RequireRole(RoleOwner, RoleRoot)
 	app.admin.GET(UserListURL, WrapHandler(UserList), AuthByCookie, adminOnly)
 	app.admin.GET(UserCreateURL, WrapHandler(UserCreate), AuthByCookie, adminOnly)
 	app.admin.POST(UserCreateURL, WrapHandler(UserCreate), AuthByCookie, adminOnly)
-	app.admin.GET(UserDeleteURL, WrapHandler(UserDelete), AuthByCookie, adminOnly)
+	app.admin.POST(UserDeleteURL, WrapHandler(UserDelete), AuthByCookie, adminOnly)
+	app.admin.GET(UserDeleteURL, methodNotAllowed)
 	app.admin.GET(UserUpdateURL, WrapHandler(UserUpdate), AuthByCookie, adminOnly)
 	app.admin.POST(UserUpdateURL, WrapHandler(UserUpdate), AuthByCookie, adminOnly)
 	app.admin.GET(FaviconPrefix, Favicon)

@@ -19,6 +19,7 @@ var (
 		{"plugins/jquery/jquery-3.4.1.min.js", -1000, JavaScript},
 		{"plugins/popper/popper.min.js", -900, JavaScript},
 		{"plugins/bootstrap/js/bootstrap.min.js", -800, JavaScript},
+		{"js/admin.js", 0, JavaScript},
 	}
 	CSS = []*Asset{
 		{"plugins/bootstrap/css/bootstrap.min.css", -1000, Stylesheet},
