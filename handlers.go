@@ -16,13 +16,10 @@ import (
 )
 
 func Login(ctx *AppContext) error {
-	// Only redirect if user is actually authenticated (not just has a cookie)
-	if u := ctx.User(); u != nil {
-		return ctx.Redirect(http.StatusFound, ctx.URL("/"))
+	// Check if user has a valid session — redirect to dashboard
+	if user, err := authByCookie(ctx); err == nil && user != nil {
+		return ctx.Redirect(http.StatusFound, ctx.URL(DashboardURL))
 	}
-
-	// Clear stale cookies to prevent redirect loops
-	clearAuthCookies(ctx)
 
 	sortOrder := -1
 	data := &Data{
@@ -49,7 +46,9 @@ func Login(ctx *AppContext) error {
 
 func Logout(ctx *AppContext) error {
 	if user := ctx.User(); user != nil {
-		_ = ctx.UserCase().RevokeUserTokens(ctx.Ctx(), user.ID)
+		if err := ctx.UserCase().RevokeUserTokens(ctx.Ctx(), user.ID); err != nil {
+			return fmt.Errorf("revoking tokens: %w", err)
+		}
 	}
 
 	clearAuthCookies(ctx)

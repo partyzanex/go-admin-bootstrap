@@ -20,6 +20,7 @@ var (
 	ErrRequiredConfig       = errors.New("required config")
 	ErrRequiredJWTSecret    = errors.New("required jwt secret")
 	ErrUserBlocked          = errors.New("user account is not active")
+	ErrRequiredUserCase     = errors.New("required user use case")
 )
 
 // NotFoundError indicates that a requested entity was not found.

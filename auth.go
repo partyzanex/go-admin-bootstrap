@@ -166,6 +166,11 @@ func authByRefreshToken(ctx *AppContext) (*User, error) {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
 	}
 
+	// Check user status before allowing refresh
+	if token.User.Status != UserActive {
+		return nil, echo.NewHTTPError(http.StatusForbidden).SetInternal(ErrUserBlocked)
+	}
+
 	// Revoke old refresh tokens before issuing new ones
 	if delErr := ctx.UserCase().RevokeUserTokens(ctx.Ctx(), token.User.ID); delErr != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError).SetInternal(delErr)

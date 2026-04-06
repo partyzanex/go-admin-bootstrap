@@ -57,6 +57,10 @@ func (config *Config) Validate() error {
 		return ErrRequiredJWTSecret
 	}
 
+	if config.UserCase == nil {
+		return ErrRequiredUserCase
+	}
+
 	return nil
 }
 
