@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"golang.org/x/crypto/bcrypt"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 )
@@ -106,29 +105,32 @@ func (uc *userCase) EncodePassword(user *goadmin.User) error {
 		return nil
 	}
 
-	p, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err := validatePasswordComplexity(user.Password); err != nil {
+		return fmt.Errorf("password policy: %w", err)
+	}
+
+	hashed, err := hashPassword(user.Password)
 	if err != nil {
-		return fmt.Errorf("encoding password failed: %w", err)
+		return fmt.Errorf("hashing password: %w", err)
 	}
 
 	user.PasswordIsEncoded = true
-	user.Password = string(p)
+	user.Password = hashed
 
 	return nil
 }
 
 func (uc *userCase) ComparePassword(user *goadmin.User, password string) (bool, error) {
-	err := uc.EncodePassword(user)
-	if err != nil {
-		return false, err
+	if !user.PasswordIsEncoded {
+		return false, nil
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err := comparePassword(user.Password, password)
 	if err != nil {
-		err = goadmin.ErrWrongPassword
+		return false, goadmin.ErrWrongPassword
 	}
 
-	return err == nil, err
+	return true, nil
 }
 
 func (uc *userCase) CreateAuthToken(
@@ -164,6 +166,10 @@ func (uc *userCase) SearchToken(ctx context.Context, token string) (*goadmin.Tok
 	}
 
 	return authToken, nil
+}
+
+func (uc *userCase) RevokeUserTokens(ctx context.Context, userID int64) error {
+	return uc.tokens.DeleteByUserID(ctx, userID)
 }
 
 func (uc *userCase) ListUsers(ctx context.Context, filter *goadmin.UserFilter) ([]*goadmin.User, int64, error) {

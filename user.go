@@ -79,6 +79,7 @@ type (
 
 		CreateAuthToken(ctx context.Context, user *User, cookieToken string, ttl time.Duration) (*Token, error)
 		SearchToken(ctx context.Context, token string) (*Token, error)
+		RevokeUserTokens(ctx context.Context, userID int64) error
 	}
 )
 

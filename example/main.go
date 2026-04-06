@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -33,6 +34,12 @@ func run() error {
 	slog.SetDefault(logger)
 
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(os.Getenv("PG_DSN"))))
+
+	sqldb.SetMaxOpenConns(25)                 //nolint:mnd
+	sqldb.SetMaxIdleConns(5)                  //nolint:mnd
+	sqldb.SetConnMaxLifetime(5 * time.Minute) //nolint:mnd
+	sqldb.SetConnMaxIdleTime(1 * time.Minute)
+
 	db := bun.NewDB(sqldb, pgdialect.New())
 
 	defer func() { _ = db.Close() }()

@@ -45,6 +45,28 @@ func AuthByCookie(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
+func RequireRole(roles ...UserRole) echo.MiddlewareFunc {
+	allowed := make(map[UserRole]bool, len(roles))
+	for _, r := range roles {
+		allowed[r] = true
+	}
+
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			user, ok := ctx.Get(UserContextKey).(*User)
+			if !ok || user == nil {
+				return echo.NewHTTPError(http.StatusUnauthorized)
+			}
+
+			if !allowed[user.Role] {
+				return echo.NewHTTPError(http.StatusForbidden, "insufficient permissions")
+			}
+
+			return next(ctx)
+		}
+	}
+}
+
 func withAppContext(app *App) echo.MiddlewareFunc {
 	return func(handlerFunc echo.HandlerFunc) echo.HandlerFunc {
 		return func(ctx echo.Context) error {

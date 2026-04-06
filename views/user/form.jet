@@ -3,6 +3,7 @@
 {{ block documentBody() }}
 
 <form action="{{ adminPath }}{{ formAction }}" method="post" id="user-form">
+  {{ if isset(csrf_token) }}<input type="hidden" name="_csrf" value="{{ csrf_token }}">{{ end }}
   {{ if isset(error) }}
     <div class="row">
       <div class="col-sm-7">

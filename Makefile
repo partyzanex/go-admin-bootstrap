@@ -44,7 +44,7 @@ migration-down: pg-wait-install goose-install local-db-up
 .PHONY: create-default-user
 create-default-user: migration-up
 	go run $(CURDIR)/cmd/goadmin-users --dsn=$(POSTGRES_DSN) \
-	--login="admin@example.com" --password="123456" --name="Admin" --role="owner"
+	--login="admin@example.com" --password="Admin123" --name="Admin" --role="owner"
 
 .PHONY: run-example
 run-example: create-default-user

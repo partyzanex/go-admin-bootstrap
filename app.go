@@ -66,8 +66,8 @@ func New(config *Config, opts ...Option) (*App, error) {
 
 	app.applyDefaults()
 	app.setStaticGroup()
-	app.setDefaultRoutes()
 	app.setDefaultMiddleware()
+	app.setDefaultRoutes()
 	app.setDefaultRenderer()
 
 	err = app.CreateAssets()
@@ -292,13 +292,30 @@ func (app *App) setDefaultRoutes() {
 
 	app.admin.Any(LogoutURL, WrapHandler(Logout), AuthByCookie)
 	app.admin.GET(DashboardURL, WrapHandler(Dashboard), AuthByCookie)
-	app.admin.GET(UserListURL, WrapHandler(UserList), AuthByCookie)
-	app.admin.GET(UserCreateURL, WrapHandler(UserCreate), AuthByCookie)
-	app.admin.POST(UserCreateURL, WrapHandler(UserCreate), AuthByCookie)
-	app.admin.GET(UserDeleteURL, WrapHandler(UserDelete), AuthByCookie)
-	app.admin.GET(UserUpdateURL, WrapHandler(UserUpdate), AuthByCookie)
-	app.admin.POST(UserUpdateURL, WrapHandler(UserUpdate), AuthByCookie)
+
+	adminOnly := RequireRole(RoleOwner, RoleRoot)
+	app.admin.GET(UserListURL, WrapHandler(UserList), AuthByCookie, adminOnly)
+	app.admin.GET(UserCreateURL, WrapHandler(UserCreate), AuthByCookie, adminOnly)
+	app.admin.POST(UserCreateURL, WrapHandler(UserCreate), AuthByCookie, adminOnly)
+	app.admin.GET(UserDeleteURL, WrapHandler(UserDelete), AuthByCookie, adminOnly)
+	app.admin.GET(UserUpdateURL, WrapHandler(UserUpdate), AuthByCookie, adminOnly)
+	app.admin.POST(UserUpdateURL, WrapHandler(UserUpdate), AuthByCookie, adminOnly)
 	app.admin.GET(FaviconPrefix, Favicon)
+
+	app.echo.GET(app.baseURL.Path+"/health", app.healthCheck)
+}
+
+const healthCheckTimeout = 2 * time.Second
+
+func (app *App) healthCheck(ctx echo.Context) error {
+	checkCtx, cancel := context.WithTimeout(ctx.Request().Context(), healthCheckTimeout)
+	defer cancel()
+
+	if err := app.config.DBConfig.DB.PingContext(checkCtx); err != nil {
+		return ctx.JSON(http.StatusServiceUnavailable, map[string]string{"status": "error", "db": "down"})
+	}
+
+	return ctx.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func (app *App) setDefaultMiddleware() {

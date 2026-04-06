@@ -16,15 +16,13 @@ import (
 )
 
 func Login(ctx *AppContext) error {
-	_, err := ctx.Cookie(ctx.CookieName() + accessCookieSuffix)
-	if err == nil {
+	// Only redirect if user is actually authenticated (not just has a cookie)
+	if u := ctx.User(); u != nil {
 		return ctx.Redirect(http.StatusFound, ctx.URL("/"))
 	}
 
-	u := ctx.User()
-	if u != nil {
-		return ctx.Redirect(http.StatusFound, ctx.URL("/"))
-	}
+	// Clear stale cookies to prevent redirect loops
+	clearAuthCookies(ctx)
 
 	sortOrder := -1
 	data := &Data{
@@ -33,8 +31,8 @@ func Login(ctx *AppContext) error {
 	data.Breadcrumbs.Add("Login", ctx.URL(LoginURL), &sortOrder)
 
 	if ctx.Request().Method == http.MethodPost {
-		_, err = auth(ctx)
-		if IsNotFound(err) || errors.Is(err, ErrWrongPassword) {
+		_, err := auth(ctx)
+		if IsNotFound(err) || errors.Is(err, ErrWrongPassword) || errors.Is(err, ErrUserBlocked) {
 			data.Set("err", "Неверный логин или пароль")
 			return ctx.Render(http.StatusUnauthorized, "auth/login", data)
 		}
@@ -50,6 +48,10 @@ func Login(ctx *AppContext) error {
 }
 
 func Logout(ctx *AppContext) error {
+	if user := ctx.User(); user != nil {
+		_ = ctx.UserCase().RevokeUserTokens(ctx.Ctx(), user.ID)
+	}
+
 	clearAuthCookies(ctx)
 
 	return ctx.Redirect(http.StatusFound, ctx.URL(LoginURL))

@@ -38,6 +38,11 @@ func auth(ctx *AppContext) (result User, err error) {
 		return result, err
 	}
 
+	// Check user status before allowing login
+	if user.Status != UserActive {
+		return result, ErrUserBlocked
+	}
+
 	ok, err := ctx.UserCase().ComparePassword(user, password)
 	if err != nil {
 		return result, err
@@ -135,6 +140,10 @@ func authByJWT(ctx *AppContext, tokenStr string) (*User, error) {
 		return nil, echo.NewHTTPError(http.StatusUnauthorized)
 	}
 
+	if user.Status != UserActive {
+		return nil, echo.NewHTTPError(http.StatusForbidden).SetInternal(ErrUserBlocked)
+	}
+
 	user.Current = true
 
 	return user, nil
@@ -155,6 +164,11 @@ func authByRefreshToken(ctx *AppContext) (*User, error) {
 
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError).SetInternal(err)
+	}
+
+	// Revoke old refresh tokens before issuing new ones
+	if delErr := ctx.UserCase().RevokeUserTokens(ctx.Ctx(), token.User.ID); delErr != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError).SetInternal(delErr)
 	}
 
 	// Refresh succeeded — issue new access + refresh tokens

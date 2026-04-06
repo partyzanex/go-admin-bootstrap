@@ -24,7 +24,7 @@ func main() {
 		name            = pflag.String("name", "", "user name")
 		role            = pflag.String("role", "", "user role name, available: owner, root, user")
 		migrate         = pflag.Bool("mig", false, "if need up migrations")
-		migrationsTable = pflag.String("migrations-table", "goadmin-migrations", "migration table name")
+		migrationsTable = pflag.String("migrations-table", "goadmin_migrations", "migration table name")
 	)
 
 	pflag.Parse()
