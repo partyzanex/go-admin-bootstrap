@@ -24,13 +24,7 @@ func NewUserRepository(ex layer.BoilExecutor) goadmin.UserRepository {
 }
 
 func (repo *userRepository) Search(ctx context.Context, filter *goadmin.UserFilter) ([]*goadmin.User, error) {
-	var mods []qm.QueryMod
-
-	if filter != nil {
-		mods = repo.applyFilter(filter, []qm.QueryMod{
-			qm.OrderBy("id"),
-		})
-	}
+	mods := userSearchQuery(filter)
 
 	c, ex := layer.GetExecutor(ctx, repo.ex)
 
@@ -39,23 +33,11 @@ func (repo *userRepository) Search(ctx context.Context, filter *goadmin.UserFilt
 		return nil, fmt.Errorf("search users failed: %w", err)
 	}
 
-	users := make([]*goadmin.User, len(models))
-
-	for i, model := range models {
-		users[i] = modelToUser(model)
-	}
-
-	return users, nil
+	return mapSlice(models, modelToUser), nil
 }
 
 func (repo *userRepository) Count(ctx context.Context, filter *goadmin.UserFilter) (int64, error) {
-	var mods []qm.QueryMod
-
-	if filter != nil {
-		f := *filter
-		f.Limit = 0
-		mods = repo.applyFilter(&f, mods)
-	}
+	mods := userFilterMods(filter)
 
 	c, ex := layer.GetExecutor(ctx, repo.ex)
 
@@ -67,39 +49,30 @@ func (repo *userRepository) Count(ctx context.Context, filter *goadmin.UserFilte
 	return count, nil
 }
 
-func (*userRepository) applyFilter(filter *goadmin.UserFilter, mods []qm.QueryMod) []qm.QueryMod {
-	if mods == nil {
-		mods = []qm.QueryMod{}
+func userFilterMods(filter *goadmin.UserFilter) []qm.QueryMod {
+	if filter == nil {
+		return nil
 	}
 
-	if n := len(filter.IDs); n > 0 {
-		ids := make([]any, n)
-		for i, id := range filter.IDs {
-			ids[i] = id
-		}
-
-		mods = append(mods, qm.WhereIn("id in ?", ids...))
+	ids := make([]any, len(filter.IDs))
+	for i, id := range filter.IDs {
+		ids[i] = id
 	}
 
-	if filter.Name != "" {
-		clause := "%" + filter.Name + "%"
-		mods = append(mods, qm.Where("name like ?", clause))
-	}
+	return buildQuery(
+		nil,
+		withWhereIn("id", ids),
+		withWhereLike("name", filter.Name),
+		withWhereEq("status", string(filter.Status)),
+		withWhereEq("login", filter.Login),
+	)
+}
 
-	if filter.Status != "" {
-		mods = append(mods, qm.Where("status = ?", filter.Status))
-	}
+func userSearchQuery(filter *goadmin.UserFilter) []qm.QueryMod {
+	mods := append(userFilterMods(filter), qm.OrderBy("id"))
 
-	if filter.Login != "" {
-		mods = append(mods, qm.Where("login = ?", filter.Login))
-	}
-
-	if filter.Limit > 0 {
-		mods = append(mods, qm.Limit(filter.Limit))
-
-		if filter.Offset >= 0 {
-			mods = append(mods, qm.Offset(filter.Offset))
-		}
+	if filter != nil && filter.Limit > 0 {
+		mods = buildQuery(mods, withLimit(filter.Limit), withOffset(filter.Offset))
 	}
 
 	return mods
