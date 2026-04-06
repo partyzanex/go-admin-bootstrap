@@ -1,15 +1,15 @@
 package goadmin
 
 import (
-	"database/sql"
 	"log/slog"
 
 	"github.com/labstack/echo/v4"
+	"github.com/uptrace/bun"
 )
 
 type (
 	DBConfig struct {
-		DB              *sql.DB
+		DB              *bun.DB
 		MigrationsTable string
 	}
 

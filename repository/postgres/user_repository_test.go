@@ -6,20 +6,31 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
-	_ "github.com/lib/pq"
-
 	"github.com/partyzanex/testutils"
 	"github.com/stretchr/testify/suite"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
 )
 
 func TestUserRepository(t *testing.T) {
-	db := testutils.NewSqlDB(t, "postgres", "TEST_PG")
+	dsn := os.Getenv("TEST_PG")
+	if dsn == "" {
+		t.Skip("TEST_PG not set")
+	}
+
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	db := bun.NewDB(sqldb, pgdialect.New())
+
+	t.Cleanup(func() { db.Close() })
+
 	repo := NewUserRepository(db)
 
 	suite.Run(t, &UserSuite{
@@ -31,17 +42,17 @@ func TestUserRepository(t *testing.T) {
 type UserSuite struct {
 	suite.Suite
 
-	db   *sql.DB
+	db   *bun.DB
 	repo *userRepository
 }
 
 func (s *UserSuite) BeforeTest(_, _ string) {
-	s.Require().NoError(migrations.Up(s.db, goadmin.MigrationsTable))
+	s.Require().NoError(migrations.Up(s.db.DB, goadmin.MigrationsTable))
 
-	_, err := s.db.Exec(`DELETE FROM goadmin.auth_token`)
+	_, err := s.db.ExecContext(context.Background(), `DELETE FROM goadmin.auth_token`)
 	s.Require().NoError(err)
 
-	_, err = s.db.Exec(`DELETE FROM goadmin."user"`)
+	_, err = s.db.ExecContext(context.Background(), `DELETE FROM goadmin."user"`)
 	s.Require().NoError(err)
 }
 
@@ -68,84 +79,50 @@ func (s *UserSuite) TestSearch() {
 		{
 			Name: "search by id",
 			Filter: &goadmin.UserFilter{
-				IDs: []int64{
-					user1.ID,
-				},
+				IDs: []int64{user1.ID},
 			},
-			Count: 1,
-			WantResult: []*goadmin.User{
-				user1,
-			},
-			WantErr: "",
+			Count:      1,
+			WantResult: []*goadmin.User{user1},
 		},
 		{
 			Name: "not found by id",
 			Filter: &goadmin.UserFilter{
-				IDs: []int64{
-					testutils.RandInt64(999999, 9999999),
-				},
+				IDs: []int64{testutils.RandInt64(999999, 9999999)},
 			},
 			Count:      0,
-			WantResult: []*goadmin.User{},
-			WantErr:    "",
+			WantResult: nil,
 		},
 		{
 			Name: "search by ids",
 			Filter: &goadmin.UserFilter{
-				IDs: []int64{
-					user1.ID,
-					user2.ID,
-				},
+				IDs: []int64{user1.ID, user2.ID},
 			},
-			Count: 2,
-			WantResult: []*goadmin.User{
-				user1,
-				user2,
-			},
-			WantErr: "",
+			Count:      2,
+			WantResult: []*goadmin.User{user1, user2},
 		},
 		{
-			Name: "search by name",
-			Filter: &goadmin.UserFilter{
-				Name: user1.Name,
-			},
-			Count: 1,
-			WantResult: []*goadmin.User{
-				user1,
-			},
-			WantErr: "",
+			Name:       "search by name",
+			Filter:     &goadmin.UserFilter{Name: user1.Name},
+			Count:      1,
+			WantResult: []*goadmin.User{user1},
 		},
 		{
-			Name: "not found by name",
-			Filter: &goadmin.UserFilter{
-				Name: user1.Login,
-			},
+			Name:       "not found by name",
+			Filter:     &goadmin.UserFilter{Name: user1.Login},
 			Count:      0,
-			WantResult: []*goadmin.User{},
-			WantErr:    "",
+			WantResult: nil,
 		},
 		{
-			Name: "search by login",
-			Filter: &goadmin.UserFilter{
-				Login: user3.Login,
-			},
-			Count: 1,
-			WantResult: []*goadmin.User{
-				user3,
-			},
-			WantErr: "",
+			Name:       "search by login",
+			Filter:     &goadmin.UserFilter{Login: user3.Login},
+			Count:      1,
+			WantResult: []*goadmin.User{user3},
 		},
 		{
-			Name: "search by status",
-			Filter: &goadmin.UserFilter{
-				Login:  user2.Login,
-				Status: user2.Status,
-			},
-			Count: 1,
-			WantResult: []*goadmin.User{
-				user2,
-			},
-			WantErr: "",
+			Name:       "search by status",
+			Filter:     &goadmin.UserFilter{Login: user2.Login, Status: user2.Status},
+			Count:      1,
+			WantResult: []*goadmin.User{user2},
 		},
 		{
 			Name: "not found by status",
@@ -161,57 +138,34 @@ func (s *UserSuite) TestSearch() {
 				}(),
 			},
 			Count:      0,
-			WantResult: []*goadmin.User{},
-			WantErr:    "",
+			WantResult: nil,
 		},
 		{
 			Name: "limit",
 			Filter: &goadmin.UserFilter{
-				IDs: []int64{
-					user1.ID,
-					user2.ID,
-					user3.ID,
-				},
+				IDs:   []int64{user1.ID, user2.ID, user3.ID},
 				Limit: 1,
 			},
-			Count: 3,
-			WantResult: []*goadmin.User{
-				user1,
-			},
-			WantErr: "",
+			Count:      3,
+			WantResult: []*goadmin.User{user1},
 		},
 		{
 			Name: "limit and offset",
 			Filter: &goadmin.UserFilter{
-				IDs: []int64{
-					user1.ID,
-					user2.ID,
-					user3.ID,
-				},
+				IDs:    []int64{user1.ID, user2.ID, user3.ID},
 				Limit:  2,
 				Offset: 1,
 			},
-			Count: 3,
-			WantResult: []*goadmin.User{
-				user2,
-				user3,
-			},
-			WantErr: "",
+			Count:      3,
+			WantResult: []*goadmin.User{user2, user3},
 		},
 		{
 			Name:   "search all",
 			Filter: nil,
 			Count:  7,
 			WantResult: []*goadmin.User{
-				user1,
-				user2,
-				user3,
-				user4,
-				user5,
-				user6,
-				user7,
+				user1, user2, user3, user4, user5, user6, user7,
 			},
-			WantErr: "",
 		},
 	}
 

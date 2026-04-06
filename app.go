@@ -36,7 +36,7 @@ func New(config *Config) (*App, error) {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
-	if err := migrations.Up(config.DBConfig.DB, config.DBConfig.MigrationsTable); err != nil {
+	if err := migrations.Up(config.DBConfig.DB.DB, config.DBConfig.MigrationsTable); err != nil {
 		return nil, fmt.Errorf("cannot up migrations: %w", err)
 	}
 

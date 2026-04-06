@@ -4,16 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	_ "github.com/lib/pq"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	"github.com/partyzanex/go-admin-bootstrap/repository/postgres"
@@ -21,18 +23,22 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		slog.Error("fatal", "err", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))
 	slog.SetDefault(logger)
 
-	db, err := sql.Open("postgres", os.Getenv("PG_DSN"))
-	if err != nil {
-		slog.Error("open sql connection failed", "err", err)
-		os.Exit(1)
-	}
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(os.Getenv("PG_DSN"))))
+	db := bun.NewDB(sqldb, pgdialect.New())
 
-	db.SetConnMaxLifetime(time.Second)
+	defer func() { _ = db.Close() }()
 
 	userRepo := postgres.NewUserRepository(db)
 	tokenRepo := postgres.NewTokenRepository(db)
@@ -47,6 +53,7 @@ func main() {
 		BaseURL:    "http://localhost:9900/admin",
 		ViewsPath:  "./views",
 		AssetsPath: "./assets",
+		Logger:     logger,
 		DBConfig: goadmin.DBConfig{
 			DB:              db,
 			MigrationsTable: goadmin.MigrationsTable,
@@ -71,8 +78,7 @@ func main() {
 		},
 	})
 	if err != nil {
-		slog.Error("creating admin failed", "err", err)
-		os.Exit(1)
+		return fmt.Errorf("creating admin: %w", err)
 	}
 
 	go func() {
@@ -91,6 +97,8 @@ func main() {
 	defer cancel()
 
 	if err = admin.Echo().Shutdown(ctx); err != nil {
-		slog.Error("shutdown failed", "err", err)
+		return fmt.Errorf("shutdown: %w", err)
 	}
+
+	return nil
 }

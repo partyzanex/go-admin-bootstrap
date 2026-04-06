@@ -11,32 +11,32 @@ type (
 	UserStatus string
 
 	User struct {
-		ID int64 `db:"id" json:"id"`
+		ID       int64      `json:"id"`
+		Login    string     `json:"login"`
+		Password string     `json:"password"`
+		Status   UserStatus `json:"status"`
+		Name     string     `json:"name"`
+		Role     UserRole   `json:"role"`
 
-		Login    string     `db:"login" json:"login"`
-		Password string     `db:"password" json:"password"`
-		Status   UserStatus `db:"status" json:"status"`
-		Name     string     `db:"name" json:"name"`
-		Role     UserRole   `db:"role" json:"role"`
+		DTCreated    time.Time `json:"dt_created"`
+		DTUpdated    time.Time `json:"dt_updated"`
+		DTLastLogged time.Time `json:"dt_last_logged"`
 
-		DTCreated    time.Time `db:"dt_created" json:"dt_created"`
-		DTUpdated    time.Time `db:"dt_updated" json:"dt_updated"`
-		DTLastLogged time.Time `db:"dt_last_logged" json:"dt_last_logged"`
-
-		PasswordIsEncoded bool `db:"password_is_encoded" json:"-"`
-		Current           bool `db:"-" json:"-"`
+		PasswordIsEncoded bool `json:"-"`
+		Current           bool `json:"-"`
 	}
 
 	TokenType string
 
 	Token struct {
-		UserID    int64     `db:"user_id" json:"user_id"`
-		Token     string    `db:"token" json:"token"`
-		Type      TokenType `db:"type" json:"type"`
-		DTExpired time.Time `db:"dt_expired" json:"dt_expired"`
-		DTCreated time.Time `db:"dt_created" json:"dt_created"`
+		ID        int64     `json:"-"`
+		UserID    int64     `json:"user_id"`
+		Token     string    `json:"token"`
+		Type      TokenType `json:"type"`
+		DTExpired time.Time `json:"dt_expired"`
+		DTCreated time.Time `json:"dt_created"`
 
-		User *User `db:"-"`
+		User *User `json:"-"`
 	}
 
 	UserFilter struct {

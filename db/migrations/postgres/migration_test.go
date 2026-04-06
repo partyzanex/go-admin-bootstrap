@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
+	"github.com/uptrace/bun/driver/pgdriver"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
@@ -19,13 +19,14 @@ func TestUp(t *testing.T) {
 		dsn = "postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable"
 	}
 
-	db, err := sql.Open("postgres", dsn)
-	require.NoError(t, err)
+	db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	require.NotNil(t, db)
+
+	t.Cleanup(func() { _ = db.Close() })
 
 	ctx := context.Background()
 
-	err = migrations.Up(db, goadmin.MigrationsTable)
+	err := migrations.Up(db, goadmin.MigrationsTable)
 	require.NoError(t, err)
 
 	_, err = db.ExecContext(ctx, `select * from goadmin."user"`)

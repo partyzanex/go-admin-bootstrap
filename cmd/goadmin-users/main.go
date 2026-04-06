@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 
-	_ "github.com/lib/pq"
 	"github.com/spf13/pflag"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
@@ -28,21 +30,22 @@ func main() {
 
 	pflag.Parse()
 
-	db, err := sql.Open("postgres", *dsn)
-	if err != nil {
-		fmt.Printf("open sql connection failed: %s\n", err)
-		return
-	}
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(*dsn)))
+	db := bun.NewDB(sqldb, pgdialect.New())
+
+	defer func() { _ = db.Close() }()
 
 	if *login == "" || *password == "" || *name == "" || *role == "" {
 		fmt.Println("user name, login and password are required")
+
 		return
 	}
 
 	if *migrate {
-		err = migrations.Up(db, *migrationsTable)
+		err := migrations.Up(db.DB, *migrationsTable)
 		if err != nil {
 			fmt.Println("migration failed")
+
 			return
 		}
 	}
@@ -52,7 +55,7 @@ func main() {
 
 	ctx := context.Background()
 
-	_, err = userCase.SearchByLogin(ctx, *login)
+	_, err := userCase.SearchByLogin(ctx, *login)
 	if err == nil {
 		fmt.Printf("user with login %s already exists\n", *login)
 
@@ -76,6 +79,7 @@ func main() {
 	err = userCase.Register(ctx, user)
 	if err != nil {
 		fmt.Printf("register failed: %s\n", err)
+
 		return
 	}
 
