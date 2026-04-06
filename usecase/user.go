@@ -172,6 +172,10 @@ func (uc *userCase) RevokeUserTokens(ctx context.Context, userID int64) error {
 	return uc.tokens.DeleteByUserID(ctx, userID)
 }
 
+func (uc *userCase) CleanupExpiredTokens(ctx context.Context) (int64, error) {
+	return uc.tokens.DeleteExpired(ctx)
+}
+
 func (uc *userCase) ListUsers(ctx context.Context, filter *goadmin.UserFilter) ([]*goadmin.User, int64, error) {
 	count, err := uc.users.Count(ctx, filter)
 	if err != nil {

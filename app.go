@@ -117,6 +117,8 @@ func (app *App) Echo() *echo.Echo {
 
 const defaultShutdownTimeout = 10 * time.Second
 
+const tokenCleanupInterval = 1 * time.Hour
+
 func (app *App) Serve(ctx context.Context) error {
 	errCh := make(chan error, 1)
 
@@ -128,6 +130,8 @@ func (app *App) Serve(ctx context.Context) error {
 		close(errCh)
 	}()
 
+	go app.runTokenCleanup(ctx)
+
 	select {
 	case <-ctx.Done():
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), defaultShutdownTimeout)
@@ -136,6 +140,25 @@ func (app *App) Serve(ctx context.Context) error {
 		return app.echo.Shutdown(shutdownCtx)
 	case err := <-errCh:
 		return err
+	}
+}
+
+func (app *App) runTokenCleanup(ctx context.Context) {
+	ticker := time.NewTicker(tokenCleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			deleted, err := app.config.UserCase.CleanupExpiredTokens(ctx)
+			if err != nil {
+				app.logger.Error("token cleanup failed", "err", err)
+			} else if deleted > 0 {
+				app.logger.Info("cleaned up expired tokens", "count", deleted)
+			}
+		}
 	}
 }
 
@@ -301,7 +324,7 @@ func (app *App) setDefaultRoutes() {
 	loginGroup.GET("", WrapHandler(Login))
 	loginGroup.POST("", WrapHandler(Login))
 
-	app.admin.Any(LogoutURL, WrapHandler(Logout), AuthByCookie)
+	app.admin.Any(LogoutURL, WrapHandler(Logout))
 	app.admin.GET(DashboardURL, WrapHandler(Dashboard), AuthByCookie)
 
 	adminOnly := RequireRole(RoleOwner, RoleRoot)
@@ -335,6 +358,7 @@ func (app *App) setDefaultMiddleware() {
 	}
 
 	app.echo.Use(withAppContext(app))
+	app.echo.Use(echomiddleware.RequestID())
 	app.echo.Use(withRequestLogger(app.logger))
 }
 

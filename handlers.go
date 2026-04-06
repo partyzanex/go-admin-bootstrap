@@ -45,9 +45,12 @@ func Login(ctx *AppContext) error {
 }
 
 func Logout(ctx *AppContext) error {
-	if user := ctx.User(); user != nil {
-		if err := ctx.UserCase().RevokeUserTokens(ctx.Ctx(), user.ID); err != nil {
-			return fmt.Errorf("revoking tokens: %w", err)
+	// Extract user ID from JWT without status check — blocked users must be able to logout
+	cfg := ctx.app.config
+
+	if cookie, err := ctx.Cookie(cfg.AccessCookieName + accessCookieSuffix); err == nil {
+		if claims, parseErr := parseAccessToken(cookie.Value, cfg.JWTSecret); parseErr == nil {
+			_ = ctx.UserCase().RevokeUserTokens(ctx.Ctx(), claims.UserID)
 		}
 	}
 

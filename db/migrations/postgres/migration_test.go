@@ -1,3 +1,5 @@
+//go:build integration
+
 package migrations_test
 
 import (
@@ -14,9 +16,9 @@ import (
 )
 
 func TestUp(t *testing.T) {
-	dsn := os.Getenv("CRYPCHS_POSTGRES_DSN")
+	dsn := os.Getenv("TEST_PG")
 	if dsn == "" {
-		dsn = "postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable"
+		t.Skip("TEST_PG not set, skipping integration test")
 	}
 
 	db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))

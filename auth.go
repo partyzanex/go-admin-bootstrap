@@ -52,6 +52,11 @@ func auth(ctx *AppContext) (result User, err error) {
 		return result, ErrWrongPassword
 	}
 
+	// Revoke any existing refresh tokens before issuing new ones
+	if revokeErr := ctx.UserCase().RevokeUserTokens(ctx.Ctx(), user.ID); revokeErr != nil {
+		return result, fmt.Errorf("revoking old tokens: %w", revokeErr)
+	}
+
 	err = setAuthCookies(ctx, user)
 	if err != nil {
 		return result, err

@@ -7,7 +7,9 @@
   <div class="navbar-expand">
     <ul class="navbar-nav mr-0 my-0">
     {{ if isset(.User) }}
+      {{ if .User.Role == "owner" || .User.Role == "root" }}
       <li class="nav-item"><a href="{{ adminPath }}/users" class="nav-link">Users</a></li>
+      {{ end }}
       <li class="nav-item"><a href="{{ adminPath }}/logout" class="nav-link">Logout [{{ .User.Name }}]</a></li>
     {{ else }}
       <li class="nav-item"><a href="{{ adminPath }}/login" class="nav-link">Login</a></li>
