@@ -61,6 +61,10 @@ func (c *AppContext) UserCase() UserUseCase {
 	return c.app.config.UserCase
 }
 
+func (c *AppContext) CookieName() string {
+	return c.app.config.AccessCookieName
+}
+
 func (c *AppContext) Log() *slog.Logger {
 	if logger, ok := c.Get(LoggerContextKey).(*slog.Logger); ok {
 		return logger

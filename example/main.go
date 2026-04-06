@@ -44,19 +44,17 @@ func run() error {
 	tokenRepo := postgres.NewTokenRepository(db)
 	userCase := usecase.NewUserCase(userRepo, tokenRepo)
 
-	goadmin.AccessCookieName = "access_token"
-
 	admin, err := goadmin.New(&goadmin.Config{
-		Host:       "localhost",
-		Port:       9900,
-		DevMode:    true,
-		BaseURL:    "http://localhost:9900/admin",
-		ViewsPath:  "./views",
-		AssetsPath: "./assets",
-		Logger:     logger,
+		Host:             "localhost",
+		Port:             9900,
+		DevMode:          true,
+		BaseURL:          "http://localhost:9900/admin",
+		ViewsPath:        "./views",
+		AssetsPath:       "./assets",
+		AccessCookieName: "access_token",
+		Logger:           logger,
 		DBConfig: goadmin.DBConfig{
-			DB:              db,
-			MigrationsTable: goadmin.MigrationsTable,
+			DB: db,
 		},
 		UserCase: userCase,
 		Middleware: []echo.MiddlewareFunc{

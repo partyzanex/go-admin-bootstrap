@@ -53,6 +53,14 @@ func New(config *Config) (*App, error) {
 	app.echo = e
 	app.baseURL = baseURL
 
+	if app.config.AccessCookieName == "" {
+		app.config.AccessCookieName = DefaultAccessCookieName
+	}
+
+	if app.config.DBConfig.MigrationsTable == "" {
+		app.config.DBConfig.MigrationsTable = DefaultMigrationsTable
+	}
+
 	if config.Logger != nil {
 		app.logger = config.Logger
 	} else {

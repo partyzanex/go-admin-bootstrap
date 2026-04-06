@@ -26,7 +26,7 @@ func TestUp(t *testing.T) {
 
 	ctx := context.Background()
 
-	err := migrations.Up(db, goadmin.MigrationsTable)
+	err := migrations.Up(db, goadmin.DefaultMigrationsTable)
 	require.NoError(t, err)
 
 	_, err = db.ExecContext(ctx, `select * from goadmin."user"`)

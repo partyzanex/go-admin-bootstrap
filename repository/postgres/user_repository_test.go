@@ -47,7 +47,7 @@ type UserSuite struct {
 }
 
 func (s *UserSuite) BeforeTest(_, _ string) {
-	s.Require().NoError(migrations.Up(s.db.DB, goadmin.MigrationsTable))
+	s.Require().NoError(migrations.Up(s.db.DB, goadmin.DefaultMigrationsTable))
 
 	_, err := s.db.ExecContext(context.Background(), `DELETE FROM goadmin.auth_token`)
 	s.Require().NoError(err)

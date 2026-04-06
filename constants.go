@@ -22,7 +22,7 @@ const (
 	RoleUser  UserRole = "user"
 )
 
-var (
+const (
 	DashboardURL = "/"
 	LoginURL     = "/login"
 	LogoutURL    = "/logout"
@@ -32,8 +32,8 @@ var (
 	UserUpdateURL = "/users/:id/update"
 	UserDeleteURL = "/users/:id/delete"
 
-	AccessCookieName = "auth_token"
-	MigrationsTable  = "goadmin_migrations"
+	DefaultAccessCookieName = "auth_token"
+	DefaultMigrationsTable  = "goadmin_migrations"
 
 	FaviconPrefix = "/favicon/:id"
 )

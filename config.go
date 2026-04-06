@@ -17,9 +17,10 @@ type (
 		Host string
 		Port uint16
 
-		BaseURL    string
-		ViewsPath  string
-		AssetsPath string
+		BaseURL          string
+		ViewsPath        string
+		AssetsPath       string
+		AccessCookieName string
 
 		DevMode bool
 

@@ -57,7 +57,7 @@ func auth(ctx *AppContext) (result User, err error) {
 	}
 
 	http.SetCookie(ctx.Response(), &http.Cookie{
-		Name:     AccessCookieName,
+		Name:     ctx.CookieName(),
 		Value:    cookieToken,
 		Expires:  token.DTExpired,
 		Path:     "/",
@@ -70,7 +70,7 @@ func auth(ctx *AppContext) (result User, err error) {
 }
 
 func authByCookie(ctx *AppContext) (*User, error) {
-	cookie, err := ctx.Cookie(AccessCookieName)
+	cookie, err := ctx.Cookie(ctx.CookieName())
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusUnauthorized)
 	}
