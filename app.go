@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"embed"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,6 +22,7 @@ import (
 
 type App struct {
 	config *Config
+	logger *slog.Logger
 
 	echo   *echo.Echo
 	static *echo.Group
@@ -50,6 +52,12 @@ func New(config *Config) (*App, error) {
 	app.config = config.Clone()
 	app.echo = e
 	app.baseURL = baseURL
+
+	if config.Logger != nil {
+		app.logger = config.Logger
+	} else {
+		app.logger = slog.Default()
+	}
 
 	app.setStaticGroup()
 	app.setDefaultRoutes()
@@ -227,6 +235,7 @@ func (app *App) setDefaultMiddleware() {
 	}
 
 	app.echo.Use(withAppContext(app))
+	app.echo.Use(withRequestLogger(app.logger))
 
 	// CSRF protection for all admin routes
 	app.admin.Use(echomiddleware.CSRFWithConfig(echomiddleware.CSRFConfig{

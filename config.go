@@ -2,6 +2,7 @@ package goadmin
 
 import (
 	"database/sql"
+	"log/slog"
 
 	"github.com/labstack/echo/v4"
 )
@@ -24,6 +25,7 @@ type (
 
 		DBConfig DBConfig
 		UserCase UserUseCase
+		Logger   *slog.Logger
 
 		Middleware []echo.MiddlewareFunc
 		Assets     []*Asset

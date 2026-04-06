@@ -1,6 +1,7 @@
 package goadmin
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -51,6 +52,27 @@ func withAppContext(app *App) echo.MiddlewareFunc {
 			}
 
 			return handlerFunc(ac)
+		}
+	}
+}
+
+func withRequestLogger(logger *slog.Logger) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(ctx echo.Context) error {
+			req := ctx.Request()
+			reqLogger := logger.With(
+				"method", req.Method,
+				"path", req.URL.Path,
+				"remote_ip", ctx.RealIP(),
+			)
+
+			if reqID := ctx.Response().Header().Get(echo.HeaderXRequestID); reqID != "" {
+				reqLogger = reqLogger.With("request_id", reqID)
+			}
+
+			ctx.Set(LoggerContextKey, reqLogger)
+
+			return next(ctx)
 		}
 	}
 }

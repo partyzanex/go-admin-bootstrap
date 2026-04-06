@@ -7,8 +7,9 @@ const (
 	LoginRateLimitPerSec = 5
 	SecureTokenLength    = 32
 
-	UserContextKey = "goadmin_user"
-	DataContextKey = "goadmin_data"
+	UserContextKey   = "goadmin_user"
+	DataContextKey   = "goadmin_data"
+	LoggerContextKey = "goadmin_logger"
 
 	AuthToken TokenType = "auth"
 

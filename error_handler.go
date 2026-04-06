@@ -2,12 +2,21 @@ package goadmin
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
 	"github.com/CloudyKit/jet/v6"
 	"github.com/labstack/echo/v4"
 )
+
+func logFromCtx(ctx echo.Context) *slog.Logger {
+	if logger, ok := ctx.Get(LoggerContextKey).(*slog.Logger); ok {
+		return logger
+	}
+
+	return slog.Default()
+}
 
 func errorHandler(e error, ctx echo.Context) {
 	accept := ctx.Request().Header.Get(echo.HeaderAccept)
@@ -48,7 +57,9 @@ func (viewData) JetData() map[string]any {
 }
 
 func HTMLError(e error, ctx echo.Context) {
-	defer ctx.Logger().Errorf("html error: %s", e)
+	logger := logFromCtx(ctx)
+
+	defer logger.Error("html error", "err", e)
 
 	code := http.StatusInternalServerError
 	title := ""
@@ -90,12 +101,14 @@ func HTMLError(e error, ctx echo.Context) {
 
 	err := ctx.Render(code, "errors/error.jet", data)
 	if err != nil {
-		ctx.Logger().Error(err)
+		logger.Error("rendering error template failed", "err", err)
 	}
 }
 
 func JSONError(e error, ctx echo.Context) {
-	defer ctx.Logger().Errorf("json error: %s", e)
+	logger := logFromCtx(ctx)
+
+	defer logger.Error("json error", "err", e)
 
 	code := http.StatusInternalServerError
 	userMessage := "Internal server error"
@@ -113,7 +126,7 @@ func JSONError(e error, ctx echo.Context) {
 	}
 
 	if err := ctx.JSON(code, resp); err != nil {
-		ctx.Logger().Error(err)
+		logger.Error("writing json error response failed", "err", err)
 	}
 }
 
@@ -124,7 +137,9 @@ type Response struct {
 }
 
 func HTTPError(e error, ctx echo.Context) {
-	defer ctx.Logger().Errorf("http error: %s", e)
+	logger := logFromCtx(ctx)
+
+	defer logger.Error("http error", "err", e)
 
 	code := http.StatusInternalServerError
 	if he, ok := e.(*echo.HTTPError); ok {
@@ -132,6 +147,6 @@ func HTTPError(e error, ctx echo.Context) {
 	}
 
 	if err := ctx.NoContent(code); err != nil {
-		ctx.Logger().Error(err)
+		logger.Error("writing error response failed", "err", err)
 	}
 }

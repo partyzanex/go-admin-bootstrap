@@ -3,6 +3,7 @@ package goadmin
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -58,4 +59,12 @@ func (c *AppContext) Ctx() context.Context {
 
 func (c *AppContext) UserCase() UserUseCase {
 	return c.app.config.UserCase
+}
+
+func (c *AppContext) Log() *slog.Logger {
+	if logger, ok := c.Get(LoggerContextKey).(*slog.Logger); ok {
+		return logger
+	}
+
+	return c.app.logger
 }
