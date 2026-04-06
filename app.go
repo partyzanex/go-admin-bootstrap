@@ -40,10 +40,6 @@ func New(config *Config, opts ...Option) (*App, error) {
 		return nil, fmt.Errorf("invalid config: %w", err)
 	}
 
-	if err := migrations.Up(config.DBConfig.DB.DB, config.DBConfig.MigrationsTable); err != nil {
-		return nil, fmt.Errorf("cannot up migrations: %w", err)
-	}
-
 	baseURL, err := url.Parse(config.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse %q as base url: %w", config.BaseURL, err)
@@ -65,6 +61,11 @@ func New(config *Config, opts ...Option) (*App, error) {
 	}
 
 	app.applyDefaults()
+
+	if migErr := migrations.Up(app.config.DBConfig.DB.DB, app.config.DBConfig.MigrationsTable); migErr != nil {
+		return nil, fmt.Errorf("cannot up migrations: %w", migErr)
+	}
+
 	app.setStaticGroup()
 	app.setDefaultMiddleware()
 	app.setDefaultRoutes()

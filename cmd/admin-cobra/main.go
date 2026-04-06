@@ -11,8 +11,8 @@ import (
 
 func main() {
 	root := &cobra.Command{
-		Use:   "goadmin-users",
-		Short: "Admin panel user management",
+		Use:   "admin",
+		Short: "Admin panel management tool (cobra)",
 	}
 
 	root.AddCommand(cobracli.CreateUserCmd())
