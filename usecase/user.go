@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/asaskevich/govalidator"
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 )
+
+var validate = validator.New()
 
 type userCase struct {
 	users  goadmin.UserRepository
@@ -21,16 +23,8 @@ func (uc *userCase) Validate(user *goadmin.User, create bool) error {
 		return goadmin.ErrRequiredUserID
 	}
 
-	if user.Name == "" {
-		return goadmin.ErrRequiredUserName
-	}
-
-	if user.Login == "" {
-		return goadmin.ErrRequiredUserLogin
-	}
-
-	if !govalidator.IsEmail(user.Login) {
-		return goadmin.ErrInvalidUserLogin
+	if err := validate.Struct(user); err != nil {
+		return fmt.Errorf("validation failed: %w", err)
 	}
 
 	if !user.PasswordIsEncoded && user.Password == "" {

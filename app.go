@@ -2,14 +2,18 @@ package goadmin
 
 import (
 	"cmp"
+	"context"
 	"embed"
+	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
+	"time"
 
 	"github.com/CloudyKit/jet/v6"
 	"github.com/labstack/echo/v4"
@@ -110,8 +114,28 @@ func (app *App) Echo() *echo.Echo {
 	return app.echo
 }
 
-func (app *App) Serve() error {
-	return app.echo.Start(app.getAddr())
+const defaultShutdownTimeout = 10 * time.Second
+
+func (app *App) Serve(ctx context.Context) error {
+	errCh := make(chan error, 1)
+
+	go func() {
+		if err := app.echo.Start(app.getAddr()); !errors.Is(err, http.ErrServerClosed) {
+			errCh <- err
+		}
+
+		close(errCh)
+	}()
+
+	select {
+	case <-ctx.Done():
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), defaultShutdownTimeout)
+		defer cancel()
+
+		return app.echo.Shutdown(shutdownCtx)
+	case err := <-errCh:
+		return err
+	}
 }
 
 func (app *App) Close() error {
@@ -122,22 +146,34 @@ func (app *App) CreateAssets() error {
 	assetsByKind := make(map[AssetKind][]*Asset)
 
 	for _, source := range app.config.assets {
-		_, ok := assetsByKind[source.Kind]
-		if !ok {
-			assetsByKind[source.Kind] = []*Asset{source}
-
-			continue
-		}
-
 		assetsByKind[source.Kind] = append(assetsByKind[source.Kind], source)
 	}
 
-	var (
-		javascriptSources = JS
-		stylesheetSources = CSS
-		viewSources       = Views
-	)
+	// Views always need to be on disk (Jet uses OSFileSystemLoader)
+	viewSources := Views
+	if sources, ok := assetsByKind[View]; ok {
+		viewSources = append(viewSources, sources...)
+	}
 
+	for _, source := range viewSources {
+		err := app.createSource(app.config.ViewsPath, source, &views.Sources)
+		if err != nil {
+			return fmt.Errorf("cannot create view source %s: %w", source.Path, err)
+		}
+	}
+
+	// JS/CSS: copy to disk only in dev mode (prod serves from embed.FS)
+	if app.config.DevMode {
+		if err := app.createStaticAssets(assetsByKind); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (app *App) createStaticAssets(assetsByKind map[AssetKind][]*Asset) error {
+	javascriptSources := JS
 	if sources, ok := assetsByKind[JavaScript]; ok {
 		javascriptSources = append(javascriptSources, sources...)
 	}
@@ -153,6 +189,7 @@ func (app *App) CreateAssets() error {
 		}
 	}
 
+	stylesheetSources := CSS
 	if sources, ok := assetsByKind[Stylesheet]; ok {
 		stylesheetSources = append(stylesheetSources, sources...)
 	}
@@ -168,21 +205,10 @@ func (app *App) CreateAssets() error {
 		}
 	}
 
-	if sources, ok := assetsByKind[View]; ok {
-		viewSources = append(viewSources, sources...)
-	}
-
-	for _, source := range viewSources {
-		err := app.createSource(app.config.ViewsPath, source, &views.Sources)
-		if err != nil {
-			return fmt.Errorf("cannot create view source %s: %w", source.Path, err)
-		}
-	}
-
 	return nil
 }
 
-func (*App) createSource(path string, source *Asset, fs *embed.FS) (err error) {
+func (*App) createSource(path string, source *Asset, embedFS *embed.FS) (err error) {
 	sourcePath := filepath.Join(path, source.Path)
 
 	stat, err := os.Stat(sourcePath)
@@ -199,7 +225,7 @@ func (*App) createSource(path string, source *Asset, fs *embed.FS) (err error) {
 		sourceDir = filepath.Dir(sourcePath)
 	)
 
-	b, err = fs.ReadFile(source.Path)
+	b, err = embedFS.ReadFile(source.Path)
 	if err != nil {
 		return fmt.Errorf("cannot read file %q: %w", source.Path, err)
 	}
@@ -231,7 +257,27 @@ func (app *App) setStaticGroup() {
 	}
 
 	app.static = app.echo.Group(app.baseURL.Path + assetsRelativePath)
-	app.static.Static("/", app.config.AssetsPath)
+
+	if app.config.DevMode {
+		app.static.Static("/", app.config.AssetsPath)
+	} else {
+		app.static.StaticFS("/", &mergedFS{filesystems: []embed.FS{assets.CSS, assets.JS}})
+	}
+}
+
+type mergedFS struct {
+	filesystems []embed.FS
+}
+
+func (m *mergedFS) Open(name string) (fs.File, error) {
+	for _, fsys := range m.filesystems {
+		f, err := fsys.Open(name)
+		if err == nil {
+			return f, nil
+		}
+	}
+
+	return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrNotExist}
 }
 
 func (app *App) setDefaultRoutes() {

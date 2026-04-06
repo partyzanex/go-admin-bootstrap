@@ -3,13 +3,10 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -82,24 +79,8 @@ func run() error {
 		return fmt.Errorf("creating admin: %w", err)
 	}
 
-	go func() {
-		if errServe := admin.Serve(); errServe != nil && !errors.Is(errServe, http.ErrServerClosed) {
-			slog.Error("shutting down the server", "err", errServe)
-		}
-	}()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
-
-	const timeout = 10 * time.Second
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	if err = admin.Echo().Shutdown(ctx); err != nil {
-		return fmt.Errorf("shutdown: %w", err)
-	}
-
-	return nil
+	return admin.Serve(ctx)
 }

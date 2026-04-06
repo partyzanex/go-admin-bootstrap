@@ -12,11 +12,11 @@ type (
 
 	User struct {
 		ID       int64      `json:"id"`
-		Login    string     `json:"login"`
+		Login    string     `json:"login" validate:"required,email"`
 		Password string     `json:"password"`
-		Status   UserStatus `json:"status"`
-		Name     string     `json:"name"`
-		Role     UserRole   `json:"role"`
+		Status   UserStatus `json:"status" validate:"required"`
+		Name     string     `json:"name" validate:"required"`
+		Role     UserRole   `json:"role" validate:"required"`
 
 		DTCreated    time.Time `json:"dt_created"`
 		DTUpdated    time.Time `json:"dt_updated"`
