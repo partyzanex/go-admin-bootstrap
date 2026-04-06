@@ -284,6 +284,16 @@ func (m *mergedFS) Open(name string) (fs.File, error) {
 func (app *App) setDefaultRoutes() {
 	app.admin = app.echo.Group(app.baseURL.Path, withViewData)
 
+	// CSRF protection for all admin routes
+	app.admin.Use(echomiddleware.CSRFWithConfig(echomiddleware.CSRFConfig{
+		TokenLength:    32,
+		TokenLookup:    "form:_csrf,header:X-CSRF-Token",
+		CookiePath:     "/",
+		CookieSecure:   !app.config.DevMode,
+		CookieHTTPOnly: true,
+		CookieSameSite: http.SameSiteStrictMode,
+	}))
+
 	// Rate-limited login routes
 	loginGroup := app.admin.Group(LoginURL, echomiddleware.RateLimiter(
 		echomiddleware.NewRateLimiterMemoryStore(LoginRateLimitPerSec),
@@ -326,16 +336,6 @@ func (app *App) setDefaultMiddleware() {
 
 	app.echo.Use(withAppContext(app))
 	app.echo.Use(withRequestLogger(app.logger))
-
-	// CSRF protection for all admin routes
-	app.admin.Use(echomiddleware.CSRFWithConfig(echomiddleware.CSRFConfig{
-		TokenLength:    32,
-		TokenLookup:    "form:_csrf,header:X-CSRF-Token",
-		CookiePath:     "/",
-		CookieSecure:   !app.config.DevMode,
-		CookieHTTPOnly: true,
-		CookieSameSite: http.SameSiteStrictMode,
-	}))
 }
 
 func (app *App) setDefaultRenderer() {
