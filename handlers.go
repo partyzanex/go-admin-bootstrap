@@ -73,8 +73,6 @@ func Dashboard(ctx *AppContext) error {
 }
 
 func UserList(ctx *AppContext) error {
-	repo := ctx.UserCase().UserRepository()
-
 	nav := &widgets.Pagination{
 		Ctx:         ctx,
 		URLTemplate: ctx.URL("/users?p={page}"),
@@ -89,12 +87,7 @@ func UserList(ctx *AppContext) error {
 		Offset: nav.Page*DefaultLimit - DefaultLimit,
 	}
 
-	count, err := repo.Count(ctx.Ctx(), filter)
-	if err != nil {
-		return err
-	}
-
-	users, err := repo.Search(ctx.Ctx(), filter)
+	users, count, err := ctx.UserCase().ListUsers(ctx.Ctx(), filter)
 	if err != nil {
 		return err
 	}
@@ -186,18 +179,11 @@ func updateUser(ctx *AppContext, user *User) error {
 
 	data := ctx.Data()
 
-	err := ctx.UserCase().Validate(user, false)
-	if err == nil {
-		repo := ctx.UserCase().UserRepository()
-
-		_, err = repo.Update(ctx.Ctx(), user)
-		if err != nil {
-			data.Set("error", err.Error())
-		} else {
-			return ctx.Redirect(http.StatusFound, ctx.URL(UserListURL))
-		}
-	} else {
+	_, err := ctx.UserCase().UpdateUser(ctx.Ctx(), user)
+	if err != nil {
 		data.Set("error", err.Error())
+	} else {
+		return ctx.Redirect(http.StatusFound, ctx.URL(UserListURL))
 	}
 
 	return nil
@@ -214,9 +200,7 @@ func UserDelete(ctx *AppContext) error {
 		return echo.NewHTTPError(http.StatusLocked, "unable to delete your account")
 	}
 
-	repo := ctx.UserCase().UserRepository()
-
-	err = repo.Delete(ctx.Ctx(), &User{ID: userID})
+	err = ctx.UserCase().DeleteUser(ctx.Ctx(), userID)
 	if err != nil {
 		return err
 	}

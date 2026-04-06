@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	_ "github.com/lib/pq"
@@ -51,16 +52,16 @@ func main() {
 
 	ctx := context.Background()
 
-	count, err := userRepo.Count(ctx, &goadmin.UserFilter{
-		Login: *login,
-	})
-	if err != nil {
-		fmt.Printf("getting count of users failed: %s\n", err)
+	_, err = userCase.SearchByLogin(ctx, *login)
+	if err == nil {
+		fmt.Printf("user with login %s already exists\n", *login)
+
 		return
 	}
 
-	if count > 0 {
-		fmt.Printf("user with login %s is exists\n", *login)
+	if !errors.Is(err, goadmin.ErrUserNotFound) {
+		fmt.Printf("searching user failed: %s\n", err)
+
 		return
 	}
 

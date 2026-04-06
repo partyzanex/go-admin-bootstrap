@@ -172,8 +172,40 @@ func (uc *userCase) SearchToken(ctx context.Context, token string) (*goadmin.Tok
 	return authToken, nil
 }
 
-func (uc *userCase) UserRepository() goadmin.UserRepository {
-	return uc.users
+func (uc *userCase) ListUsers(ctx context.Context, filter *goadmin.UserFilter) ([]*goadmin.User, int64, error) {
+	count, err := uc.users.Count(ctx, filter)
+	if err != nil {
+		return nil, 0, fmt.Errorf("counting users: %w", err)
+	}
+
+	users, err := uc.users.Search(ctx, filter)
+	if err != nil {
+		return nil, 0, fmt.Errorf("listing users: %w", err)
+	}
+
+	return users, count, nil
+}
+
+func (uc *userCase) UpdateUser(ctx context.Context, user *goadmin.User) (*goadmin.User, error) {
+	if err := uc.Validate(user, false); err != nil {
+		return nil, err
+	}
+
+	result, err := uc.users.Update(ctx, user)
+	if err != nil {
+		return nil, fmt.Errorf("updating user: %w", err)
+	}
+
+	return result, nil
+}
+
+func (uc *userCase) DeleteUser(ctx context.Context, id int64) error {
+	err := uc.users.Delete(ctx, &goadmin.User{ID: id})
+	if err != nil {
+		return fmt.Errorf("deleting user: %w", err)
+	}
+
+	return nil
 }
 
 func NewUserCase(users goadmin.UserRepository, tokens goadmin.TokenRepository) goadmin.UserUseCase {

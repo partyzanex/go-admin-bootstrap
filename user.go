@@ -69,14 +69,15 @@ type (
 		SearchByID(ctx context.Context, id int64) (*User, error)
 		SetLastLogged(ctx context.Context, user *User) error
 		Register(ctx context.Context, user *User) error
+		UpdateUser(ctx context.Context, user *User) (*User, error)
+		DeleteUser(ctx context.Context, id int64) error
+		ListUsers(ctx context.Context, filter *UserFilter) ([]*User, int64, error)
 
 		ComparePassword(user *User, password string) (bool, error)
 		EncodePassword(user *User) error
 
 		CreateAuthToken(ctx context.Context, user *User, cookieToken string) (*Token, error)
 		SearchToken(ctx context.Context, token string) (*Token, error)
-
-		UserRepository() UserRepository
 	}
 )
 
