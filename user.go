@@ -56,6 +56,7 @@ type (
 		Update(ctx context.Context, user *User) (*User, error)
 		SetLastLogged(ctx context.Context, user *User) error
 		Delete(ctx context.Context, user *User) error
+		GetUserByID(ctx context.Context, id int64) (*User, error)
 	}
 
 	TokenRepository interface {

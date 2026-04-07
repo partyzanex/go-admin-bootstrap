@@ -15,12 +15,13 @@ import (
 // Mock implementations
 
 type mockUserRepo struct {
-	searchFn     func(ctx context.Context, filter *goadmin.UserFilter) ([]*goadmin.User, error)
-	countFn      func(ctx context.Context, filter *goadmin.UserFilter) (int64, error)
-	createFn     func(ctx context.Context, user *goadmin.User) (*goadmin.User, error)
-	updateFn     func(ctx context.Context, user *goadmin.User) (*goadmin.User, error)
-	setLastLogFn func(ctx context.Context, user *goadmin.User) error
-	deleteFn     func(ctx context.Context, user *goadmin.User) error
+	searchFn       func(ctx context.Context, filter *goadmin.UserFilter) ([]*goadmin.User, error)
+	countFn        func(ctx context.Context, filter *goadmin.UserFilter) (int64, error)
+	createFn       func(ctx context.Context, user *goadmin.User) (*goadmin.User, error)
+	updateFn       func(ctx context.Context, user *goadmin.User) (*goadmin.User, error)
+	setLastLogFn   func(ctx context.Context, user *goadmin.User) error
+	deleteFn       func(ctx context.Context, user *goadmin.User) error
+	getUserByIDFn  func(ctx context.Context, id int64) (*goadmin.User, error)
 }
 
 func (m *mockUserRepo) Search(ctx context.Context, filter *goadmin.UserFilter) ([]*goadmin.User, error) {
@@ -63,6 +64,13 @@ func (m *mockUserRepo) Delete(ctx context.Context, user *goadmin.User) error {
 		return m.deleteFn(ctx, user)
 	}
 	return nil
+}
+
+func (m *mockUserRepo) GetUserByID(ctx context.Context, id int64) (*goadmin.User, error) {
+	if m.getUserByIDFn != nil {
+		return m.getUserByIDFn(ctx, id)
+	}
+	return nil, nil
 }
 
 type mockTokenRepo struct {

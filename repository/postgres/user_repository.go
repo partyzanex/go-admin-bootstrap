@@ -144,10 +144,10 @@ func (repo *userRepository) Delete(ctx context.Context, user *goadmin.User) erro
 	return nil
 }
 
-func GetUserByID(ctx context.Context, db *bun.DB, id int64) (*goadmin.User, error) {
+func (repo *userRepository) GetUserByID(ctx context.Context, id int64) (*goadmin.User, error) {
 	model := new(userModel)
 
-	err := db.NewSelect().Model(model).Where("u.id = ?", id).Scan(ctx)
+	err := repo.db.NewSelect().Model(model).Where("u.id = ?", id).Scan(ctx)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, goadmin.NewUserNotFoundError(id)
 	}

@@ -243,7 +243,7 @@ func (s *UserSuite) TestSetLastLogged() {
 	err := s.repo.SetLastLogged(ctx, user)
 	s.Require().NoError(err)
 
-	result, err := GetUserByID(ctx, s.db, user.ID)
+	result, err := s.repo.GetUserByID(ctx, user.ID)
 	s.Require().NoError(err)
 	s.NotZero(result.DTLastLogged)
 }
@@ -257,7 +257,7 @@ func (s *UserSuite) TestDelete() {
 	err := s.repo.Delete(ctx, user)
 	s.Require().NoError(err)
 
-	_, err = GetUserByID(ctx, s.db, user.ID)
+	_, err = s.repo.GetUserByID(ctx, user.ID)
 	s.Require().Error(err)
 
 	var notFound *goadmin.NotFoundError
@@ -289,7 +289,7 @@ func (s *UserSuite) TestGetUserByID() {
 
 	created := s.createTestUser(ctx)
 
-	got, err := GetUserByID(ctx, s.db, created.ID)
+	got, err := s.repo.GetUserByID(ctx, created.ID)
 	s.Require().NoError(err)
 	s.Require().NotNil(got)
 	s.Equal(created.ID, got.ID)
@@ -303,7 +303,7 @@ func (s *UserSuite) TestGetUserByID_NotFound() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	_, err := GetUserByID(ctx, s.db, testutils.RandInt64(999999, 9999999))
+	_, err := s.repo.GetUserByID(ctx, testutils.RandInt64(999999, 9999999))
 	s.Require().Error(err)
 
 	var notFound *goadmin.NotFoundError
