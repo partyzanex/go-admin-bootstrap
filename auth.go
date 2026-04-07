@@ -15,6 +15,8 @@ import (
 )
 
 const (
+	// accessCookieSuffix is intentionally empty: the access cookie name equals
+	// cfg.AccessCookieName with no suffix, while the refresh cookie appends "_refresh".
 	accessCookieSuffix  = ""
 	refreshCookieSuffix = "_refresh"
 )
@@ -86,7 +88,7 @@ func setAuthCookies(ctx *AppContext, user *User) error {
 		return fmt.Errorf("creating access token: %w", err)
 	}
 
-	http.SetCookie(ctx.Response(), &http.Cookie{ // #nosec G124 -- Secure is false only in DevMode; HttpOnly and SameSite=Strict are always set
+	http.SetCookie(ctx.Response(), &http.Cookie{ // #nosec G402 -- Secure is false only in DevMode; HttpOnly and SameSite=Strict are always set
 		Name:     cfg.AccessCookieName + accessCookieSuffix,
 		Value:    accessToken,
 		Expires:  accessExpires,
@@ -109,7 +111,7 @@ func setAuthCookies(ctx *AppContext, user *User) error {
 		return fmt.Errorf("creating refresh token: %w", err)
 	}
 
-	http.SetCookie(ctx.Response(), &http.Cookie{ // #nosec G124 -- Secure is false only in DevMode; HttpOnly and SameSite=Strict are always set
+	http.SetCookie(ctx.Response(), &http.Cookie{ // #nosec G402 -- Secure is false only in DevMode; HttpOnly and SameSite=Strict are always set
 		Name:     cfg.AccessCookieName + refreshCookieSuffix,
 		Value:    refreshValue,
 		Expires:  refreshToken.DTExpired,
@@ -224,7 +226,7 @@ func clearAuthCookies(ctx *AppContext) {
 	cfg := ctx.app.config
 
 	for _, suffix := range []string{accessCookieSuffix, refreshCookieSuffix} {
-		// #nosec G124 -- Secure is false only in DevMode; HttpOnly and SameSite=Strict are always set
+		// #nosec G402 -- Secure is false only in DevMode; HttpOnly and SameSite=Strict are always set
 		http.SetCookie(ctx.Response(), &http.Cookie{
 			Name:     cfg.AccessCookieName + suffix,
 			Value:    "",
