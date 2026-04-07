@@ -2,7 +2,6 @@ package goadmin
 
 import (
 	"context"
-	"database/sql"
 	"embed"
 	"errors"
 	"log/slog"
@@ -17,9 +16,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
 
 	"github.com/partyzanex/go-admin-bootstrap/assets"
 	"github.com/partyzanex/go-admin-bootstrap/views"
@@ -36,7 +32,6 @@ func TestApplyDefaults_FillsEmptyValues(t *testing.T) {
 	app.applyDefaults()
 
 	assert.Equal(t, DefaultAccessCookieName, app.config.AccessCookieName)
-	assert.Equal(t, DefaultMigrationsTable, app.config.DBConfig.MigrationsTable)
 	assert.Equal(t, DefaultAccessTokenTTL, app.config.AccessTokenTTL)
 	assert.Equal(t, DefaultRefreshTokenTTL, app.config.RefreshTokenTTL)
 	assert.NotNil(t, app.logger)
@@ -51,9 +46,6 @@ func TestApplyDefaults_PreservesExistingValues(t *testing.T) {
 			AccessTokenTTL:   5 * time.Minute,
 			RefreshTokenTTL:  7 * 24 * time.Hour,
 			Logger:           customLogger,
-			DBConfig: DBConfig{
-				MigrationsTable: "my_migrations",
-			},
 		},
 		echo: echo.New(),
 	}
@@ -61,7 +53,6 @@ func TestApplyDefaults_PreservesExistingValues(t *testing.T) {
 	app.applyDefaults()
 
 	assert.Equal(t, "my_cookie", app.config.AccessCookieName)
-	assert.Equal(t, "my_migrations", app.config.DBConfig.MigrationsTable)
 	assert.Equal(t, 5*time.Minute, app.config.AccessTokenTTL)
 	assert.Equal(t, 7*24*time.Hour, app.config.RefreshTokenTTL)
 	assert.Equal(t, customLogger, app.logger)
@@ -288,13 +279,16 @@ func TestSetDefaultRenderer(t *testing.T) {
 	assert.NotNil(t, app.echo.Renderer)
 }
 
+// errPinger is a DBPinger stub that always returns an error.
+type errPinger struct{}
+
+func (e *errPinger) PingContext(_ context.Context) error {
+	return errors.New("db down")
+}
+
 func TestHealthCheck_DBDown(t *testing.T) {
 	app := newTestApp(t)
-
-	// DB with a deliberately broken DSN — Ping will return an error → 503
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN("postgres://localhost:1/nonexistent?sslmode=disable")))
-	app.config.DBConfig.DB = bun.NewDB(sqldb, pgdialect.New())
-	t.Cleanup(func() { assert.NoError(t, sqldb.Close()) })
+	app.config.DBConfig.DB = &errPinger{}
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
@@ -303,6 +297,19 @@ func TestHealthCheck_DBDown(t *testing.T) {
 	err := app.healthCheck(ctx)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusServiceUnavailable, rec.Code)
+}
+
+func TestHealthCheck_NoDB(t *testing.T) {
+	app := newTestApp(t)
+	// DB is nil — health check skips DB ping and returns 200
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	rec := httptest.NewRecorder()
+	ctx := app.echo.NewContext(req, rec)
+
+	err := app.healthCheck(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 // --- helpers ---

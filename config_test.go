@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/uptrace/bun"
 )
 
 func TestConfig_Validate(t *testing.T) {
@@ -14,7 +13,6 @@ func TestConfig_Validate(t *testing.T) {
 		return &Config{
 			Port:      8080,
 			JWTSecret: []byte("this-secret-is-exactly-32-bytes!"),
-			DBConfig:  DBConfig{DB: &bun.DB{}},
 			UserCase:  &stubUseCase{},
 		}
 	}
@@ -26,7 +24,6 @@ func TestConfig_Validate(t *testing.T) {
 	}{
 		{"valid", func(_ *Config) {}, nil},
 		{"nil config", nil, ErrRequiredConfig},
-		{"no db", func(c *Config) { c.DBConfig.DB = nil }, ErrRequiredDB},
 		{"no port", func(c *Config) { c.Port = 0 }, ErrInvalidPort},
 		{"no jwt secret", func(c *Config) { c.JWTSecret = nil }, ErrRequiredJWTSecret},
 		{"jwt secret too short", func(c *Config) { c.JWTSecret = []byte("short") }, ErrJWTSecretTooShort},

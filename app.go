@@ -20,7 +20,6 @@ import (
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 
 	"github.com/partyzanex/go-admin-bootstrap/assets"
-	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
 	"github.com/partyzanex/go-admin-bootstrap/views"
 )
 
@@ -62,8 +61,10 @@ func New(config *Config, opts ...Option) (*App, error) {
 
 	app.applyDefaults()
 
-	if migErr := migrations.Up(app.config.DBConfig.DB.DB, app.config.DBConfig.MigrationsTable); migErr != nil {
-		return nil, fmt.Errorf("cannot up migrations: %w", migErr)
+	if app.config.DBConfig.MigrateFunc != nil {
+		if migErr := app.config.DBConfig.MigrateFunc(); migErr != nil {
+			return nil, fmt.Errorf("cannot up migrations: %w", migErr)
+		}
 	}
 
 	app.setStaticGroup()
@@ -82,10 +83,6 @@ func New(config *Config, opts ...Option) (*App, error) {
 func (app *App) applyDefaults() {
 	if app.config.AccessCookieName == "" {
 		app.config.AccessCookieName = DefaultAccessCookieName
-	}
-
-	if app.config.DBConfig.MigrationsTable == "" {
-		app.config.DBConfig.MigrationsTable = DefaultMigrationsTable
 	}
 
 	if app.config.AccessTokenTTL == 0 {
@@ -347,11 +344,13 @@ func (app *App) setDefaultRoutes() {
 const healthCheckTimeout = 2 * time.Second
 
 func (app *App) healthCheck(ctx echo.Context) error {
-	checkCtx, cancel := context.WithTimeout(ctx.Request().Context(), healthCheckTimeout)
-	defer cancel()
+	if app.config.DBConfig.DB != nil {
+		checkCtx, cancel := context.WithTimeout(ctx.Request().Context(), healthCheckTimeout)
+		defer cancel()
 
-	if err := app.config.DBConfig.DB.PingContext(checkCtx); err != nil {
-		return ctx.JSON(http.StatusServiceUnavailable, map[string]string{"status": "error", "db": "down"})
+		if err := app.config.DBConfig.DB.PingContext(checkCtx); err != nil {
+			return ctx.JSON(http.StatusServiceUnavailable, map[string]string{"status": "error", "db": "down"})
+		}
 	}
 
 	return ctx.JSON(http.StatusOK, map[string]string{"status": "ok"})

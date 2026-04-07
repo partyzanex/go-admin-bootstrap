@@ -7,7 +7,6 @@ import (
 
 var (
 	ErrInvalidPort          = errors.New("invalid http port")
-	ErrRequiredDB           = errors.New("required database connection instance")
 	ErrContextNotConfigured = errors.New("admin context not configured")
 	ErrRequiredUserName     = errors.New("required user name")
 	ErrRequiredUserLogin    = errors.New("required user login")

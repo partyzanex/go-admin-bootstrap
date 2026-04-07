@@ -1,17 +1,26 @@
 package goadmin
 
 import (
+	"context"
 	"log/slog"
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/uptrace/bun"
 )
 
+// DBPinger is satisfied by *sql.DB, *bun.DB, and any other driver that supports
+// context-aware connectivity checks. It is used by the /health endpoint.
+type DBPinger interface {
+	PingContext(ctx context.Context) error
+}
+
 type (
+	// DBConfig holds optional database-related settings.
+	// DB is used only for the /health endpoint connectivity check; leave nil to skip the check.
+	// MigrateFunc, when set, is called once during New() before the server starts.
 	DBConfig struct {
-		DB              *bun.DB
-		MigrationsTable string
+		DB          DBPinger
+		MigrateFunc func() error
 	}
 
 	Config struct {
@@ -43,10 +52,6 @@ type (
 func (config *Config) Validate() error {
 	if config == nil {
 		return ErrRequiredConfig
-	}
-
-	if config.DBConfig.DB == nil {
-		return ErrRequiredDB
 	}
 
 	if config.Port == 0 {

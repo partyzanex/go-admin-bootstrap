@@ -16,6 +16,7 @@ import (
 	"github.com/uptrace/bun/driver/pgdriver"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
+	pgmigrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
 	"github.com/partyzanex/go-admin-bootstrap/repository/postgres"
 	"github.com/partyzanex/go-admin-bootstrap/usecase"
 )
@@ -61,6 +62,9 @@ func run() error {
 			Logger:           logger,
 			DBConfig: goadmin.DBConfig{
 				DB: db,
+				MigrateFunc: func() error {
+					return pgmigrations.Up(sqldb, goadmin.DefaultMigrationsTable)
+				},
 			},
 			UserCase: userCase,
 		},
