@@ -206,7 +206,7 @@ func TestAuthByCookie_ExpiredJWT_RefreshWorks(t *testing.T) {
 func TestAuth_Success(t *testing.T) {
 	app := newTestApp(t)
 
-	user := &User{ID: 10, Role: RoleOwner, Status: UserActive, Password: "hashed"}
+	user := &User{ID: 10, Login: "admin@example.com", Role: RoleOwner, Status: UserActive, Password: "hashed"}
 	app.config.UserCase = &mockUseCaseForAuth{
 		user:      user,
 		compareOk: true,
@@ -221,6 +221,7 @@ func TestAuth_Success(t *testing.T) {
 
 	result, err := auth(ac)
 	require.NoError(t, err)
+	assert.Equal(t, int64(10), result.ID)
 	assert.Equal(t, "admin@example.com", result.Login)
 }
 

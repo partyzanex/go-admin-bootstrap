@@ -35,5 +35,6 @@ var (
 		{"auth/login.jet", 0, View},
 		{"user/form.jet", 0, View},
 		{"user/index.jet", 0, View},
+		{"audit/index.jet", 0, View},
 	}
 )

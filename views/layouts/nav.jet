@@ -9,6 +9,7 @@
     {{ if isset(.User) }}
       {{ if .User.Role == "owner" || .User.Role == "root" }}
       <li class="nav-item"><a href="{{ adminPath }}/users" class="nav-link">Users</a></li>
+      <li class="nav-item"><a href="{{ adminPath }}/audit" class="nav-link">Audit Log</a></li>
       {{ end }}
       <li class="nav-item">
         <form method="POST" action="{{ adminPath }}/logout" style="display:inline;">

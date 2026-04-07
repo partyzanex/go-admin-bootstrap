@@ -336,6 +336,7 @@ func (app *App) setDefaultRoutes() {
 	app.admin.GET(UserDeleteURL, methodNotAllowed)
 	app.admin.GET(UserUpdateURL, WrapHandler(UserUpdate), AuthByCookie, adminOnly)
 	app.admin.POST(UserUpdateURL, WrapHandler(UserUpdate), AuthByCookie, adminOnly)
+	app.admin.GET(AuditLogURL, WrapHandler(AuditLogList), AuthByCookie, adminOnly)
 	app.admin.GET(FaviconPrefix, Favicon)
 
 	app.echo.GET(app.baseURL.Path+"/health", app.healthCheck)

@@ -38,48 +38,43 @@ func generateSecureToken(length int) (string, error) {
 	return base64.URLEncoding.EncodeToString(bytes), nil
 }
 
-func auth(ctx *AppContext) (result User, err error) {
+func auth(ctx *AppContext) (User, error) {
 	login := ctx.FormValue("login")
 	password := ctx.FormValue("password")
 
-	result.Login = login
-	result.Password = password
-
 	user, err := ctx.UserCase().SearchByLogin(ctx.Ctx(), login)
 	if err != nil {
-		return result, err
+		return User{}, err
 	}
 
 	// Check user status before allowing login
 	if user.Status != UserActive {
-		return result, ErrUserBlocked
+		return User{}, ErrUserBlocked
 	}
 
 	ok, err := ctx.UserCase().ComparePassword(user, password)
 	if err != nil {
-		return result, err
+		return User{}, err
 	}
 
 	if !ok {
-		return result, ErrWrongPassword
+		return User{}, ErrWrongPassword
 	}
 
 	// Revoke any existing refresh tokens before issuing new ones
 	if revokeErr := ctx.UserCase().RevokeUserTokens(ctx.Ctx(), user.ID); revokeErr != nil {
-		return result, fmt.Errorf("revoking old tokens: %w", revokeErr)
+		return User{}, fmt.Errorf("revoking old tokens: %w", revokeErr)
 	}
 
-	err = setAuthCookies(ctx, user)
-	if err != nil {
-		return result, err
+	if err = setAuthCookies(ctx, user); err != nil {
+		return User{}, err
 	}
 
-	err = ctx.UserCase().SetLastLogged(ctx.Ctx(), user)
-	if err != nil {
-		return result, fmt.Errorf("updating user failed: %w", err)
+	if err = ctx.UserCase().SetLastLogged(ctx.Ctx(), user); err != nil {
+		return User{}, fmt.Errorf("updating user failed: %w", err)
 	}
 
-	return result, nil
+	return *user, nil
 }
 
 func setAuthCookies(ctx *AppContext, user *User) error {

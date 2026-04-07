@@ -40,6 +40,7 @@ type (
 
 		DBConfig DBConfig
 		UserCase UserUseCase
+		AuditLog AuditLogRepository // optional: set to nil to disable audit logging
 		Logger   *slog.Logger
 
 		middleware []echo.MiddlewareFunc

@@ -35,7 +35,7 @@ func Login(ctx *AppContext) error {
 	data.Breadcrumbs.Add("Login", ctx.URL(LoginURL), &sortOrder)
 
 	if ctx.Request().Method == http.MethodPost {
-		_, err := auth(ctx)
+		user, err := auth(ctx)
 		if IsNotFound(err) || errors.Is(err, ErrWrongPassword) || errors.Is(err, ErrUserBlocked) {
 			data.Set("err", "Неверный логин или пароль")
 			return ctx.Render(http.StatusUnauthorized, "auth/login", data)
@@ -44,6 +44,8 @@ func Login(ctx *AppContext) error {
 		if err != nil {
 			return err
 		}
+
+		ctx.writeAuditLog(AuditLogin, user.ID, nil)
 
 		return ctx.Redirect(http.StatusFound, ctx.URL(DashboardURL))
 	}
@@ -77,6 +79,13 @@ func Logout(ctx *AppContext) error {
 		if err := ctx.UserCase().RevokeUserTokens(ctx.Ctx(), userID); err != nil {
 			return fmt.Errorf("revoking tokens: %w", err)
 		}
+
+		// Fetch the actor for the audit log (best-effort; failures are ignored).
+		if actor, fetchErr := ctx.UserCase().SearchByID(ctx.Ctx(), userID); fetchErr == nil {
+			ctx.Set(UserContextKey, actor)
+		}
+
+		ctx.writeAuditLog(AuditLogout, userID, nil)
 	}
 
 	clearAuthCookies(ctx)
@@ -160,6 +169,11 @@ func UserCreate(ctx *AppContext) error {
 		if err != nil {
 			data.Set("error", err.Error())
 		} else {
+			ctx.writeAuditLog(AuditCreateUser, user.ID, map[string]any{
+				"login": user.Login,
+				"role":  string(user.Role),
+			})
+
 			return ctx.Redirect(http.StatusFound, ctx.URL(UserListURL))
 		}
 	}
@@ -222,6 +236,11 @@ func updateUser(ctx *AppContext, user *User) error {
 	if err != nil {
 		data.Set("error", err.Error())
 	} else {
+		ctx.writeAuditLog(AuditUpdateUser, user.ID, map[string]any{
+			"login": user.Login,
+			"role":  string(user.Role),
+		})
+
 		return ctx.Redirect(http.StatusFound, ctx.URL(UserListURL))
 	}
 
@@ -234,15 +253,23 @@ func UserDelete(ctx *AppContext) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
-	user := ctx.User()
-	if user.ID == userID {
+	actor := ctx.User()
+	if actor.ID == userID {
 		return echo.NewHTTPError(http.StatusLocked, "unable to delete your account")
+	}
+
+	// Fetch the target login before deletion for the audit record.
+	meta := map[string]any{"user_id": userID}
+	if target, fetchErr := ctx.UserCase().SearchByID(ctx.Ctx(), userID); fetchErr == nil {
+		meta["login"] = target.Login
 	}
 
 	err = ctx.UserCase().DeleteUser(ctx.Ctx(), userID)
 	if err != nil {
 		return err
 	}
+
+	ctx.writeAuditLog(AuditDeleteUser, userID, meta)
 
 	return ctx.Redirect(http.StatusFound, ctx.URL(UserListURL))
 }
@@ -264,6 +291,62 @@ func Favicon(ctx echo.Context) error {
 	ctx.Response().Header().Add(echo.HeaderLastModified, lastModified)
 
 	return ctx.Blob(http.StatusOK, http.DetectContentType(b), b)
+}
+
+func AuditLogList(ctx *AppContext) error {
+	repo := ctx.app.config.AuditLog
+	if repo == nil {
+		data := ctx.Data()
+		data.Breadcrumbs.Add("Audit Log", ctx.URL(AuditLogURL), nil)
+		data.Set("auditDisabled", true)
+
+		return ctx.Render(http.StatusOK, "audit/index", data)
+	}
+
+	actionFilter := AuditAction(ctx.QueryParam("action"))
+
+	qs := url.Values{}
+	if actionFilter != "" {
+		qs.Set("action", string(actionFilter))
+	}
+
+	qs.Set("p", "{page}")
+
+	nav := &widgets.Pagination{
+		Ctx:         ctx,
+		URLTemplate: ctx.URL(AuditLogURL) + "?" + qs.Encode(),
+		PageParam:   "p",
+		Limit:       DefaultLimit,
+	}
+
+	nav.ParsePage()
+
+	filter := &AuditLogFilter{
+		Action: actionFilter,
+		Limit:  DefaultLimit,
+		Offset: nav.Page*DefaultLimit - DefaultLimit,
+	}
+
+	logs, err := repo.Search(ctx.Ctx(), filter)
+	if err != nil {
+		return err
+	}
+
+	count, err := repo.Count(ctx.Ctx(), filter)
+	if err != nil {
+		return err
+	}
+
+	nav.Total = count
+
+	data := ctx.Data()
+	data.Set("logs", logs)
+	data.Set("count", count)
+	data.Set("pagination", nav)
+	data.Set("actionFilter", string(actionFilter))
+	data.Breadcrumbs.Add("Audit Log", ctx.URL(AuditLogURL), nil)
+
+	return ctx.Render(http.StatusOK, "audit/index", data)
 }
 
 func methodNotAllowed(ctx echo.Context) error {

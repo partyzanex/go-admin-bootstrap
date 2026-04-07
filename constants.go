@@ -41,6 +41,8 @@ const (
 	UserUpdateURL = "/users/:id/update"
 	UserDeleteURL = "/users/:id/delete"
 
+	AuditLogURL = "/audit"
+
 	DefaultAccessCookieName = "auth_token"
 	DefaultMigrationsTable  = "goadmin_migrations"
 

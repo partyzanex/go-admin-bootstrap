@@ -1,0 +1,93 @@
+{{ extends "../layouts/main.jet" }}
+{{ import "../widgets/pagination.jet" }}
+
+{{ block documentBody() }}
+
+  {{ if isset(auditDisabled) && auditDisabled }}
+    <div class="alert alert-warning">
+      Audit logging is disabled. Set <code>Config.AuditLog</code> to enable it.
+    </div>
+  {{ else }}
+
+  <form method="GET" action="{{ adminPath }}/audit" class="mb-3">
+    <div class="form-row align-items-end">
+      <div class="col-md-4">
+        <select name="action" class="form-control">
+          <option value="">All actions</option>
+          <option value="login"{{ isset(actionFilter) && actionFilter == "login" ? ` selected` : `` }}>Login</option>
+          <option value="logout"{{ isset(actionFilter) && actionFilter == "logout" ? ` selected` : `` }}>Logout</option>
+          <option value="create_user"{{ isset(actionFilter) && actionFilter == "create_user" ? ` selected` : `` }}>Create user</option>
+          <option value="update_user"{{ isset(actionFilter) && actionFilter == "update_user" ? ` selected` : `` }}>Update user</option>
+          <option value="delete_user"{{ isset(actionFilter) && actionFilter == "delete_user" ? ` selected` : `` }}>Delete user</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{{ adminPath }}/audit" class="btn btn-secondary ml-1">Reset</a>
+      </div>
+    </div>
+  </form>
+
+  <table class="table table-hover table-striped table-sm">
+    <thead>
+      <tr class="table-secondary">
+        <td style="width: 170px;">Date</td>
+        <td style="width: 180px;">Actor</td>
+        <td style="width: 140px;">Action</td>
+        <td style="width: 80px;">Entity ID</td>
+        <td>Details</td>
+      </tr>
+    </thead>
+    <tbody>
+    {{ if isset(logs) && len(logs) > 0 }}
+      {{ range _, entry := logs }}
+      <tr>
+        <td class="text-muted small">{{ entry.GetDTCreated() }}</td>
+        <td>
+          {{ if entry.ActorLogin != "" }}
+            {{ entry.ActorLogin }}
+            {{ if entry.ActorID != 0 }}
+              <span class="text-muted small">#{{ entry.ActorID }}</span>
+            {{ end }}
+          {{ else }}
+            <span class="text-muted">—</span>
+          {{ end }}
+        </td>
+        <td>
+          {{ if entry.Action == "login" }}
+            <span class="badge badge-success">login</span>
+          {{ else if entry.Action == "logout" }}
+            <span class="badge badge-secondary">logout</span>
+          {{ else if entry.Action == "create_user" }}
+            <span class="badge badge-primary">create user</span>
+          {{ else if entry.Action == "update_user" }}
+            <span class="badge badge-warning">update user</span>
+          {{ else if entry.Action == "delete_user" }}
+            <span class="badge badge-danger">delete user</span>
+          {{ else }}
+            <span class="badge badge-light">{{ entry.Action }}</span>
+          {{ end }}
+        </td>
+        <td class="text-muted small">
+          {{ if entry.EntityID != 0 }}#{{ entry.EntityID }}{{ else }}—{{ end }}
+        </td>
+        <td class="small">
+          {{ if isset(entry.Meta) }}
+            {{ range key, val := entry.Meta }}
+              <span class="text-muted">{{ key }}:</span> {{ val }}&nbsp;
+            {{ end }}
+          {{ end }}
+        </td>
+      </tr>
+      {{ end }}
+    {{ else }}
+      <tr>
+        <td colspan="5" class="text-center text-muted">No audit records found</td>
+      </tr>
+    {{ end }}
+    </tbody>
+  </table>
+  {{ yield pagenav() }}
+
+  {{ end }}
+{{ end }}

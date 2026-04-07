@@ -72,3 +72,27 @@ func (c *AppContext) Log() *slog.Logger {
 
 	return c.app.logger
 }
+
+// writeAuditLog records an audit event. Errors are logged but never returned to
+// the caller — a logging failure must not block the user's operation.
+func (c *AppContext) writeAuditLog(action AuditAction, entityID int64, meta map[string]any) {
+	repo := c.app.config.AuditLog
+	if repo == nil {
+		return
+	}
+
+	entry := &AuditLog{
+		Action:   action,
+		EntityID: entityID,
+		Meta:     meta,
+	}
+
+	if actor := c.User(); actor != nil {
+		entry.ActorID = actor.ID
+		entry.ActorLogin = actor.Login
+	}
+
+	if _, err := repo.Create(c.Ctx(), entry); err != nil {
+		c.Log().Error("audit log write failed", "action", action, "err", err)
+	}
+}
