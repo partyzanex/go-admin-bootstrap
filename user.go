@@ -40,11 +40,13 @@ type (
 	}
 
 	UserFilter struct {
-		IDs           []int64
-		Name          string
-		Login         string
-		Status        UserStatus
-		Limit, Offset int
+		IDs    []int64
+		Name   string
+		Login  string
+		Search string // ILIKE match against both login and name
+		Status UserStatus
+		Limit  int
+		Offset int
 	}
 
 	UserRepository interface {

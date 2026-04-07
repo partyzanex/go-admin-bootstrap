@@ -63,6 +63,11 @@ func applyUserFilter(q *bun.SelectQuery, f *goadmin.UserFilter) *bun.SelectQuery
 		q = q.Where("u.name ILIKE ?", "%"+f.Name+"%")
 	}
 
+	if f.Search != "" {
+		pattern := "%" + f.Search + "%"
+		q = q.Where("(u.login ILIKE ? OR u.name ILIKE ?)", pattern, pattern)
+	}
+
 	if f.Status != "" {
 		q = q.Where("u.status = ?", f.Status)
 	}

@@ -3,6 +3,32 @@
 
 {{ block documentBody() }}
 
+  <form method="GET" action="{{ adminPath }}/users" class="mb-3">
+    <div class="form-row align-items-end">
+      <div class="col-md-5">
+        <input
+          type="text"
+          name="q"
+          class="form-control"
+          placeholder="Search by login or name"
+          value="{{ isset(searchQuery) ? searchQuery : "" }}"
+        >
+      </div>
+      <div class="col-md-3">
+        <select name="status" class="form-control">
+          <option value="">All statuses</option>
+          <option value="active"{{ isset(searchStatus) && searchStatus == "active" ? ` selected` : `` }}>Active</option>
+          <option value="new"{{ isset(searchStatus) && searchStatus == "new" ? ` selected` : `` }}>New</option>
+          <option value="blocked"{{ isset(searchStatus) && searchStatus == "blocked" ? ` selected` : `` }}>Blocked</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a href="{{ adminPath }}/users" class="btn btn-secondary ml-1">Reset</a>
+      </div>
+    </div>
+  </form>
+
   <table class="table table-hover table-striped">
     <thead>
       <tr class="table-secondary">
@@ -18,7 +44,7 @@
       </tr>
     </thead>
     <tbody>
-    {{ if isset(users) }}
+    {{ if isset(users) && len(users) > 0 }}
       {{ range _, user := users }}
       <tr>
         <td>{{ user.ID }}</td>
@@ -44,11 +70,10 @@
       {{ end }}
     {{ else }}
       <tr>
-        <td colspan="4">No groups</td>
+        <td colspan="7" class="text-center text-muted">No users found</td>
       </tr>
     {{ end }}
     </tbody>
   </table>
   {{ yield pagenav() }}
 {{ end }}
-

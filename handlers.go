@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -93,9 +94,23 @@ func Dashboard(ctx *AppContext) error {
 }
 
 func UserList(ctx *AppContext) error {
+	searchQuery := strings.TrimSpace(ctx.QueryParam("q"))
+	searchStatus := UserStatus(ctx.QueryParam("status"))
+
+	qs := url.Values{}
+	if searchQuery != "" {
+		qs.Set("q", searchQuery)
+	}
+
+	if searchStatus != "" {
+		qs.Set("status", string(searchStatus))
+	}
+
+	qs.Set("p", "{page}")
+
 	nav := &widgets.Pagination{
 		Ctx:         ctx,
-		URLTemplate: ctx.URL("/users?p={page}"),
+		URLTemplate: ctx.URL(UserListURL) + "?" + qs.Encode(),
 		PageParam:   "p",
 		Limit:       DefaultLimit,
 	}
@@ -103,6 +118,8 @@ func UserList(ctx *AppContext) error {
 	nav.ParsePage()
 
 	filter := &UserFilter{
+		Search: searchQuery,
+		Status: searchStatus,
 		Limit:  DefaultLimit,
 		Offset: nav.Page*DefaultLimit - DefaultLimit,
 	}
@@ -118,6 +135,8 @@ func UserList(ctx *AppContext) error {
 	data.Set("users", users)
 	data.Set("count", count)
 	data.Set("pagination", nav)
+	data.Set("searchQuery", searchQuery)
+	data.Set("searchStatus", string(searchStatus))
 	data.Breadcrumbs.Add("Users", ctx.URL(UserListURL), nil)
 
 	return ctx.Render(http.StatusOK, "user/index", data)
