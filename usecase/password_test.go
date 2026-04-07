@@ -75,7 +75,7 @@ func TestComparePassword_InvalidArgon2Hash(t *testing.T) {
 // --- validatePasswordComplexity tests ---
 
 func TestValidatePasswordComplexity_Valid(t *testing.T) {
-	err := validatePasswordComplexity("StrongP1")
+	err := validatePasswordComplexity("StrongP1!")
 	assert.NoError(t, err)
 }
 
@@ -99,9 +99,14 @@ func TestValidatePasswordComplexity_NoDigit(t *testing.T) {
 	assert.ErrorIs(t, err, errPasswordNoDigit)
 }
 
+func TestValidatePasswordComplexity_NoSpecialChar(t *testing.T) {
+	err := validatePasswordComplexity("StrongP1")
+	assert.ErrorIs(t, err, errPasswordNoSpecialChar)
+}
+
 func TestValidatePasswordComplexity_ExactlyMinLength(t *testing.T) {
-	// Exactly 8 chars with all requirements
-	err := validatePasswordComplexity("Abcdefg1")
+	// Exactly 8 chars with all requirements: upper, lower, digit, special
+	err := validatePasswordComplexity("Abcde1!A")
 	assert.NoError(t, err)
 }
 

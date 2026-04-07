@@ -105,7 +105,7 @@ func validUser(id int64) *goadmin.User {
 	return &goadmin.User{
 		ID:       id,
 		Login:    "user@example.com",
-		Password: "StrongPass1",
+		Password: "StrongPass1!",
 		Status:   goadmin.UserActive,
 		Name:     "Test User",
 		Role:     goadmin.RoleUser,
@@ -309,7 +309,7 @@ func TestRegister_Success(t *testing.T) {
 	users := &mockUserRepo{
 		createFn: func(_ context.Context, u *goadmin.User) (*goadmin.User, error) {
 			assert.True(t, u.PasswordIsEncoded)
-			assert.NotEqual(t, "StrongPass1", u.Password) // should be hashed
+			assert.NotEqual(t, "StrongPass1!", u.Password) // should be hashed
 			result := *u
 			result.ID = 10
 			return &result, nil
@@ -474,7 +474,7 @@ func TestListUsers_SearchError(t *testing.T) {
 func TestEncodePassword_NewPassword(t *testing.T) {
 	uc := newUseCase(&mockUserRepo{}, &mockTokenRepo{})
 	user := validUser(1)
-	user.Password = "StrongPass1"
+	user.Password = "StrongPass1!"
 	user.PasswordIsEncoded = false
 	err := uc.EncodePassword(user)
 	require.NoError(t, err)
@@ -508,12 +508,12 @@ func TestEncodePassword_WeakPassword(t *testing.T) {
 func TestComparePassword_Correct(t *testing.T) {
 	uc := newUseCase(&mockUserRepo{}, &mockTokenRepo{})
 	user := validUser(1)
-	user.Password = "StrongPass1"
+	user.Password = "StrongPass1!"
 	user.PasswordIsEncoded = false
 	err := uc.EncodePassword(user)
 	require.NoError(t, err)
 
-	ok, err := uc.ComparePassword(user, "StrongPass1")
+	ok, err := uc.ComparePassword(user, "StrongPass1!")
 	require.NoError(t, err)
 	assert.True(t, ok)
 }
@@ -521,7 +521,7 @@ func TestComparePassword_Correct(t *testing.T) {
 func TestComparePassword_Wrong(t *testing.T) {
 	uc := newUseCase(&mockUserRepo{}, &mockTokenRepo{})
 	user := validUser(1)
-	user.Password = "StrongPass1"
+	user.Password = "StrongPass1!"
 	user.PasswordIsEncoded = false
 	err := uc.EncodePassword(user)
 	require.NoError(t, err)

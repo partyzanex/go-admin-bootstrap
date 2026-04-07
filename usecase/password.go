@@ -27,12 +27,13 @@ const (
 )
 
 var (
-	errPasswordTooShort    = errors.New("password must be at least 8 characters")
-	errPasswordNoUpper     = errors.New("password must contain at least one uppercase letter")
-	errPasswordNoLower     = errors.New("password must contain at least one lowercase letter")
-	errPasswordNoDigit     = errors.New("password must contain at least one digit")
-	errInvalidArgon2Hash   = errors.New("invalid argon2id hash format")
-	errArgon2VersionChange = errors.New("argon2id version mismatch")
+	errPasswordTooShort      = errors.New("password must be at least 8 characters")
+	errPasswordNoUpper       = errors.New("password must contain at least one uppercase letter")
+	errPasswordNoLower       = errors.New("password must contain at least one lowercase letter")
+	errPasswordNoDigit       = errors.New("password must contain at least one digit")
+	errPasswordNoSpecialChar = errors.New("password must contain at least one special character (!@#$%^&*-_=+[]{}|;:,.<>?)")
+	errInvalidArgon2Hash     = errors.New("invalid argon2id hash format")
+	errArgon2VersionChange   = errors.New("argon2id version mismatch")
 )
 
 func hashPassword(password string) (string, error) {
@@ -113,12 +114,14 @@ func compareArgon2(encoded, password string) error {
 	return nil
 }
 
+const specialChars = "!@#$%^&*-_=+[]{}|;:,.<>?"
+
 func validatePasswordComplexity(password string) error {
 	if len(password) < minPasswordLen {
 		return errPasswordTooShort
 	}
 
-	var hasUpper, hasLower, hasDigit bool
+	var hasUpper, hasLower, hasDigit, hasSpecial bool
 
 	for _, r := range password {
 		switch {
@@ -128,6 +131,8 @@ func validatePasswordComplexity(password string) error {
 			hasLower = true
 		case unicode.IsDigit(r):
 			hasDigit = true
+		case strings.ContainsRune(specialChars, r):
+			hasSpecial = true
 		}
 	}
 
@@ -141,6 +146,10 @@ func validatePasswordComplexity(password string) error {
 
 	if !hasDigit {
 		return errPasswordNoDigit
+	}
+
+	if !hasSpecial {
+		return errPasswordNoSpecialChar
 	}
 
 	return nil
