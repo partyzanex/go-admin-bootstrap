@@ -4,37 +4,23 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/partyzanex/testutils"
 	"github.com/stretchr/testify/suite"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"github.com/uptrace/bun/driver/pgdriver"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
 )
 
 func TestTokenRepository(t *testing.T) {
-	dsn := os.Getenv("TEST_PG")
-	if dsn == "" {
-		t.Skip("TEST_PG not set")
-	}
-
-	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-	db := bun.NewDB(sqldb, pgdialect.New())
-
-	t.Cleanup(func() { db.Close() })
-
-	repo := NewTokenRepository(db)
+	repo := NewTokenRepository(testDB)
 
 	suite.Run(t, &TokenSuite{
-		db:   db,
+		db:   testDB,
 		repo: repo.(*authTokenRepository),
 	})
 }

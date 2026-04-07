@@ -1,24 +1,28 @@
 //go:build integration
 
-package migrations_test
+package postgres
 
 import (
 	"context"
 	"database/sql"
+	"log"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
-
-	goadmin "github.com/partyzanex/go-admin-bootstrap"
-	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
 )
 
-func TestUp(t *testing.T) {
+// testDB is shared across all integration tests in this package.
+// It is initialised once in TestMain by a single PostgreSQL container.
+var testDB *bun.DB
+
+func TestMain(m *testing.M) {
 	ctx := context.Background()
 
 	pgContainer, err := tcpostgres.Run(ctx, "postgres:14-alpine",
@@ -31,21 +35,25 @@ func TestUp(t *testing.T) {
 				WithStartupTimeout(60*time.Second),
 		),
 	)
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = pgContainer.Terminate(ctx) })
+	if err != nil {
+		log.Fatalf("start postgres container: %v", err)
+	}
+
+	defer func() {
+		if termErr := pgContainer.Terminate(ctx); termErr != nil {
+			log.Printf("terminate postgres container: %v", termErr)
+		}
+	}()
 
 	dsn, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
-	require.NoError(t, err)
+	if err != nil {
+		log.Fatalf("get postgres connection string: %v", err)
+	}
 
-	db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-	t.Cleanup(func() { _ = db.Close() })
+	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	testDB = bun.NewDB(sqldb, pgdialect.New())
 
-	err = migrations.Up(db, goadmin.DefaultMigrationsTable)
-	require.NoError(t, err)
+	defer func() { _ = testDB.Close() }()
 
-	_, err = db.ExecContext(ctx, `select * from goadmin."user"`)
-	require.NoError(t, err)
-
-	_, err = db.ExecContext(ctx, `select * from goadmin.auth_token`)
-	require.NoError(t, err)
+	os.Exit(m.Run())
 }
