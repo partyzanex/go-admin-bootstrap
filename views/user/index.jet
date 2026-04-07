@@ -4,7 +4,7 @@
 {{ block documentBody() }}
 
   <form method="GET" action="{{ adminPath }}/users" class="mb-3">
-    <div class="form-row align-items-end">
+    <div class="row g-2 align-items-end">
       <div class="col-md-5">
         <input
           type="text"
@@ -15,7 +15,7 @@
         >
       </div>
       <div class="col-md-3">
-        <select name="status" class="form-control">
+        <select name="status" class="form-select">
           <option value="">All statuses</option>
           <option value="active"{{ isset(searchStatus) && searchStatus == "active" ? ` selected` : `` }}>Active</option>
           <option value="new"{{ isset(searchStatus) && searchStatus == "new" ? ` selected` : `` }}>New</option>
@@ -24,7 +24,7 @@
       </div>
       <div class="col-auto">
         <button type="submit" class="btn btn-primary">Search</button>
-        <a href="{{ adminPath }}/users" class="btn btn-secondary ml-1">Reset</a>
+        <a href="{{ adminPath }}/users" class="btn btn-secondary ms-1">Reset</a>
       </div>
     </div>
   </form>
@@ -38,7 +38,7 @@
         <td>Role</td>
         <td style="width: 120px">Status</td>
         <td style="width: 200px">Date</td>
-        <td style="width: 160px" class="text-right">
+        <td style="width: 160px" class="text-end">
           <a class="btn btn-info btn-sm" href="{{ adminPath }}/users/create">Create User</a>
         </td>
       </tr>
@@ -48,22 +48,20 @@
       {{ range _, user := users }}
       <tr>
         <td>{{ user.ID }}</td>
-        <td>
-          {{ user.Login }}
-        </td>
+        <td>{{ user.Login }}</td>
         <td>{{ user.Name }}</td>
         <td>{{ user.Role }}</td>
         <td>{{ user.Status }}</td>
         <td class="text-muted">
-          <span class="badge badge-success">Created: {{ user.GetDTCreated() }}</span><br>
-          <span class="badge badge-primary">Updated: {{ user.GetDTUpdated() }}</span><br>
-          <span class="badge badge-info">Last logged: {{ user.GetDTLastLogged() }}</span>
+          <span class="badge bg-success">Created: {{ user.GetDTCreated() }}</span><br>
+          <span class="badge bg-primary">Updated: {{ user.GetDTUpdated() }}</span><br>
+          <span class="badge bg-info text-dark">Last logged: {{ user.GetDTLastLogged() }}</span>
         </td>
-        <td class="text-right">
-          <a href="{{ adminPath }}/users/{{ user.ID }}/update" class="btn-sm btn btn-outline-primary">Edit</a>
+        <td class="text-end">
+          <a href="{{ adminPath }}/users/{{ user.ID }}/update" class="btn btn-sm btn-outline-primary">Edit</a>
           <form method="POST" action="{{ adminPath }}/users/{{ user.ID }}/delete" style="display:inline;" data-confirm="Delete user?">
             <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-            <button type="submit" class="btn-sm btn btn-outline-danger">Delete</button>
+            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
           </form>
         </td>
       </tr>

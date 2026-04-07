@@ -99,7 +99,7 @@ func TestApp_Close(t *testing.T) {
 func TestMergedFS_Open_FoundInFirst(t *testing.T) {
 	mfs := &mergedFS{filesystems: []embed.FS{assets.JS, assets.CSS}}
 
-	f, err := mfs.Open("plugins/jquery/jquery-3.4.1.min.js")
+	f, err := mfs.Open("plugins/bootstrap/js/bootstrap.bundle.min.js")
 	require.NoError(t, err)
 	assert.NotNil(t, f)
 	require.NoError(t, f.Close())

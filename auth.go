@@ -66,11 +66,11 @@ func auth(ctx *AppContext) (User, error) {
 		return User{}, fmt.Errorf("revoking old tokens: %w", revokeErr)
 	}
 
-	if err = setAuthCookies(ctx, user); err != nil {
+	if err := setAuthCookies(ctx, user); err != nil {
 		return User{}, err
 	}
 
-	if err = ctx.UserCase().SetLastLogged(ctx.Ctx(), user); err != nil {
+	if err := ctx.UserCase().SetLastLogged(ctx.Ctx(), user); err != nil {
 		return User{}, fmt.Errorf("updating user failed: %w", err)
 	}
 

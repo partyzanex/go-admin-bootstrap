@@ -6,7 +6,7 @@ var (
 	//go:embed css/*.css plugins/bootstrap/css/*
 	CSS embed.FS
 
-	//go:embed plugins/bootstrap/js/* plugins/jquery/* plugins/popper/* js/*.js
+	//go:embed plugins/bootstrap/js/* js/*.js
 	JS embed.FS
 
 	//go:embed favicon/*

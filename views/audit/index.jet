@@ -10,9 +10,9 @@
   {{ else }}
 
   <form method="GET" action="{{ adminPath }}/audit" class="mb-3">
-    <div class="form-row align-items-end">
+    <div class="row g-2 align-items-end">
       <div class="col-md-4">
-        <select name="action" class="form-control">
+        <select name="action" class="form-select">
           <option value="">All actions</option>
           <option value="login"{{ isset(actionFilter) && actionFilter == "login" ? ` selected` : `` }}>Login</option>
           <option value="logout"{{ isset(actionFilter) && actionFilter == "logout" ? ` selected` : `` }}>Logout</option>
@@ -23,7 +23,7 @@
       </div>
       <div class="col-auto">
         <button type="submit" class="btn btn-primary">Filter</button>
-        <a href="{{ adminPath }}/audit" class="btn btn-secondary ml-1">Reset</a>
+        <a href="{{ adminPath }}/audit" class="btn btn-secondary ms-1">Reset</a>
       </div>
     </div>
   </form>
@@ -55,17 +55,17 @@
         </td>
         <td>
           {{ if entry.Action == "login" }}
-            <span class="badge badge-success">login</span>
+            <span class="badge bg-success">login</span>
           {{ else if entry.Action == "logout" }}
-            <span class="badge badge-secondary">logout</span>
+            <span class="badge bg-secondary">logout</span>
           {{ else if entry.Action == "create_user" }}
-            <span class="badge badge-primary">create user</span>
+            <span class="badge bg-primary">create user</span>
           {{ else if entry.Action == "update_user" }}
-            <span class="badge badge-warning">update user</span>
+            <span class="badge bg-warning text-dark">update user</span>
           {{ else if entry.Action == "delete_user" }}
-            <span class="badge badge-danger">delete user</span>
+            <span class="badge bg-danger">delete user</span>
           {{ else }}
-            <span class="badge badge-light">{{ entry.Action }}</span>
+            <span class="badge bg-light text-dark">{{ entry.Action }}</span>
           {{ end }}
         </td>
         <td class="text-muted small">

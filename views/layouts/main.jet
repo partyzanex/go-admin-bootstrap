@@ -4,6 +4,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>GoAdmin {{ isset(title) ? title : "" }}</title>
     <link rel="apple-touch-icon" sizes="57x57" href="{{ adminPath }}/favicon/apple-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="{{ adminPath }}/favicon/apple-icon-60x60.png">
@@ -14,7 +15,7 @@
     <link rel="apple-touch-icon" sizes="144x144" href="{{ adminPath }}/favicon/apple-icon-144x144.png">
     <link rel="apple-touch-icon" sizes="152x152" href="{{ adminPath }}/favicon/apple-icon-152x152.png">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ adminPath }}/favicon/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192"  href="{{ adminPath }}/favicon/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ adminPath }}/favicon/android-icon-192x192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ adminPath }}/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="{{ adminPath }}/favicon/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ adminPath }}/favicon/favicon-16x16.png">
@@ -27,24 +28,24 @@
     <link href="{{ adminPath }}/assets/{{ style.Path }}" rel="stylesheet" type="text/css"/>
     {{ end }}
   {{ end }}
-  {{ if isset(scripts) }}
-    {{ range _, script := scripts }}
-    <script src="{{ adminPath }}/assets/{{ script.Path }}"></script>
-    {{ end }}
-  {{ end }}
   </head>
   <body>
     <header>
       {{ yield nav() }}
     </header>
-    <main class="container-fluid pt-2">
+    <main class="container-fluid pt-3">
       {{ yield breadcrumbs() }}
       {{ block documentBody() }}{{ end }}
     </main>
-    <footer class="footer bg-light border-top p-2">
+    <footer class="footer bg-light border-top p-2 mt-4">
       <div class="container">
-        <p class="text-center text-muted">&copy;2019 All rights reserved and bla bla bla</p>
+        <p class="text-center text-muted mb-0">&copy;2019 All rights reserved and bla bla bla</p>
       </div>
     </footer>
+  {{ if isset(scripts) }}
+    {{ range _, script := scripts }}
+    <script src="{{ adminPath }}/assets/{{ script.Path }}"></script>
+    {{ end }}
+  {{ end }}
   </body>
 </html>
