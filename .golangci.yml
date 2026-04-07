@@ -63,6 +63,10 @@ linters:
     depguard:
       rules:
         main:
+          # Restrict this rule to non-test files: testcontainers (used in integration tests)
+          # pulls logrus as an indirect transitive dependency. Test code is allowed to import it.
+          files:
+            - "!**/*_test.go"
           deny:
             - pkg: "github.com/sirupsen/logrus"
               desc: "use log/slog instead"
