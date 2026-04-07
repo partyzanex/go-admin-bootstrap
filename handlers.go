@@ -65,10 +65,12 @@ func Logout(ctx *AppContext) error {
 		}
 	}
 
-	// Fallback: look up user via refresh cookie if JWT is expired/missing
+	// Fallback: look up user via refresh cookie if JWT is expired/missing.
+	// The DB stores the HMAC-SHA256 hash, so hash the raw cookie value before searching.
 	if userID == 0 {
 		if cookie, err := ctx.Cookie(cfg.AccessCookieName + refreshCookieSuffix); err == nil {
-			if token, searchErr := ctx.UserCase().SearchToken(ctx.Ctx(), cookie.Value); searchErr == nil {
+			hashed := hashRefreshToken(cfg.JWTSecret, cookie.Value)
+			if token, searchErr := ctx.UserCase().SearchToken(ctx.Ctx(), hashed); searchErr == nil {
 				userID = token.UserID
 			}
 		}
