@@ -17,7 +17,7 @@ func TestCreateAccessToken_Valid(t *testing.T) {
 	secret := []byte("test-secret-key")
 	ttl := 15 * time.Minute
 
-	tokenStr, expiresAt, err := createAccessToken(user, secret, ttl)
+	tokenStr, expiresAt, err := createAccessToken(user, secret, ttl, "", nil)
 
 	require.NoError(t, err)
 	assert.NotEmpty(t, tokenStr)
@@ -32,7 +32,7 @@ func TestCreateAccessToken_ClaimsCorrect(t *testing.T) {
 	secret := []byte("my-secret")
 	ttl := 30 * time.Minute
 
-	tokenStr, _, err := createAccessToken(user, secret, ttl)
+	tokenStr, _, err := createAccessToken(user, secret, ttl, "", nil)
 	require.NoError(t, err)
 
 	// Parse back and verify claims
@@ -53,7 +53,7 @@ func TestParseAccessToken_Valid(t *testing.T) {
 	}
 	secret := []byte("secret123")
 
-	tokenStr, _, err := createAccessToken(user, secret, time.Hour)
+	tokenStr, _, err := createAccessToken(user, secret, time.Hour, "", nil)
 	require.NoError(t, err)
 
 	claims, err := parseAccessToken(tokenStr, secret)
@@ -98,7 +98,7 @@ func TestParseAccessToken_WrongSecret(t *testing.T) {
 	correctSecret := []byte("correct-secret")
 	wrongSecret := []byte("wrong-secret")
 
-	tokenStr, _, err := createAccessToken(user, correctSecret, time.Hour)
+	tokenStr, _, err := createAccessToken(user, correctSecret, time.Hour, "", nil)
 	require.NoError(t, err)
 
 	_, err = parseAccessToken(tokenStr, wrongSecret)
@@ -127,7 +127,7 @@ func TestCreateAndParseAccessToken_Roundtrip(t *testing.T) {
 	secret := []byte("roundtrip-secret")
 
 	for _, user := range users {
-		tokenStr, _, err := createAccessToken(user, secret, time.Hour)
+		tokenStr, _, err := createAccessToken(user, secret, time.Hour, "", nil)
 		require.NoError(t, err)
 
 		claims, err := parseAccessToken(tokenStr, secret)

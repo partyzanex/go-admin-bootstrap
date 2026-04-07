@@ -205,7 +205,7 @@ func TestAuthByCookie_NonUnauthorizedError(t *testing.T) {
 	user := &User{ID: 1, Role: RoleOwner, Status: UserBlocked}
 	app.config.UserCase = &mockUseCaseForAuth{user: user}
 
-	tokenStr, _, err := createAccessToken(user, app.config.JWTSecret, app.config.AccessTokenTTL)
+	tokenStr, _, err := createAccessToken(user, app.config.JWTSecret, app.config.AccessTokenTTL, "", nil)
 	require.NoError(t, err)
 
 	handler := AuthByCookie(func(_ echo.Context) error { return nil })
@@ -231,7 +231,7 @@ func TestAuthByCookie_Success(t *testing.T) {
 	user := &User{ID: 7, Role: RoleOwner, Status: UserActive}
 	app.config.UserCase = &mockUseCaseForAuth{user: user}
 
-	tokenStr, _, err := createAccessToken(user, app.config.JWTSecret, app.config.AccessTokenTTL)
+	tokenStr, _, err := createAccessToken(user, app.config.JWTSecret, app.config.AccessTokenTTL, "", nil)
 	require.NoError(t, err)
 
 	var capturedUser *User

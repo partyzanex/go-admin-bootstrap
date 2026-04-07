@@ -8,6 +8,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const defaultJWTIssuer = "go-admin-bootstrap"
+
 var errUnexpectedClaims = errors.New("unexpected claims type")
 
 type Claims struct {
@@ -16,13 +18,19 @@ type Claims struct {
 	Role   string `json:"role"`
 }
 
-func createAccessToken(user *User, secret []byte, ttl time.Duration) (string, time.Time, error) {
+func createAccessToken(user *User, secret []byte, ttl time.Duration, issuer string, audience jwt.ClaimStrings) (string, time.Time, error) {
 	expiresAt := time.Now().Add(ttl)
+
+	if issuer == "" {
+		issuer = defaultJWTIssuer
+	}
 
 	claims := Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    issuer,
+			Audience:  audience,
 		},
 		UserID: user.ID,
 		Role:   string(user.Role),

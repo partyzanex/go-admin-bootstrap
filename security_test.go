@@ -143,7 +143,7 @@ func TestUserDelete_POST_WithCSRF_Authenticated_Deletes(t *testing.T) {
 	app.config.UserCase = &mockUseCaseForAuth{user: owner}
 
 	// Step 1: JWT for the authenticated owner
-	tokenStr, _, err := createAccessToken(owner, app.config.JWTSecret, app.config.AccessTokenTTL)
+	tokenStr, _, err := createAccessToken(owner, app.config.JWTSecret, app.config.AccessTokenTTL, "", nil)
 	require.NoError(t, err)
 
 	// Step 2: CSRF token
@@ -171,7 +171,7 @@ func TestUserDelete_POST_SelfDelete_Returns423(t *testing.T) {
 	app := newRoutedTestApp(t)
 	app.config.UserCase = &mockUseCaseForAuth{user: owner}
 
-	tokenStr, _, err := createAccessToken(owner, app.config.JWTSecret, app.config.AccessTokenTTL)
+	tokenStr, _, err := createAccessToken(owner, app.config.JWTSecret, app.config.AccessTokenTTL, "", nil)
 	require.NoError(t, err)
 
 	csrfToken := csrfTokenFromGET(t, app, "/admin/login")
@@ -234,7 +234,7 @@ func TestLogout_DoesNotExecute_OnGETEvenWithCSRFCookie(t *testing.T) {
 	app := newRoutedTestApp(t)
 	app.config.UserCase = &mockUseCaseForAuth{user: owner}
 
-	tokenStr, _, err := createAccessToken(owner, app.config.JWTSecret, 15*time.Minute)
+	tokenStr, _, err := createAccessToken(owner, app.config.JWTSecret, 15*time.Minute, "", nil)
 	require.NoError(t, err)
 
 	// GET with JWT and CSRF cookie — simulating <img src="/admin/logout">

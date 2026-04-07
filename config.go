@@ -33,6 +33,8 @@ type (
 		AccessCookieName string
 
 		JWTSecret       []byte
+		JWTIssuer       string   // optional: set in JWT iss claim; defaults to "go-admin-bootstrap"
+		JWTAudience     []string // optional: set in JWT aud claim; skipped when empty
 		AccessTokenTTL  time.Duration
 		RefreshTokenTTL time.Duration
 

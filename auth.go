@@ -83,7 +83,7 @@ func setAuthCookies(ctx *AppContext, user *User) error {
 	cfg := ctx.app.config
 
 	// Access token (JWT)
-	accessToken, accessExpires, err := createAccessToken(user, cfg.JWTSecret, cfg.AccessTokenTTL)
+	accessToken, accessExpires, err := createAccessToken(user, cfg.JWTSecret, cfg.AccessTokenTTL, cfg.JWTIssuer, cfg.JWTAudience)
 	if err != nil {
 		return fmt.Errorf("creating access token: %w", err)
 	}
