@@ -1,37 +1,51 @@
+//go:build integration
+
 package migrations_test
 
 import (
+	"context"
 	"database/sql"
-	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
-
-	_ "github.com/lib/pq"
+	"github.com/testcontainers/testcontainers-go"
+	tcpostgres "github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/uptrace/bun/driver/pgdriver"
 
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 	migrations "github.com/partyzanex/go-admin-bootstrap/db/migrations/postgres"
 )
 
 func TestUp(t *testing.T) {
-	dsn := os.Getenv("CRYPCHS_POSTGRES_DSN")
-	if dsn == "" {
-		dsn = "postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable"
-	}
+	ctx := context.Background()
 
-	db, err := sql.Open("postgres", dsn)
+	pgContainer, err := tcpostgres.Run(ctx, "postgres:14-alpine",
+		tcpostgres.WithDatabase("postgres"),
+		tcpostgres.WithUsername("postgres"),
+		tcpostgres.WithPassword("postgres"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(60*time.Second),
+		),
+	)
 	require.NoError(t, err)
-	require.NotNil(t, db)
+	t.Cleanup(func() { _ = pgContainer.Terminate(ctx) })
 
-	err = migrations.Up(db, goadmin.MigrationsTable)
+	dsn, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	require.NoError(t, err)
 
-	_, err = db.Exec(`select * from goadmin."user"`)
+	db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	t.Cleanup(func() { _ = db.Close() })
+
+	err = migrations.Up(db, goadmin.DefaultMigrationsTable)
 	require.NoError(t, err)
 
-	err = migrations.Down(db, goadmin.MigrationsTable)
+	_, err = db.ExecContext(ctx, `select * from goadmin."user"`)
 	require.NoError(t, err)
 
-	_, err = db.Exec(`select * from goadmin."user"`)
-	require.Error(t, err)
+	_, err = db.ExecContext(ctx, `select * from goadmin.auth_token`)
+	require.NoError(t, err)
 }

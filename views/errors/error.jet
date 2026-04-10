@@ -1,9 +1,15 @@
 {{ extends "../layouts/main.jet" }}
 
 {{ block documentBody() }}
-<div class="m-4">
-  <h1>{{ isset(title) ? title : "" }}</h1>
-  <p class="text-danger">{{ isset(error) ? error : "Unknown Error" }}</p>
-  <p class="text-warning">{{ isset(details) ? details : "" }}</p>
+<div class="d-flex align-items-center justify-content-center" style="padding:3rem 1rem;">
+  <div class="col-lg-5 col-md-8">
+    <div class="card text-center">
+      <div class="card-body py-5">
+        <h1 style="font-size:4rem;font-weight:700;color:var(--danger);margin-bottom:.25rem;">{{ isset(title) ? title : "" }}</h1>
+        <p class="text-danger fs-5 mb-2">{{ isset(error) ? error : "Unknown Error" }}</p>
+        <p class="mb-0" style="color:var(--text-muted);">{{ isset(details) ? details : "" }}</p>
+      </div>
+    </div>
+  </div>
 </div>
 {{ end }}

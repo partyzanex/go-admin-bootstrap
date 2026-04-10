@@ -1,0 +1,25 @@
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+
+	"github.com/partyzanex/go-admin-bootstrap/adapters/cobracli"
+)
+
+func main() {
+	root := &cobra.Command{
+		Use:   "admin",
+		Short: "Admin panel management tool (cobra)",
+	}
+
+	root.AddCommand(cobracli.CreateUserCmd())
+	root.AddCommand(cobracli.MigrateCmd())
+
+	if err := root.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}

@@ -1,12 +1,24 @@
 package goadmin
 
-const (
-	DefaultAssetsPath = "./assets"
-	DefaultViewsPath  = "./views"
-	DefaultLimit      = 20
+import "time"
 
-	UserContextKey = "goadmin_user"
-	DataContextKey = "goadmin_data"
+const (
+	DefaultAssetsPath    = "./assets"
+	DefaultViewsPath     = "./views"
+	DefaultLimit         = 20
+	LoginRateLimitPerSec = 5
+	SecureTokenLength    = 32
+
+	// MinJWTSecretLen is the minimum byte length of JWTSecret for non-dev deployments.
+	// HS256 provides its full 256-bit security only when the key is at least 32 bytes.
+	MinJWTSecretLen = 32
+
+	DefaultAccessTokenTTL  = 15 * time.Minute
+	DefaultRefreshTokenTTL = 30 * 24 * time.Hour
+
+	UserContextKey   = "goadmin_user"
+	DataContextKey   = "goadmin_data"
+	LoggerContextKey = "goadmin_logger"
 
 	AuthToken TokenType = "auth"
 
@@ -19,7 +31,7 @@ const (
 	RoleUser  UserRole = "user"
 )
 
-var (
+const (
 	DashboardURL = "/"
 	LoginURL     = "/login"
 	LogoutURL    = "/logout"
@@ -29,8 +41,10 @@ var (
 	UserUpdateURL = "/users/:id/update"
 	UserDeleteURL = "/users/:id/delete"
 
-	AccessCookieName = "auth_token"
-	MigrationsTable  = "goadmin_migrations"
+	AuditLogURL = "/audit"
+
+	DefaultAccessCookieName = "auth_token"
+	DefaultMigrationsTable  = "goadmin_migrations"
 
 	FaviconPrefix = "/favicon/:id"
 )

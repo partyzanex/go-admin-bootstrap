@@ -1,12 +1,23 @@
 package goadmin
 
 import (
+	"errors"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 
 	"github.com/CloudyKit/jet/v6"
 	"github.com/labstack/echo/v4"
 )
+
+func logFromCtx(ctx echo.Context) *slog.Logger {
+	if logger, ok := ctx.Get(LoggerContextKey).(*slog.Logger); ok {
+		return logger
+	}
+
+	return slog.Default()
+}
 
 func errorHandler(e error, ctx echo.Context) {
 	accept := ctx.Request().Header.Get(echo.HeaderAccept)
@@ -42,79 +53,105 @@ func (data viewData) JetVars() jet.VarMap {
 	return vars
 }
 
-func (viewData) JetData() map[string]interface{} {
+func (viewData) JetData() map[string]any {
 	return nil
 }
 
 func HTMLError(e error, ctx echo.Context) {
-	defer ctx.Logger().Errorf("html error: %s", e)
+	logger := logFromCtx(ctx)
+
+	defer logger.Error("html error", "err", e)
 
 	code := http.StatusInternalServerError
-	title, details := "", ""
+	title := ""
+	userMessage := "Внутренняя ошибка сервера"
 
-	if he, ok := e.(*echo.HTTPError); ok {
+	var he *echo.HTTPError
+	if errors.As(e, &he) {
 		code = he.Code
 
-		if he.Internal != nil {
-			title = he.Internal.Error()
-		} else {
-			switch code {
-			case http.StatusBadRequest:
-				title = "Bad Request"
-			case http.StatusInternalServerError:
+		switch code {
+		case http.StatusBadRequest:
+			title = "Bad Request"
+			userMessage = fmt.Sprintf("%v", he.Message)
+		case http.StatusNotFound:
+			title = "Not Found"
+			userMessage = "Not Found"
+		case http.StatusForbidden:
+			title = "Forbidden"
+			userMessage = "Forbidden"
+		case http.StatusUnauthorized:
+			title = "Unauthorized"
+			userMessage = "Unauthorized"
+		case http.StatusInternalServerError:
+			title = "Internal Server Error"
+		default:
+			if code < http.StatusInternalServerError {
+				title = fmt.Sprintf("%v", he.Message)
+				userMessage = title
+			} else {
 				title = "Internal Server Error"
-			case http.StatusNotFound:
-				title = "Not Found"
 			}
 		}
 	}
 
 	data := &viewData{
-		Code:    code,
-		Title:   title,
-		Error:   e.Error(),
-		Details: details,
+		Code:  code,
+		Title: title,
+		Error: userMessage,
 	}
 
 	err := ctx.Render(code, "errors/error.jet", data)
 	if err != nil {
-		ctx.Logger().Error(err)
+		logger.Error("rendering error template failed", "err", err)
 	}
 }
 
 func JSONError(e error, ctx echo.Context) {
-	defer ctx.Logger().Errorf("json error: %s", e)
+	logger := logFromCtx(ctx)
+
+	defer logger.Error("json error", "err", e)
 
 	code := http.StatusInternalServerError
-	if he, ok := e.(*echo.HTTPError); ok {
+	userMessage := "Internal server error"
+
+	var he *echo.HTTPError
+	if errors.As(e, &he) {
 		code = he.Code
+		if code < http.StatusInternalServerError {
+			userMessage = fmt.Sprintf("%v", he.Message)
+		}
 	}
 
 	resp := &Response{
 		Success: false,
-		Error:   e.Error(),
+		Error:   userMessage,
 	}
 
 	if err := ctx.JSON(code, resp); err != nil {
-		ctx.Logger().Error(err)
+		logger.Error("writing json error response failed", "err", err)
 	}
 }
 
 type Response struct {
-	Success bool        `json:"success"`
-	Error   string      `json:"error,omitempty"`
-	Data    interface{} `json:"data,omitempty"`
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+	Data    any    `json:"data,omitempty"`
 }
 
 func HTTPError(e error, ctx echo.Context) {
-	defer ctx.Logger().Errorf("http error: %s", e)
+	logger := logFromCtx(ctx)
+
+	defer logger.Error("http error", "err", e)
 
 	code := http.StatusInternalServerError
-	if he, ok := e.(*echo.HTTPError); ok {
+
+	var he *echo.HTTPError
+	if errors.As(e, &he) {
 		code = he.Code
 	}
 
 	if err := ctx.NoContent(code); err != nil {
-		ctx.Logger().Error(err)
+		logger.Error("writing error response failed", "err", err)
 	}
 }

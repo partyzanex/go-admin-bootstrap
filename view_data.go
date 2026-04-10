@@ -2,12 +2,13 @@ package goadmin
 
 import (
 	"github.com/CloudyKit/jet/v6"
+
 	"github.com/partyzanex/go-admin-bootstrap/widgets"
 )
 
 type ViewData interface {
 	JetVars() jet.VarMap
-	JetData() map[string]interface{}
+	JetData() map[string]any
 }
 
 type Data struct {
@@ -30,8 +31,8 @@ func (data *Data) JetVars() jet.VarMap {
 	return data.VarMap
 }
 
-func (data *Data) JetData() map[string]interface{} {
-	result := map[string]interface{}{}
+func (data *Data) JetData() map[string]any {
+	result := map[string]any{}
 
 	if data.User != nil {
 		result["User"] = data.User
@@ -44,7 +45,7 @@ func (data *Data) JetData() map[string]interface{} {
 	return result
 }
 
-func (data *Data) Set(name string, value interface{}) {
+func (data *Data) Set(name string, value any) {
 	if data.VarMap == nil {
 		data.VarMap = make(jet.VarMap)
 	}
@@ -58,7 +59,7 @@ func (data Data) Has(key string) bool {
 	}
 
 	v, ok := data.VarMap[key]
-	if !ok || v.IsNil() {
+	if !ok || !v.IsValid() {
 		return false
 	}
 

@@ -1,9 +1,10 @@
 {{ import "nav.jet" }}
 {{ import "../widgets/breadcrumbs.jet" }}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>GoAdmin {{ isset(title) ? title : "" }}</title>
     <link rel="apple-touch-icon" sizes="57x57" href="{{ adminPath }}/favicon/apple-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="{{ adminPath }}/favicon/apple-icon-60x60.png">
@@ -14,7 +15,7 @@
     <link rel="apple-touch-icon" sizes="144x144" href="{{ adminPath }}/favicon/apple-icon-144x144.png">
     <link rel="apple-touch-icon" sizes="152x152" href="{{ adminPath }}/favicon/apple-icon-152x152.png">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ adminPath }}/favicon/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192"  href="{{ adminPath }}/favicon/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ adminPath }}/favicon/android-icon-192x192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ adminPath }}/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="{{ adminPath }}/favicon/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ adminPath }}/favicon/favicon-16x16.png">
@@ -22,29 +23,39 @@
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="{{ adminPath }}/favicon/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   {{ if isset(styles) }}
     {{ range _, style := styles }}
     <link href="{{ adminPath }}/assets/{{ style.Path }}" rel="stylesheet" type="text/css"/>
     {{ end }}
   {{ end }}
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <header>
+        {{ yield nav() }}
+      </header>
+      {{ yield breadcrumbBar() }}
+      <main class="container-fluid py-4">
+        {{ block documentBody() }}{{ end }}
+      </main>
+      <footer class="site-footer">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+          &copy; 2024 GoAdmin. All rights reserved.
+          <div class="footer-theme-selector">
+            <button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">&#9728;</button>
+            <button class="ft-btn" onclick="setTheme('medium')" title="Medium">&#9680;</button>
+            <button class="ft-btn" onclick="setTheme('dark')" title="Dark">&#9679;</button>
+          </div>
+        </div>
+      </footer>
+    </div>
   {{ if isset(scripts) }}
     {{ range _, script := scripts }}
     <script src="{{ adminPath }}/assets/{{ script.Path }}"></script>
     {{ end }}
   {{ end }}
-  </head>
-  <body>
-    <header>
-      {{ yield nav() }}
-    </header>
-    <main class="container-fluid pt-2">
-      {{ yield breadcrumbs() }}
-      {{ block documentBody() }}{{ end }}
-    </main>
-    <footer class="footer bg-light border-top p-2">
-      <div class="container">
-        <p class="text-center text-muted">&copy;2019 All rights reserved and bla bla bla</p>
-      </div>
-    </footer>
   </body>
 </html>

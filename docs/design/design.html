@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoAdmin — Design Prototype</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bs-body-font-family: 'IBM Plex Sans', system-ui, sans-serif;
+            --bs-font-monospace: 'JetBrains Mono', monospace;
+        }
+
+        /* ===== LIGHT THEME ===== */
+        [data-theme="light"] {
+            --navbar-bg: #2563eb;
+            --navbar-text: #fff;
+            --page-bg: #f8f9fb;
+            --surface: #ffffff;
+            --surface-alt: #f1f3f5;
+            --border: #e2e5ea;
+            --text-main: #1a1a2e;
+            --text-muted: #6b7280;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --success: #16a34a;
+            --success-hover: #15803d;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --info: #0891b2;
+            --secondary: #6b7280;
+            --footer-bg: #f1f3f5;
+            --card-shadow: 0 1px 3px rgba(0,0,0,.06);
+            --switcher-bg: linear-gradient(135deg, #1e40af, #2563eb);
+            --heading-color: #1e3a5f;
+            --placeholder-border: #d1d5db;
+            --placeholder-text: #9ca3af;
+        }
+
+        /* ===== MEDIUM (TWILIGHT) THEME ===== */
+        [data-theme="medium"] {
+            --navbar-bg: #334155;
+            --navbar-text: #f1f5f9;
+            --page-bg: #e2e8f0;
+            --surface: #f1f5f9;
+            --surface-alt: #e2e8f0;
+            --border: #cbd5e1;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #4f46e5;
+            --accent-hover: #4338ca;
+            --success: #0f766e;
+            --success-hover: #0d5e58;
+            --danger: #b91c1c;
+            --warning: #d97706;
+            --info: #0e7490;
+            --secondary: #64748b;
+            --footer-bg: #cbd5e1;
+            --card-shadow: 0 1px 4px rgba(0,0,0,.08);
+            --switcher-bg: linear-gradient(135deg, #1e293b, #334155);
+            --heading-color: #334155;
+            --placeholder-border: #94a3b8;
+            --placeholder-text: #94a3b8;
+        }
+
+        /* ===== DARK THEME ===== */
+        [data-theme="dark"] {
+            --navbar-bg: #0f172a;
+            --navbar-text: #e2e8f0;
+            --page-bg: #0f172a;
+            --surface: #1e293b;
+            --surface-alt: #273548;
+            --border: #334155;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #6272a4;
+            --accent-hover: #546196;
+            --success: #2f7a5c;
+            --success-hover: #276a4e;
+            --danger: #b45454;
+            --warning: #b8860b;
+            --info: #3a7c8c;
+            --secondary: #64748b;
+            --footer-bg: #1e293b;
+            --card-shadow: 0 2px 8px rgba(0,0,0,.3);
+            --switcher-bg: linear-gradient(135deg, #020617, #0f172a);
+            --heading-color: #93c5fd;
+            --placeholder-border: #475569;
+            --placeholder-text: #64748b;
+        }
+
+        body {
+            font-family: var(--bs-body-font-family);
+            background: var(--page-bg);
+            color: var(--text-main);
+            transition: background .25s, color .25s;
+        }
+
+        /* Sticky footer */
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .page-wrapper > main { flex: 1; }
+
+        /* Navbar override */
+        .navbar-goadmin {
+            background-color: var(--navbar-bg) !important;
+        }
+        .navbar-goadmin .navbar-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+            letter-spacing: -0.5px;
+            color: var(--navbar-text) !important;
+        }
+        .navbar-goadmin .nav-link,
+        .navbar-goadmin .btn-link {
+            color: var(--navbar-text) !important;
+            opacity: .85;
+            font-weight: 500;
+            font-size: .9rem;
+            text-decoration: none;
+        }
+        .navbar-goadmin .nav-link:hover,
+        .navbar-goadmin .btn-link:hover { opacity: 1; }
+        .navbar-goadmin .nav-link.active {
+            opacity: 1;
+            border-bottom: 2px solid var(--navbar-text);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb-bar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: .6rem 0;
+        }
+        .breadcrumb {
+            margin-bottom: 0;
+            font-size: .875rem;
+        }
+        .breadcrumb-item a { color: var(--accent); }
+        .breadcrumb-item.active { color: var(--text-main); }
+
+        /* Footer */
+        footer.site-footer {
+            background: var(--footer-bg);
+            border-top: 1px solid var(--border);
+            padding: .75rem 0;
+            font-size: .8rem;
+            color: var(--text-muted);
+        }
+        .footer-theme-selector { display: inline-flex; gap: 2px; }
+        .ft-btn {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: .75rem;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0;
+            transition: all .15s;
+        }
+        .ft-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .ft-btn.active-ft { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+        /* Cards */
+        .card { border: 1px solid var(--border); border-radius: .5rem; box-shadow: var(--card-shadow); background: var(--surface); }
+        .card-header { font-weight: 600; background: var(--surface); border-bottom: 1px solid var(--border); color: var(--text-main); }
+
+        /* Tables */
+        .table { --bs-table-bg: var(--surface); --bs-table-color: var(--text-main); --bs-table-striped-bg: var(--surface-alt); --bs-table-striped-color: var(--text-main); --bs-table-hover-bg: var(--surface-alt); --bs-table-hover-color: var(--text-main); --bs-table-border-color: var(--border); color: var(--text-main); }
+        .table th { font-weight: 600; font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); }
+        .table td { vertical-align: middle; font-size: .875rem; color: var(--text-main); }
+        thead.table-secondary { --bs-table-bg: var(--surface-alt); --bs-table-color: var(--text-muted); }
+
+        /* Badge tweaks */
+        .badge { font-weight: 500; font-size: .75rem; letter-spacing: .3px; }
+        .badge.bg-success { background-color: var(--success) !important; }
+        .badge.bg-primary { background-color: var(--accent) !important; }
+        .badge.bg-info { background-color: var(--info) !important; }
+        .badge.bg-danger { background-color: var(--danger) !important; }
+        .badge.bg-warning { background-color: var(--warning) !important; }
+        .badge.bg-secondary { background-color: var(--secondary) !important; }
+
+        /* Muted badges for dark/medium themes */
+        [data-theme="dark"] .badge.bg-success,
+        [data-theme="dark"] .badge-status-active { background-color: #1a5c3a !important; }
+        [data-theme="dark"] .badge.bg-primary { background-color: #3b4fa0 !important; }
+        [data-theme="dark"] .badge.bg-info,
+        [data-theme="dark"] .badge-status-new { background-color: #155e75 !important; }
+        [data-theme="dark"] .badge.bg-danger,
+        [data-theme="dark"] .badge-status-blocked { background-color: #7f1d1d !important; }
+        [data-theme="dark"] .badge.bg-warning { background-color: #92600a !important; }
+        [data-theme="dark"] .badge.bg-secondary { background-color: #475569 !important; }
+
+        [data-theme="medium"] .badge.bg-success,
+        [data-theme="medium"] .badge-status-active { background-color: #166534 !important; }
+        [data-theme="medium"] .badge.bg-primary { background-color: #4338ca !important; }
+        [data-theme="medium"] .badge.bg-info,
+        [data-theme="medium"] .badge-status-new { background-color: #0e6e87 !important; }
+        [data-theme="medium"] .badge.bg-danger,
+        [data-theme="medium"] .badge-status-blocked { background-color: #991b1b !important; }
+        [data-theme="medium"] .badge.bg-warning { background-color: #a16207 !important; }
+
+        /* Status badges */
+        .badge-status-new { background-color: var(--info) !important; color: #fff; }
+        .badge-status-active { background-color: var(--success) !important; color: #fff; }
+        .badge-status-blocked { background-color: var(--danger) !important; color: #fff; }
+
+        /* Date badge stack */
+        .date-badges { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+        .date-badges .badge { font-size: .68rem; font-family: var(--bs-font-monospace); font-weight: 400; padding: .2em .5em; }
+
+        /* Filter bar */
+        .filter-bar { background: var(--surface); border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; margin-bottom: 1rem; }
+
+        /* Form controls in themes */
+        .form-control, .form-select { background-color: var(--surface); color: var(--text-main); border-color: var(--border); }
+        .form-control:focus, .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 .2rem rgba(0,0,0,.08); }
+        .form-label { color: var(--text-main); }
+        .form-label-sm { font-size: .8rem; font-weight: 500; }
+
+        /* Pagination override */
+        .page-link { font-size: .85rem; background: var(--surface); color: var(--accent); border-color: var(--border); }
+        .page-item.active .page-link { background-color: var(--accent); border-color: var(--accent); color: #fff; }
+        .page-item.disabled .page-link { background: var(--surface-alt); color: var(--text-muted); }
+
+        /* Login card */
+        .login-card { max-width: 460px; margin: 0 auto; }
+        .login-card .card-header { text-align: center; font-size: 1.1rem; padding: 1rem; }
+        .login-card .card-footer { background: var(--surface); border-top: 1px solid var(--border); }
+
+        /* Design switcher at top */
+        .design-switcher {
+            background: var(--switcher-bg);
+            color: #fff;
+            padding: .5rem 0;
+            font-size: .8rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 1050;
+        }
+        .design-switcher .btn-screen {
+            font-size: .7rem;
+            padding: .15rem .5rem;
+            margin: .1rem;
+            border-radius: 1rem;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,.25);
+            background: transparent;
+        }
+        .design-switcher .btn-screen:hover,
+        .design-switcher .btn-screen.active-screen {
+            background: rgba(255,255,255,.2);
+            color: #fff;
+            border-color: rgba(255,255,255,.6);
+        }
+        .theme-selector {
+            display: inline-flex;
+            gap: 2px;
+            background: rgba(0,0,0,.25);
+            border-radius: 1rem;
+            padding: 2px;
+            margin-left: .75rem;
+        }
+        .theme-selector .btn-theme {
+            font-size: .7rem;
+            padding: .15rem .65rem;
+            border-radius: 1rem;
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,.7);
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .theme-selector .btn-theme:hover { color: #fff; }
+        .theme-selector .btn-theme.active-theme {
+            background: rgba(255,255,255,.25);
+            color: #fff;
+        }
+
+        /* Dashboard welcome */
+        .dashboard-welcome { padding: 3rem 0; }
+        .dashboard-welcome h3 { font-weight: 700; color: var(--heading-color); }
+        .dashboard-welcome .lead { color: var(--text-muted); }
+        .dashboard-placeholder {
+            border: 2px dashed var(--placeholder-border);
+            border-radius: .75rem;
+            padding: 3rem;
+            text-align: center;
+            color: var(--placeholder-text);
+        }
+
+        /* Error page */
+        .error-display { padding: 4rem 0; }
+        .error-display h1 { font-size: 4rem; font-weight: 700; color: var(--danger); }
+
+        /* Btn overrides */
+        .btn-success { background-color: var(--success); border-color: var(--success); color: #fff; }
+        .btn-success:hover { background-color: var(--success-hover); border-color: var(--success-hover); color: #fff; }
+        .btn-primary { background-color: var(--accent); border-color: var(--accent); color: #fff; }
+        .btn-primary:hover { background-color: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+        .btn-info { background-color: var(--info); border-color: var(--info); color: #fff; }
+        .btn-info:hover { opacity: .9; color: #fff; }
+        .btn-danger { background-color: var(--danger); border-color: var(--danger); color: #fff; }
+        .btn-secondary { background-color: var(--secondary); border-color: var(--secondary); color: #fff; }
+        .btn-outline-primary { color: var(--accent); border-color: var(--accent); }
+        .btn-outline-primary:hover { background-color: var(--accent); border-color: var(--accent); color: #fff; }
+        .btn-outline-danger { color: var(--danger); border-color: var(--danger); }
+        .btn-outline-danger:hover { background-color: var(--danger); border-color: var(--danger); color: #fff; }
+
+        /* Alert tweaks */
+        .alert { background: var(--surface); color: var(--text-main); border-color: var(--border); }
+        .alert-danger { border-left: 4px solid var(--danger) !important; }
+        .alert-warning { border-left: 4px solid var(--warning) !important; }
+
+        .text-muted { color: var(--text-muted) !important; }
+        .text-danger { color: var(--danger) !important; }
+        .text-warning { color: var(--warning) !important; }
+
+        /* Links */
+        a { color: var(--accent); }
+        [data-theme="dark"] a { color: #93b4f5; }
+        [data-theme="dark"] .table a { color: #93b4f5; }
+        [data-theme="dark"] .table td, [data-theme="dark"] .table th { color: var(--text-main); }
+        [data-theme="medium"] .table td, [data-theme="medium"] .table th { color: var(--text-main); }
+
+        .navbar-toggler { border-color: rgba(255,255,255,.3); }
+        .navbar-toggler-icon { filter: invert(1); }
+    </style>
+</head>
+<body>
+
+<!-- Screen switcher -->
+<div class="design-switcher">
+    <strong>Screens:</strong>
+    <button class="btn-screen active-screen" onclick="showScreen('login')">Login</button>
+    <button class="btn-screen" onclick="showScreen('login-error')">Login Error</button>
+    <button class="btn-screen" onclick="showScreen('dashboard')">Dashboard</button>
+    <button class="btn-screen" onclick="showScreen('users')">Users</button>
+    <button class="btn-screen" onclick="showScreen('users-empty')">Users Empty</button>
+    <button class="btn-screen" onclick="showScreen('user-create')">Create User</button>
+    <button class="btn-screen" onclick="showScreen('user-edit')">Edit User</button>
+    <button class="btn-screen" onclick="showScreen('user-edit-error')">Edit Error</button>
+    <button class="btn-screen" onclick="showScreen('audit')">Audit Log</button>
+    <button class="btn-screen" onclick="showScreen('audit-disabled')">Audit Off</button>
+    <button class="btn-screen" onclick="showScreen('error-404')">404</button>
+    <button class="btn-screen" onclick="showScreen('error-500')">500</button>
+    <span class="theme-selector">
+    <button class="btn-theme active-theme" onclick="setTheme('light')">☀ Light</button>
+    <button class="btn-theme" onclick="setTheme('medium')">◐ Medium</button>
+    <button class="btn-theme" onclick="setTheme('dark')">● Dark</button>
+  </span>
+</div>
+
+<!-- ===================== LOGIN ===================== -->
+<div class="screen" id="screen-login">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAnon"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAnon">
+                    <ul class="navbar-nav ms-auto"><li class="nav-item"><a class="nav-link" href="#">Login</a></li></ul>
+                </div>
+            </div>
+        </nav>
+        <main class="d-flex align-items-center justify-content-center" style="padding:2rem 1rem;">
+            <div class="login-card w-100">
+                <div class="card">
+                    <div class="card-header">Login</div>
+                    <div class="card-body">
+                        <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control form-control-lg" placeholder="admin@example.com"></div>
+                        <div class="mb-3"><label class="form-label">Password</label><input type="password" class="form-control form-control-lg" placeholder="••••••••"></div>
+                    </div>
+                    <div class="card-footer text-end"><button class="btn btn-success btn-lg">Login</button></div>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<!-- ===================== LOGIN ERROR ===================== -->
+<div class="screen d-none" id="screen-login-error">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAnon2"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAnon2">
+                    <ul class="navbar-nav ms-auto"><li class="nav-item"><a class="nav-link" href="#">Login</a></li></ul>
+                </div>
+            </div>
+        </nav>
+        <main class="d-flex align-items-center justify-content-center" style="padding:2rem 1rem;">
+            <div class="login-card w-100">
+                <div class="card">
+                    <div class="card-header">Login</div>
+                    <div class="card-body">
+                        <div class="alert alert-danger">Invalid email or password. Please try again.</div>
+                        <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control form-control-lg" value="admin@example.com"></div>
+                        <div class="mb-3"><label class="form-label">Password</label><input type="password" class="form-control form-control-lg"></div>
+                    </div>
+                    <div class="card-footer text-end"><button class="btn btn-success btn-lg">Login</button></div>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<!-- ===================== DASHBOARD ===================== -->
+<div class="screen d-none" id="screen-dashboard">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAuth1"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAuth1">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Audit Log</a></li>
+                        <li class="nav-item"><button class="btn btn-link nav-link">Logout [Alice Smith]</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="breadcrumb-bar"><div class="container-fluid"><nav><ol class="breadcrumb"><li class="breadcrumb-item active"><strong>Dashboard</strong></li></ol></nav></div></div>
+        <main class="container-fluid py-4">
+            <div class="dashboard-welcome">
+                <h3>Welcome, Alice Smith</h3>
+                <p class="lead">You are logged in as <strong>owner</strong>.</p>
+                <div class="dashboard-placeholder mt-4">
+                    <div style="font-size:2.5rem;margin-bottom:.5rem;">📊</div>
+                    <p class="mb-1" style="font-size:1rem;color:var(--text-muted);">Dashboard content</p>
+                    <p class="mb-0" style="font-size:.8rem;">This area is meant to be customized by the library consumer.</p>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<!-- ===================== USER LIST ===================== -->
+<div class="screen d-none" id="screen-users">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAuth2"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAuth2">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link active" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Audit Log</a></li>
+                        <li class="nav-item"><button class="btn btn-link nav-link">Logout [Alice Smith]</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="breadcrumb-bar"><div class="container-fluid"><nav><ol class="breadcrumb"><li class="breadcrumb-item"><a href="#">Dashboard</a></li><li class="breadcrumb-item active"><strong>Users</strong></li></ol></nav></div></div>
+        <main class="container-fluid py-4">
+            <div class="filter-bar">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-4 col-md-6"><input type="text" class="form-control" placeholder="Search by login or name…"></div>
+                    <div class="col-lg-2 col-md-4">
+                        <select class="form-select"><option>All statuses</option><option>Active</option><option>New</option><option>Blocked</option></select>
+                    </div>
+                    <div class="col-lg-3 col-md-4">
+                        <button class="btn btn-primary me-1">Search</button>
+                        <button class="btn btn-secondary">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="table-secondary">
+                            <tr>
+                                <th style="width:50px">#</th>
+                                <th>Login</th>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th class="text-end">
+                                    <button class="btn btn-info btn-sm">Create User</button>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="482924212b2d082d30292538242d662b2725">[email&#160;protected]</a></td>
+                                <td>Alice Smith</td>
+                                <td>owner</td>
+                                <td><span class="badge badge-status-active">active</span></td>
+                                <td class="date-badges">
+                                    <span class="badge bg-success">Created: 2024-01-15 10:30</span>
+                                    <span class="badge bg-primary">Updated: 2024-06-20 14:00</span>
+                                    <span class="badge bg-info text-white">Last logged: 2024-07-01 09:15</span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary me-1">Edit</button>
+                                    <!-- Self-delete protection: no Delete button for current user -->
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="debcb1bc9ebba6bfb3aeb2bbf0bdb1b3">[email&#160;protected]</a></td>
+                                <td>Bob Johnson</td>
+                                <td>root</td>
+                                <td><span class="badge badge-status-active">active</span></td>
+                                <td class="date-badges">
+                                    <span class="badge bg-success">Created: 2024-02-10 08:00</span>
+                                    <span class="badge bg-primary">Updated: 2024-05-15 11:30</span>
+                                    <span class="badge bg-info text-white">Last logged: 2024-06-28 17:45</span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary me-1">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e28183908d8ea2879a838f928e87cc818d8f">[email&#160;protected]</a></td>
+                                <td>Carol Williams</td>
+                                <td>user</td>
+                                <td><span class="badge badge-status-new">new</span></td>
+                                <td class="date-badges">
+                                    <span class="badge bg-success">Created: 2024-07-01 12:00</span>
+                                    <span class="badge bg-primary">Updated: 2024-07-01 12:00</span>
+                                    <span class="badge bg-info text-white">Last logged: —</span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary me-1">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5c383d2a391c39243d312c3039723f3331">[email&#160;protected]</a></td>
+                                <td>Dave Brown</td>
+                                <td>user</td>
+                                <td><span class="badge badge-status-blocked">blocked</span></td>
+                                <td class="date-badges">
+                                    <span class="badge bg-success">Created: 2024-03-05 09:20</span>
+                                    <span class="badge bg-primary">Updated: 2024-06-30 16:10</span>
+                                    <span class="badge bg-info text-white">Last logged: 2024-04-12 08:00</span>
+                                </td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-primary me-1">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center" style="background:var(--surface);border-top:1px solid var(--border);">
+                    <small class="text-muted">Page 1 of 8 (150 users)</small>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item disabled"><a class="page-link" href="#">First</a></li>
+                            <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item"><a class="page-link" href="#">4</a></li>
+                            <li class="page-item"><a class="page-link" href="#">5</a></li>
+                            <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                            <li class="page-item"><a class="page-link" href="#">Last</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<!-- ===================== USER LIST EMPTY ===================== -->
+<div class="screen d-none" id="screen-users-empty">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAuth3"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAuth3">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link active" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Audit Log</a></li>
+                        <li class="nav-item"><button class="btn btn-link nav-link">Logout [Alice Smith]</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="breadcrumb-bar"><div class="container-fluid"><nav><ol class="breadcrumb"><li class="breadcrumb-item"><a href="#">Dashboard</a></li><li class="breadcrumb-item active"><strong>Users</strong></li></ol></nav></div></div>
+        <main class="container-fluid py-4">
+            <div class="filter-bar">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-4 col-md-6"><input type="text" class="form-control" value="nonexistent" placeholder="Search by login or name…"></div>
+                    <div class="col-lg-2 col-md-4"><select class="form-select"><option>All statuses</option></select></div>
+                    <div class="col-lg-3 col-md-4"><button class="btn btn-primary me-1">Search</button><button class="btn btn-secondary">Reset</button></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0">
+                            <thead class="table-secondary">
+                            <tr><th>#</th><th>Login</th><th>Name</th><th>Role</th><th>Status</th><th>Date</th><th class="text-end"><button class="btn btn-info btn-sm">Create User</button></th></tr>
+                            </thead>
+                            <tbody>
+                            <tr><td colspan="7" class="text-center text-muted py-4">No users found</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<!-- ===================== CREATE USER ===================== -->
+<div class="screen d-none" id="screen-user-create">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAuth4"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAuth4">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link active" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Audit Log</a></li>
+                        <li class="nav-item"><button class="btn btn-link nav-link">Logout [Alice Smith]</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="breadcrumb-bar"><div class="container-fluid"><nav><ol class="breadcrumb"><li class="breadcrumb-item"><a href="#">Dashboard</a></li><li class="breadcrumb-item"><a href="#">Users</a></li><li class="breadcrumb-item active"><strong>Create User</strong></li></ol></nav></div></div>
+        <main class="container-fluid py-4">
+            <div class="col-lg-7 col-md-10 mx-auto">
+                <div class="card">
+                    <div class="card-header">Create User</div>
+                    <div class="card-body py-3">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label class="form-label form-label-sm mb-1">User Name</label>
+                                <input type="text" class="form-control" placeholder="Display name">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label form-label-sm mb-1">User Role</label>
+                                <select class="form-select"><option>user</option><option>root</option><option>owner</option></select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label form-label-sm mb-1">User Login</label>
+                                <input type="email" class="form-control" placeholder="email@example.com">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label form-label-sm mb-1">User Status</label>
+                                <select class="form-select"><option>new</option><option>active</option><option>blocked</option></select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label form-label-sm mb-1">User Password</label>
+                                <input type="password" class="form-control" placeholder="••••••••">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end" style="background:var(--surface);border-top:1px solid var(--border);"><button class="btn btn-success btn-sm">Save</button></div>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<!-- ===================== EDIT USER ===================== -->
+<div class="screen d-none" id="screen-user-edit">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAuth5"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAuth5">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link active" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Audit Log</a></li>
+                        <li class="nav-item"><button class="btn btn-link nav-link">Logout [Alice Smith]</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="breadcrumb-bar"><div class="container-fluid"><nav><ol class="breadcrumb"><li class="breadcrumb-item"><a href="#">Dashboard</a></li><li class="breadcrumb-item"><a href="#">Users</a></li><li class="breadcrumb-item active"><strong>Edit User</strong></li></ol></nav></div></div>
+        <main class="container-fluid py-4">
+            <div class="col-lg-7 col-md-10 mx-auto">
+                <div class="card">
+                    <div class="card-header">Edit User</div>
+                    <div class="card-body py-3">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label class="form-label form-label-sm mb-1">User Name</label>
+                                <input type="text" class="form-control" value="Bob Johnson">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label form-label-sm mb-1">User Role</label>
+                                <select class="form-select"><option>root</option><option>user</option><option>owner</option></select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label form-label-sm mb-1">User Login</label>
+                                <input type="email" class="form-control" value="bob@example.com">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label form-label-sm mb-1">User Status</label>
+                                <select class="form-select"><option>active</option><option>new</option><option>blocked</option></select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label form-label-sm mb-1">User Password</label>
+                                <input type="password" class="form-control" placeholder="Leave empty to keep current">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end" style="background:var(--surface);border-top:1px solid var(--border);"><button class="btn btn-success btn-sm">Save</button></div>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<!-- ===================== EDIT USER ERROR ===================== -->
+<div class="screen d-none" id="screen-user-edit-error">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAuth6"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAuth6">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link active" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Audit Log</a></li>
+                        <li class="nav-item"><button class="btn btn-link nav-link">Logout [Alice Smith]</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="breadcrumb-bar"><div class="container-fluid"><nav><ol class="breadcrumb"><li class="breadcrumb-item"><a href="#">Dashboard</a></li><li class="breadcrumb-item"><a href="#">Users</a></li><li class="breadcrumb-item active"><strong>Edit User</strong></li></ol></nav></div></div>
+        <main class="container-fluid py-4">
+            <div class="col-lg-7 col-md-10 mx-auto">
+                <div class="alert alert-danger"><strong>Validation error:</strong> Login email "bob@example" is not a valid email address. Password must be at least 8 characters.</div>
+                <div class="card">
+                    <div class="card-header">Edit User</div>
+                    <div class="card-body py-3">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label class="form-label form-label-sm mb-1">User Name</label>
+                                <input type="text" class="form-control" value="Bob Johnson">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label form-label-sm mb-1">User Role</label>
+                                <select class="form-select"><option>root</option><option>user</option><option>owner</option></select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label form-label-sm mb-1">User Login</label>
+                                <input type="email" class="form-control" value="bob@example">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label form-label-sm mb-1">User Status</label>
+                                <select class="form-select"><option>active</option><option>new</option><option>blocked</option></select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label form-label-sm mb-1">User Password</label>
+                                <input type="password" class="form-control" value="123">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-end" style="background:var(--surface);border-top:1px solid var(--border);"><button class="btn btn-success btn-sm">Save</button></div>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<!-- ===================== AUDIT LOG ===================== -->
+<div class="screen d-none" id="screen-audit">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAuth7"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAuth7">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="#">Audit Log</a></li>
+                        <li class="nav-item"><button class="btn btn-link nav-link">Logout [Alice Smith]</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="breadcrumb-bar"><div class="container-fluid"><nav><ol class="breadcrumb"><li class="breadcrumb-item"><a href="#">Dashboard</a></li><li class="breadcrumb-item active"><strong>Audit Log</strong></li></ol></nav></div></div>
+        <main class="container-fluid py-4">
+            <div class="filter-bar">
+                <div class="row g-2 align-items-end">
+                    <div class="col-lg-3 col-md-5">
+                        <select class="form-select"><option>All actions</option><option>Login</option><option>Logout</option><option>Create user</option><option>Update user</option><option>Delete user</option></select>
+                    </div>
+                    <div class="col-lg-3 col-md-4"><button class="btn btn-primary me-1">Filter</button><button class="btn btn-secondary">Reset</button></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped table-sm mb-0">
+                            <thead class="table-secondary">
+                            <tr><th style="width:170px">Date</th><th style="width:180px">Actor</th><th style="width:140px">Action</th><th style="width:80px">Entity ID</th><th>Details</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><small class="text-muted">2024-07-01 09:15:32</small></td>
+                                <td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="cbaaa7a2a8ae8baeb3aaa6bba7aee5a8a4a6">[email&#160;protected]</a> <small class="text-muted">#1</small></td>
+                                <td><span class="badge bg-success">login</span></td>
+                                <td>—</td>
+                                <td><small>ip: 192.168.1.10, ua: Chrome/126</small></td>
+                            </tr>
+                            <tr>
+                                <td><small class="text-muted">2024-07-01 09:20:11</small></td>
+                                <td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="70111c191315301508111d001c155e131f1d">[email&#160;protected]</a> <small class="text-muted">#1</small></td>
+                                <td><span class="badge bg-primary">create_user</span></td>
+                                <td>#5</td>
+                                <td><small>login: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="482b293a2724082d30292538242d662b2725">[email&#160;protected]</a>, role: user</small></td>
+                            </tr>
+                            <tr>
+                                <td><small class="text-muted">2024-07-01 10:05:44</small></td>
+                                <td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="62030e0b010722071a030f120e074c010d0f">[email&#160;protected]</a> <small class="text-muted">#1</small></td>
+                                <td><span class="badge bg-warning text-dark">update_user</span></td>
+                                <td>#3</td>
+                                <td><small>status: active → blocked</small></td>
+                            </tr>
+                            <tr>
+                                <td><small class="text-muted">2024-07-01 10:12:08</small></td>
+                                <td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a1c0cdc8c2c4e1c4d9c0ccd1cdc48fc2cecc">[email&#160;protected]</a> <small class="text-muted">#1</small></td>
+                                <td><span class="badge bg-danger">delete_user</span></td>
+                                <td>#4</td>
+                                <td><small>login: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="90fffcf4d0f5e8f1fde0fcf5bef3fffd">[email&#160;protected]</a></small></td>
+                            </tr>
+                            <tr>
+                                <td><small class="text-muted">2024-07-01 11:00:00</small></td>
+                                <td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="cfada0ad8faab7aea2bfa3aae1aca0a2">[email&#160;protected]</a> <small class="text-muted">#2</small></td>
+                                <td><span class="badge bg-success">login</span></td>
+                                <td>—</td>
+                                <td><small>ip: 10.0.0.5</small></td>
+                            </tr>
+                            <tr>
+                                <td><small class="text-muted">2024-07-01 11:45:30</small></td>
+                                <td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="04666b6644617c65697468612a676b69">[email&#160;protected]</a> <small class="text-muted">#2</small></td>
+                                <td><span class="badge bg-secondary">logout</span></td>
+                                <td>—</td>
+                                <td></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center" style="background:var(--surface);border-top:1px solid var(--border);">
+                    <small class="text-muted">Page 1 of 12 (230 records)</small>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item disabled"><a class="page-link" href="#">First</a></li>
+                            <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                            <li class="page-item"><a class="page-link" href="#">Last</a></li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<!-- ===================== AUDIT DISABLED ===================== -->
+<div class="screen d-none" id="screen-audit-disabled">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAuth8"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAuth8">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="#">Audit Log</a></li>
+                        <li class="nav-item"><button class="btn btn-link nav-link">Logout [Alice Smith]</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="breadcrumb-bar"><div class="container-fluid"><nav><ol class="breadcrumb"><li class="breadcrumb-item"><a href="#">Dashboard</a></li><li class="breadcrumb-item active"><strong>Audit Log</strong></li></ol></nav></div></div>
+        <main class="container-fluid py-4">
+            <div class="alert alert-warning"><strong>Audit logging is disabled.</strong> Set Config.AuditLog to enable it.</div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<!-- ===================== ERROR 404 ===================== -->
+<div class="screen d-none" id="screen-error-404">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAuth9"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAuth9">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Audit Log</a></li>
+                        <li class="nav-item"><button class="btn btn-link nav-link">Logout [Alice Smith]</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <main class="container-fluid d-flex align-items-center justify-content-center" style="padding:3rem 1rem;">
+            <div class="col-lg-5 col-md-8">
+                <div class="card text-center">
+                    <div class="card-body py-5">
+                        <h1 style="font-size:4rem;font-weight:700;color:var(--danger);margin-bottom:.25rem;">404</h1>
+                        <p class="text-danger fs-5 mb-2">Page not found</p>
+                        <p class="mb-0" style="color:var(--text-muted);">The requested URL was not found on this server.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+
+<!-- ===================== ERROR 500 ===================== -->
+<div class="screen d-none" id="screen-error-500">
+    <div class="page-wrapper">
+        <nav class="navbar navbar-expand-lg navbar-goadmin">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">GoAdmin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navAuth10"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navAuth10">
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" href="#">Users</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Audit Log</a></li>
+                        <li class="nav-item"><button class="btn btn-link nav-link">Logout [Alice Smith]</button></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <main class="container-fluid d-flex align-items-center justify-content-center" style="padding:3rem 1rem;">
+            <div class="col-lg-5 col-md-8">
+                <div class="card text-center">
+                    <div class="card-body py-5">
+                        <h1 style="font-size:4rem;font-weight:700;color:var(--danger);margin-bottom:.25rem;">500</h1>
+                        <p class="text-danger fs-5 mb-2">Internal Server Error</p>
+                        <p class="mb-0" style="color:var(--text-muted);">Something went wrong. Please try again later or contact the administrator.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer class="site-footer"><div class="container-fluid d-flex justify-content-between align-items-center">&copy; 2024 GoAdmin. All rights reserved.<div class="footer-theme-selector"><button class="ft-btn active-ft" onclick="setTheme('light')" title="Light">☀</button><button class="ft-btn" onclick="setTheme('medium')" title="Medium">◐</button><button class="ft-btn" onclick="setTheme('dark')" title="Dark">●</button></div></div></footer>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(function(s) { s.classList.add('d-none'); });
+        document.getElementById('screen-' + id).classList.remove('d-none');
+        document.querySelectorAll('.design-switcher .btn-screen').forEach(function(b) { b.classList.remove('active-screen'); });
+        event.target.classList.add('active-screen');
+    }
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        document.querySelectorAll('.theme-selector .btn-theme').forEach(function(b) { b.classList.remove('active-theme'); });
+        document.querySelectorAll('.ft-btn').forEach(function(b) { b.classList.remove('active-ft'); });
+        var labels = {light:0, medium:1, dark:2};
+        var idx = labels[theme];
+        var topBtns = document.querySelectorAll('.theme-selector .btn-theme');
+        if (topBtns[idx]) topBtns[idx].classList.add('active-theme');
+        document.querySelectorAll('.footer-theme-selector').forEach(function(sel) {
+            if (sel.children[idx]) sel.children[idx].classList.add('active-ft');
+        });
+    }
+</script>
+</body>
+</html>

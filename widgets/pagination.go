@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"iter"
 	"math"
 	"strconv"
 	"strings"
@@ -54,7 +55,7 @@ func (p *Pagination) ParsePage() {
 	page := p.Ctx.QueryParam(p.PageParam)
 	p.Page, _ = strconv.Atoi(page)
 
-	if p.Page == 0 {
+	if p.Page < 1 {
 		p.Page = 1
 	}
 
@@ -93,7 +94,32 @@ func (p *Pagination) ParsePage() {
 	}
 }
 
-func (p *Pagination) Items() []PaginationItem {
+// All returns an iterator over pagination items.
+// Use for Go code; for Jet templates use Items().
+func (p *Pagination) All() iter.Seq[PaginationItem] {
+	start, end := p.pageRange()
+
+	return func(yield func(PaginationItem) bool) {
+		for i := range end - start + 1 {
+			pageNum := start + i
+
+			if !yield(PaginationItem{
+				PageNum: pageNum,
+				URL:     p.url(pageNum),
+				Current: p.Page == pageNum,
+			}) {
+				return
+			}
+		}
+	}
+}
+
+// Items returns a Jet Ranger for use in templates via {{ range }}.
+func (p *Pagination) Items() *seqRanger[PaginationItem] {
+	return newSeqRanger(p.All())
+}
+
+func (p *Pagination) pageRange() (start, end int) {
 	p.ParsePage()
 
 	if p.Page < 1 {
@@ -111,45 +137,21 @@ func (p *Pagination) Items() []PaginationItem {
 	pages := int(math.Ceil(float64(p.Total) / float64(p.Limit)))
 
 	if pages <= 1 {
-		return nil
+		return 0, -1 // empty range
 	}
 
-	start := 1
-	end := pages
+	start = 1
+	end = pages
 
 	if pages > p.NumLinks {
-		part := int(math.Floor(float64(p.NumLinks) / 2)) //nolint:gomnd
+		part := int(math.Floor(float64(p.NumLinks) / 2)) //nolint:mnd
 		start = p.Page - part
 		end = p.Page + part
 	}
 
-	if start < 1 {
-		end += int(math.Abs(float64(start)))
-		start = 1
-	}
-
-	if end > pages {
-		start -= end - pages
-		end = pages
-	}
-
-	items := make([]PaginationItem, end-start+1)
-
-	j := 0
-
-	for i := start; i <= end; i++ {
-		items[j] = PaginationItem{
-			PageNum: i,
-			URL:     p.url(i),
-			Current: p.Page == i,
-		}
-
-		j++
-	}
-
-	return items
+	return max(1, start), min(pages, end)
 }
 
 func (p *Pagination) url(pageNum int) string {
-	return strings.Replace(p.URLTemplate, "{page}", strconv.Itoa(pageNum), 1)
+	return strings.ReplaceAll(p.URLTemplate, "{page}", strconv.Itoa(pageNum))
 }

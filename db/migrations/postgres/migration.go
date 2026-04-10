@@ -3,8 +3,8 @@ package migrations
 import (
 	"database/sql"
 	"embed"
+	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/pressly/goose/v3"
 )
 
@@ -17,7 +17,7 @@ func Up(db *sql.DB, migrationsTable string) (err error) {
 
 	err = goose.Up(db, ".")
 	if err != nil {
-		return errors.Wrap(err, "goose.Up")
+		return fmt.Errorf("goose.Up: %w", err)
 	}
 
 	return nil
@@ -29,7 +29,7 @@ func Down(db *sql.DB, migrationsTable string) error {
 
 	err := goose.Down(db, ".")
 	if err != nil {
-		return errors.Wrap(err, "goose.Up")
+		return fmt.Errorf("goose.Down: %w", err)
 	}
 
 	return nil

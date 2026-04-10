@@ -2,19 +2,15 @@ package usecase
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
-	"strconv"
-	"strings"
+	"fmt"
 	"time"
 
-	"github.com/asaskevich/govalidator"
-	"github.com/pkg/errors"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/go-playground/validator/v10"
 
-	astistring "github.com/asticode/go-astitools/string"
 	goadmin "github.com/partyzanex/go-admin-bootstrap"
 )
+
+var validate = validator.New()
 
 type userCase struct {
 	users  goadmin.UserRepository
@@ -26,16 +22,8 @@ func (uc *userCase) Validate(user *goadmin.User, create bool) error {
 		return goadmin.ErrRequiredUserID
 	}
 
-	if user.Name == "" {
-		return goadmin.ErrRequiredUserName
-	}
-
-	if user.Login == "" {
-		return goadmin.ErrRequiredUserLogin
-	}
-
-	if !govalidator.IsEmail(user.Login) {
-		return goadmin.ErrInvalidUserLogin
+	if err := validate.Struct(user); err != nil {
+		return fmt.Errorf("validation failed: %w", err)
 	}
 
 	if !user.PasswordIsEncoded && user.Password == "" {
@@ -64,7 +52,7 @@ func (uc *userCase) SearchByLogin(ctx context.Context, login string) (*goadmin.U
 	}
 
 	if len(users) == 0 {
-		return nil, goadmin.ErrUserNotFound
+		return nil, goadmin.NewUserNotFoundError(login)
 	}
 
 	return users[0], nil
@@ -81,7 +69,7 @@ func (uc *userCase) SearchByID(ctx context.Context, id int64) (*goadmin.User, er
 	}
 
 	if len(users) == 0 {
-		return nil, goadmin.ErrUserNotFound
+		return nil, goadmin.NewUserNotFoundError(id)
 	}
 
 	return users[0], nil
@@ -89,13 +77,7 @@ func (uc *userCase) SearchByID(ctx context.Context, id int64) (*goadmin.User, er
 
 func (uc *userCase) SetLastLogged(ctx context.Context, user *goadmin.User) error {
 	user.DTLastLogged = time.Now()
-
-	err := uc.users.SetLastLogged(ctx, user)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return uc.users.SetLastLogged(ctx, user)
 }
 
 func (uc *userCase) Register(ctx context.Context, user *goadmin.User) error {
@@ -123,55 +105,46 @@ func (uc *userCase) EncodePassword(user *goadmin.User) error {
 		return nil
 	}
 
-	p, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err := validatePasswordComplexity(user.Password); err != nil {
+		return fmt.Errorf("password policy: %w", err)
+	}
+
+	hashed, err := hashPassword(user.Password)
 	if err != nil {
-		return errors.Wrap(err, "encoding password failed")
+		return fmt.Errorf("hashing password: %w", err)
 	}
 
 	user.PasswordIsEncoded = true
-	user.Password = string(p)
+	user.Password = hashed
 
 	return nil
 }
 
 func (uc *userCase) ComparePassword(user *goadmin.User, password string) (bool, error) {
-	err := uc.EncodePassword(user)
-	if err != nil {
-		return false, err
+	if !user.PasswordIsEncoded {
+		return false, nil
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err := comparePassword(user.Password, password)
 	if err != nil {
-		err = goadmin.ErrWrongPassword
+		return false, goadmin.ErrWrongPassword
 	}
 
-	return err == nil, err
+	return true, nil
 }
 
-func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User) (*goadmin.Token, error) {
-	const (
-		day       = 24 * time.Hour
-		randomLen = 32
-		baseInt   = 10
-	)
-
-	uniq := []string{
-		strconv.FormatInt(user.ID, baseInt),
-		strconv.FormatInt(time.Now().Unix(), baseInt),
-		user.Login, astistring.RandomString(randomLen),
-	}
-
-	t := sha256.Sum256([]byte(strings.Join(uniq, "_")))
-
+func (uc *userCase) CreateAuthToken(
+	ctx context.Context, user *goadmin.User, cookieToken string, ttl time.Duration,
+) (*goadmin.Token, error) {
 	token, err := uc.tokens.Create(ctx, &goadmin.Token{
 		User:      user,
 		UserID:    user.ID,
 		Type:      goadmin.AuthToken,
-		Token:     hex.EncodeToString(t[:]),
-		DTExpired: time.Now().Add(day),
+		Token:     cookieToken,
+		DTExpired: time.Now().Add(ttl),
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "creating token failed")
+		return nil, fmt.Errorf("creating token failed: %w", err)
 	}
 
 	return token, nil
@@ -180,23 +153,63 @@ func (uc *userCase) CreateAuthToken(ctx context.Context, user *goadmin.User) (*g
 func (uc *userCase) SearchToken(ctx context.Context, token string) (*goadmin.Token, error) {
 	authToken, err := uc.tokens.Search(ctx, token)
 	if err != nil {
-		return nil, errors.Wrap(err, "search token failed")
+		return nil, fmt.Errorf("search token failed: %w", err)
 	}
 
 	authToken.User, err = uc.SearchByID(ctx, authToken.UserID)
 	if err != nil {
-		return nil, errors.Wrap(err, "search user failed")
+		return nil, fmt.Errorf("search user failed: %w", err)
 	}
 
 	if authToken.DTExpired.Before(time.Now()) {
-		return authToken, goadmin.ErrTokenExpired
+		return authToken, goadmin.NewTokenExpiredError(token)
 	}
 
 	return authToken, nil
 }
 
-func (uc *userCase) UserRepository() goadmin.UserRepository {
-	return uc.users
+func (uc *userCase) RevokeUserTokens(ctx context.Context, userID int64) error {
+	return uc.tokens.DeleteByUserID(ctx, userID)
+}
+
+func (uc *userCase) CleanupExpiredTokens(ctx context.Context) (int64, error) {
+	return uc.tokens.DeleteExpired(ctx)
+}
+
+func (uc *userCase) ListUsers(ctx context.Context, filter *goadmin.UserFilter) ([]*goadmin.User, int64, error) {
+	count, err := uc.users.Count(ctx, filter)
+	if err != nil {
+		return nil, 0, fmt.Errorf("counting users: %w", err)
+	}
+
+	users, err := uc.users.Search(ctx, filter)
+	if err != nil {
+		return nil, 0, fmt.Errorf("listing users: %w", err)
+	}
+
+	return users, count, nil
+}
+
+func (uc *userCase) UpdateUser(ctx context.Context, user *goadmin.User) (*goadmin.User, error) {
+	if err := uc.Validate(user, false); err != nil {
+		return nil, err
+	}
+
+	result, err := uc.users.Update(ctx, user)
+	if err != nil {
+		return nil, fmt.Errorf("updating user: %w", err)
+	}
+
+	return result, nil
+}
+
+func (uc *userCase) DeleteUser(ctx context.Context, id int64) error {
+	err := uc.users.Delete(ctx, &goadmin.User{ID: id})
+	if err != nil {
+		return fmt.Errorf("deleting user: %w", err)
+	}
+
+	return nil
 }
 
 func NewUserCase(users goadmin.UserRepository, tokens goadmin.TokenRepository) goadmin.UserUseCase {

@@ -1,19 +1,28 @@
 {{ block nav() }}
-<nav class="navbar navbar-dark bg-info">
-<div class="container-fluid">
-  <div class="navbar-brand">
-    <a href="{{ adminPath }}/" class="navbar-brand align-self-center">GoAdmin</a>
-  </div>
-  <div class="navbar-expand">
-    <ul class="navbar-nav mr-0 my-0">
-    {{ if isset(.User) }}
-      <li class="nav-item"><a href="{{ adminPath }}/users" class="nav-link">Users</a></li>
-      <li class="nav-item"><a href="{{ adminPath }}/logout" class="nav-link">Logout [{{ .User.Name }}]</a></li>
-    {{ else }}
-      <li class="nav-item"><a href="{{ adminPath }}/login" class="nav-link">Login</a></li>
-    {{ end }}
-    </ul>
-  </div>
+<nav class="navbar navbar-expand-lg navbar-goadmin">
+  <div class="container-fluid">
+    <a href="{{ adminPath }}/" class="navbar-brand">GoAdminBootstrap</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMain">
+      <ul class="navbar-nav ms-auto my-0">
+      {{ if isset(.User) }}
+        {{ if .User.Role == "owner" || .User.Role == "root" }}
+        <li class="nav-item"><a href="{{ adminPath }}/users" class="nav-link">Users</a></li>
+        <li class="nav-item"><a href="{{ adminPath }}/audit" class="nav-link">Audit Log</a></li>
+        {{ end }}
+        <li class="nav-item">
+          <form method="POST" action="{{ adminPath }}/logout" class="d-inline">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <button type="submit" class="btn btn-link nav-link border-0 bg-transparent">Logout [{{ .User.Name }}]</button>
+          </form>
+        </li>
+      {{ else }}
+        <li class="nav-item"><a href="{{ adminPath }}/login" class="nav-link">Login</a></li>
+      {{ end }}
+      </ul>
+    </div>
   </div>
 </nav>
 {{ end }}

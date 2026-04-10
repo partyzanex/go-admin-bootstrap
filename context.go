@@ -3,6 +3,7 @@ package goadmin
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -26,9 +27,12 @@ type AppContext struct {
 	app *App
 }
 
-func (c *AppContext) URL(path string, args ...interface{}) string {
-	result := Path(c.app.baseURL.Path, fmt.Sprintf(path, args...))
-	return result
+func (c *AppContext) URL(path string, args ...any) string {
+	if len(args) > 0 {
+		path = fmt.Sprintf(path, args...)
+	}
+
+	return Path(c.app.baseURL.Path, path)
 }
 
 func (c *AppContext) Data() *Data {
@@ -55,4 +59,40 @@ func (c *AppContext) Ctx() context.Context {
 
 func (c *AppContext) UserCase() UserUseCase {
 	return c.app.config.UserCase
+}
+
+func (c *AppContext) CookieName() string {
+	return c.app.config.AccessCookieName
+}
+
+func (c *AppContext) Log() *slog.Logger {
+	if logger, ok := c.Get(LoggerContextKey).(*slog.Logger); ok {
+		return logger
+	}
+
+	return c.app.logger
+}
+
+// writeAuditLog records an audit event. Errors are logged but never returned to
+// the caller — a logging failure must not block the user's operation.
+func (c *AppContext) writeAuditLog(action AuditAction, entityID int64, meta map[string]any) {
+	repo := c.app.config.AuditLog
+	if repo == nil {
+		return
+	}
+
+	entry := &AuditLog{
+		Action:   action,
+		EntityID: entityID,
+		Meta:     meta,
+	}
+
+	if actor := c.User(); actor != nil {
+		entry.ActorID = actor.ID
+		entry.ActorLogin = actor.Login
+	}
+
+	if _, err := repo.Create(c.Ctx(), entry); err != nil {
+		c.Log().Error("audit log write failed", "action", action, "err", err)
+	}
 }

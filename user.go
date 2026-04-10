@@ -11,40 +11,42 @@ type (
 	UserStatus string
 
 	User struct {
-		ID int64 `db:"id" json:"id"`
+		ID       int64      `json:"id"`
+		Login    string     `json:"login" validate:"required,email"`
+		Password string     `json:"password"`
+		Status   UserStatus `json:"status" validate:"required"`
+		Name     string     `json:"name" validate:"required"`
+		Role     UserRole   `json:"role" validate:"required"`
 
-		Login    string     `db:"login" json:"login"`
-		Password string     `db:"password" json:"password"`
-		Status   UserStatus `db:"status" json:"status"`
-		Name     string     `db:"name" json:"name"`
-		Role     UserRole   `db:"role" json:"role"`
+		DTCreated    time.Time `json:"dt_created"`
+		DTUpdated    time.Time `json:"dt_updated"`
+		DTLastLogged time.Time `json:"dt_last_logged"`
 
-		DTCreated    time.Time `db:"dt_created" json:"dt_created"`
-		DTUpdated    time.Time `db:"dt_updated" json:"dt_updated"`
-		DTLastLogged time.Time `db:"dt_last_logged" json:"dt_last_logged"`
-
-		PasswordIsEncoded bool `db:"password_is_encoded" json:"-"`
-		Current           bool `db:"-" json:"-"`
+		PasswordIsEncoded bool `json:"-"`
+		Current           bool `json:"-"`
 	}
 
 	TokenType string
 
 	Token struct {
-		UserID    int64     `db:"user_id" json:"user_id"`
-		Token     string    `db:"token" json:"token"`
-		Type      TokenType `db:"type" json:"type"`
-		DTExpired time.Time `db:"dt_expired" json:"dt_expired"`
-		DTCreated time.Time `db:"dt_created" json:"dt_created"`
+		ID        int64     `json:"-"`
+		UserID    int64     `json:"user_id"`
+		Token     string    `json:"token"`
+		Type      TokenType `json:"type"`
+		DTExpired time.Time `json:"dt_expired"`
+		DTCreated time.Time `json:"dt_created"`
 
-		User *User `db:"-"`
+		User *User `json:"-"`
 	}
 
 	UserFilter struct {
-		IDs           []int64
-		Name          string
-		Login         string
-		Status        UserStatus
-		Limit, Offset int
+		IDs    []int64
+		Name   string
+		Login  string
+		Search string // ILIKE match against both login and name
+		Status UserStatus
+		Limit  int
+		Offset int
 	}
 
 	UserRepository interface {
@@ -59,6 +61,8 @@ type (
 	TokenRepository interface {
 		Search(ctx context.Context, token string) (*Token, error)
 		Create(ctx context.Context, token *Token) (*Token, error)
+		DeleteExpired(ctx context.Context) (int64, error)
+		DeleteByUserID(ctx context.Context, userID int64) error
 	}
 
 	UserUseCase interface {
@@ -68,14 +72,17 @@ type (
 		SearchByID(ctx context.Context, id int64) (*User, error)
 		SetLastLogged(ctx context.Context, user *User) error
 		Register(ctx context.Context, user *User) error
+		UpdateUser(ctx context.Context, user *User) (*User, error)
+		DeleteUser(ctx context.Context, id int64) error
+		ListUsers(ctx context.Context, filter *UserFilter) ([]*User, int64, error)
 
 		ComparePassword(user *User, password string) (bool, error)
 		EncodePassword(user *User) error
 
-		CreateAuthToken(ctx context.Context, user *User) (*Token, error)
+		CreateAuthToken(ctx context.Context, user *User, cookieToken string, ttl time.Duration) (*Token, error)
 		SearchToken(ctx context.Context, token string) (*Token, error)
-
-		UserRepository() UserRepository
+		RevokeUserTokens(ctx context.Context, userID int64) error
+		CleanupExpiredTokens(ctx context.Context) (int64, error)
 	}
 )
 
