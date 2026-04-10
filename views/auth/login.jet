@@ -1,46 +1,42 @@
 {{ extends "../layouts/main.jet" }}
 
 {{ block documentBody() }}
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-sm-10 col-md-8 col-lg-5 m-3">
-      <form action="{{ adminPath }}/login" method="post" id="auth">
-        {{ if isset(csrf_token) }}<input type="hidden" name="_csrf" value="{{ csrf_token }}">{{ end }}
-        <div class="card">
-          <div class="card-header">
-            <h3 class="card-title mb-0">Login</h3>
+<div class="d-flex align-items-center justify-content-center" style="padding:2rem 1rem;">
+  <div class="login-card w-100">
+    <form action="{{ adminPath }}/login" method="post" id="auth">
+      {{ if isset(csrf_token) }}<input type="hidden" name="_csrf" value="{{ csrf_token }}">{{ end }}
+      <div class="card">
+        <div class="card-header">Login</div>
+        <div class="card-body">
+          {{ if isset(err) && err != "" }}
+            <div class="alert alert-danger" id="error">{{ err }}</div>
+          {{ end }}
+          <div class="mb-3">
+            <label for="login" class="form-label">Email</label>
+            <input type="text"
+              class="form-control form-control-lg"
+              id="login"
+              placeholder="admin@example.com"
+              name="login"
+              value="{{ isset(login) ? login : "" }}"
+            />
           </div>
-          <div class="card-body">
-            {{ if isset(err) && err != "" }}
-              <div class="alert alert-danger" id="error">{{ err }}</div>
-            {{ end }}
-            <div class="mb-3">
-              <label for="login" class="form-label">Email:</label>
-              <input type="text"
-                class="form-control form-control-lg"
-                id="login"
-                placeholder="Enter your email"
-                name="login"
-                value="{{ isset(login) ? login : "" }}"
-              />
-            </div>
-            <div class="mb-3">
-              <label for="password" class="form-label">Password:</label>
-              <input type="password"
-                class="form-control form-control-lg"
-                id="password"
-                placeholder="Enter your password"
-                name="password"
-                value="{{ isset(password) ? password : "" }}"
-              />
-            </div>
-          </div>
-          <div class="card-footer bg-white text-end">
-            <button type="submit" class="btn btn-success btn-lg">Login</button>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password"
+              class="form-control form-control-lg"
+              id="password"
+              placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"
+              name="password"
+              value="{{ isset(password) ? password : "" }}"
+            />
           </div>
         </div>
-      </form>
-    </div>
+        <div class="card-footer text-end">
+          <button type="submit" class="btn btn-success btn-lg">Login</button>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 {{ end }}

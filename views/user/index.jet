@@ -3,75 +3,95 @@
 
 {{ block documentBody() }}
 
-  <form method="GET" action="{{ adminPath }}/users" class="mb-3">
-    <div class="row g-2 align-items-end">
-      <div class="col-md-5">
-        <input
-          type="text"
-          name="q"
-          class="form-control"
-          placeholder="Search by login or name"
-          value="{{ isset(searchQuery) ? searchQuery : "" }}"
-        >
+  <div class="filter-bar">
+    <form method="GET" action="{{ adminPath }}/users">
+      <div class="row g-2 align-items-end">
+        <div class="col-lg-4 col-md-6">
+          <input
+            type="text"
+            name="q"
+            class="form-control"
+            placeholder="Search by login or name..."
+            value="{{ isset(searchQuery) ? searchQuery : "" }}"
+          >
+        </div>
+        <div class="col-lg-2 col-md-4">
+          <select name="status" class="form-select">
+            <option value="">All statuses</option>
+            <option value="active"{{ isset(searchStatus) && searchStatus == "active" ? ` selected` : `` }}>Active</option>
+            <option value="new"{{ isset(searchStatus) && searchStatus == "new" ? ` selected` : `` }}>New</option>
+            <option value="blocked"{{ isset(searchStatus) && searchStatus == "blocked" ? ` selected` : `` }}>Blocked</option>
+          </select>
+        </div>
+        <div class="col-lg-3 col-md-4">
+          <button type="submit" class="btn btn-primary me-1">Search</button>
+          <a href="{{ adminPath }}/users" class="btn btn-secondary">Reset</a>
+        </div>
       </div>
-      <div class="col-md-3">
-        <select name="status" class="form-select">
-          <option value="">All statuses</option>
-          <option value="active"{{ isset(searchStatus) && searchStatus == "active" ? ` selected` : `` }}>Active</option>
-          <option value="new"{{ isset(searchStatus) && searchStatus == "new" ? ` selected` : `` }}>New</option>
-          <option value="blocked"{{ isset(searchStatus) && searchStatus == "blocked" ? ` selected` : `` }}>Blocked</option>
-        </select>
-      </div>
-      <div class="col-auto">
-        <button type="submit" class="btn btn-primary">Search</button>
-        <a href="{{ adminPath }}/users" class="btn btn-secondary ms-1">Reset</a>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0">
+          <thead class="table-secondary">
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>Login</th>
+              <th>Name</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th class="text-end">
+                <a class="btn btn-info btn-sm" href="{{ adminPath }}/users/create">Create User</a>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+          {{ if isset(users) && len(users) > 0 }}
+            {{ range _, user := users }}
+            <tr>
+              <td>{{ user.ID }}</td>
+              <td>{{ user.Login }}</td>
+              <td>{{ user.Name }}</td>
+              <td>{{ user.Role }}</td>
+              <td>
+                {{ if user.Status == "active" }}
+                  <span class="badge badge-status-active">active</span>
+                {{ else if user.Status == "new" }}
+                  <span class="badge badge-status-new">new</span>
+                {{ else if user.Status == "blocked" }}
+                  <span class="badge badge-status-blocked">blocked</span>
+                {{ else }}
+                  {{ user.Status }}
+                {{ end }}
+              </td>
+              <td class="date-badges">
+                <span class="badge bg-success">Created: {{ user.GetDTCreated() }}</span>
+                <span class="badge bg-primary">Updated: {{ user.GetDTUpdated() }}</span>
+                <span class="badge bg-info text-white">Last logged: {{ user.GetDTLastLogged() }}</span>
+              </td>
+              <td class="text-end">
+                <a href="{{ adminPath }}/users/{{ user.ID }}/update" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                {{ if isset(.User) && .User.ID != user.ID }}
+                <form method="POST" action="{{ adminPath }}/users/{{ user.ID }}/delete" style="display:inline;" data-confirm="Delete user?">
+                  <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                </form>
+                {{ end }}
+              </td>
+            </tr>
+            {{ end }}
+          {{ else }}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">No users found</td>
+            </tr>
+          {{ end }}
+          </tbody>
+        </table>
       </div>
     </div>
-  </form>
-
-  <table class="table table-hover table-striped">
-    <thead>
-      <tr class="table-secondary">
-        <td style="width: 40px;">#</td>
-        <td>Login</td>
-        <td>Name</td>
-        <td>Role</td>
-        <td style="width: 120px">Status</td>
-        <td style="width: 200px">Date</td>
-        <td style="width: 160px" class="text-end">
-          <a class="btn btn-info btn-sm" href="{{ adminPath }}/users/create">Create User</a>
-        </td>
-      </tr>
-    </thead>
-    <tbody>
-    {{ if isset(users) && len(users) > 0 }}
-      {{ range _, user := users }}
-      <tr>
-        <td>{{ user.ID }}</td>
-        <td>{{ user.Login }}</td>
-        <td>{{ user.Name }}</td>
-        <td>{{ user.Role }}</td>
-        <td>{{ user.Status }}</td>
-        <td class="text-muted">
-          <span class="badge bg-success">Created: {{ user.GetDTCreated() }}</span><br>
-          <span class="badge bg-primary">Updated: {{ user.GetDTUpdated() }}</span><br>
-          <span class="badge bg-info text-dark">Last logged: {{ user.GetDTLastLogged() }}</span>
-        </td>
-        <td class="text-end">
-          <a href="{{ adminPath }}/users/{{ user.ID }}/update" class="btn btn-sm btn-outline-primary">Edit</a>
-          <form method="POST" action="{{ adminPath }}/users/{{ user.ID }}/delete" style="display:inline;" data-confirm="Delete user?">
-            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-          </form>
-        </td>
-      </tr>
-      {{ end }}
-    {{ else }}
-      <tr>
-        <td colspan="7" class="text-center text-muted">No users found</td>
-      </tr>
-    {{ end }}
-    </tbody>
-  </table>
-  {{ yield pagenav() }}
+    {{ yield pagenav() }}
+  </div>
 {{ end }}

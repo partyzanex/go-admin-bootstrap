@@ -48,6 +48,7 @@ func run() error {
 	userRepo := postgres.NewUserRepository(db)
 	tokenRepo := postgres.NewTokenRepository(db)
 	userCase := usecase.NewUserCase(userRepo, tokenRepo)
+	auditLogRepo := postgres.NewAuditLogRepository(db)
 
 	admin, err := goadmin.New(
 		&goadmin.Config{
@@ -67,6 +68,7 @@ func run() error {
 				},
 			},
 			UserCase: userCase,
+			AuditLog: auditLogRepo,
 		},
 		goadmin.WithMiddleware(
 			middleware.Recover(),
@@ -92,6 +94,8 @@ func run() error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+
+	fmt.Fprintf(os.Stderr, "\n\033]8;;http://localhost:9900/admin\033\\  → http://localhost:9900/admin\033]8;;\033\\\n\n")
 
 	return admin.Serve(ctx)
 }

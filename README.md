@@ -121,10 +121,67 @@ go run ./cmd/goadmin-users create-user \
 go run ./cmd/goadmin-users migrate --dsn="..." --direction=up
 ```
 
+## Running the example application
+
+### Prerequisites
+
+- Go 1.22+
+- Docker and Docker Compose
+
+### Step-by-step
+
+**1. Start PostgreSQL:**
+
+```bash
+make local-db-up
+```
+
+This starts a PostgreSQL container on port `5432` with credentials `goadmin:goadmin` (see `docker-compose.yml`).
+
+**2. Run migrations:**
+
+```bash
+make migration-up
+```
+
+Creates the `goadmin` schema and required tables (`user`, `auth_token`, `audit_log`).
+
+**3. Create an admin user:**
+
+```bash
+make create-default-user
+```
+
+Creates `admin@example.com` / `Admin123` with `owner` role. For production use `GOADMIN_PASSWORD` env var or the interactive prompt instead of `--password`.
+
+**4. Start the example application:**
+
+```bash
+make run-example
+```
+
+The admin panel is available at [http://localhost:9900/admin](http://localhost:9900/admin).
+
+Log in with `admin@example.com` / `Admin123`.
+
+### Custom DSN or JWT secret
+
+```bash
+PG_DSN="postgres://user:pass@host:5432/db?sslmode=disable" JWT_SECRET="my-secret" make run-example
+```
+
+Makefile defaults: `PG_DSN=postgres://goadmin:goadmin@localhost:5432/goadmin?sslmode=disable`, `JWT_SECRET=dev-secret-change-me`.
+
+### Stop the database
+
+```bash
+make local-db-down
+```
+
 ## Development
 
 ```bash
-make tools           # Install goose and pg-wait
+make tools           # Install goose CLI
 make local-db-up     # Start PostgreSQL via docker compose
 make migration-up    # Run migrations
 make create-default-user  # Create admin user

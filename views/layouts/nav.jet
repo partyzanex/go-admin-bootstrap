@@ -1,8 +1,11 @@
 {{ block nav() }}
-<nav class="navbar navbar-expand-lg bg-info" data-bs-theme="dark">
+<nav class="navbar navbar-expand-lg navbar-goadmin">
   <div class="container-fluid">
-    <a href="{{ adminPath }}/" class="navbar-brand">GoAdmin</a>
-    <div class="collapse navbar-collapse">
+    <a href="{{ adminPath }}/" class="navbar-brand">GoAdminBootstrap</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMain">
       <ul class="navbar-nav ms-auto my-0">
       {{ if isset(.User) }}
         {{ if .User.Role == "owner" || .User.Role == "root" }}
@@ -12,9 +15,7 @@
         <li class="nav-item">
           <form method="POST" action="{{ adminPath }}/logout" class="d-inline">
             <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-            <button type="submit" class="nav-link btn btn-link text-white text-decoration-none p-0 border-0 bg-transparent">
-              Logout [{{ .User.Name }}]
-            </button>
+            <button type="submit" class="btn btn-link nav-link border-0 bg-transparent">Logout [{{ .User.Name }}]</button>
           </form>
         </li>
       {{ else }}

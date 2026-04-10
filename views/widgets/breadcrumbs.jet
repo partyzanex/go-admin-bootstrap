@@ -1,17 +1,21 @@
-{{ block breadcrumbs() }}
+{{ block breadcrumbBar() }}
   {{ if isset(.Breadcrumbs) }}
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb p-0">
-      {{ range _, breadcrumb := .Breadcrumbs }}
-        <li class="breadcrumb-item"{{ breadcrumb.Active ? `aria-current="page"` : "" }}>
-          {{ if !breadcrumb.Active }}
-          <a href="{{ breadcrumb.URL }}">{{ breadcrumb.Name }}</a>
-          {{ else }}
-          <b>{{ breadcrumb.Name }}</b>
+  <div class="breadcrumb-bar">
+    <div class="container-fluid">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb p-0">
+          {{ range _, breadcrumb := .Breadcrumbs }}
+            <li class="breadcrumb-item"{{ breadcrumb.Active ? `aria-current="page"` : "" }}>
+              {{ if !breadcrumb.Active }}
+              <a href="{{ breadcrumb.URL }}">{{ breadcrumb.Name }}</a>
+              {{ else }}
+              <strong>{{ breadcrumb.Name }}</strong>
+              {{ end }}
+            </li>
           {{ end }}
-        </li>
-      {{ end }}
-    </ol>
-  </nav>
+        </ol>
+      </nav>
+    </div>
+  </div>
   {{ end }}
 {{ end }}

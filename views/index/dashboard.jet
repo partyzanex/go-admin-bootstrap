@@ -1,5 +1,14 @@
 {{ extends "../layouts/main.jet" }}
 
 {{ block documentBody() }}
-<h3>Dashboard content</h3>
+<div class="dashboard-welcome">
+  <h3>Welcome{{ if isset(.User) }}, {{ .User.Name }}{{ end }}</h3>
+  {{ if isset(.User) }}
+  <p class="lead">You are logged in as <strong>{{ .User.Role }}</strong>.</p>
+  {{ end }}
+  <div class="dashboard-placeholder mt-4">
+    <p class="mb-1" style="font-size:1rem;color:var(--text-muted);">Dashboard content</p>
+    <p class="mb-0" style="font-size:.8rem;">This area is meant to be customized by the library consumer.</p>
+  </div>
+</div>
 {{ end }}
